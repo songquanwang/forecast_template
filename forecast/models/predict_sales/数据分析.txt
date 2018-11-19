@@ -1,0 +1,16 @@
+1.train
+train[train[['date','item_id','shop_id']].duplicated()]
+
+完全相同的两行
+
+train[(train['item_id']==12133)&(train['date']=='29.01.2013')]
+ 14.08.2014              19       31     9842
+             date  date_block_num  shop_id  item_id  item_price  item_cnt_day
+76961  05.01.2013               0       54    20130       149.0           1.0
+76962  05.01.2013               0       54    20130       149.0           1.0
+
+>>> train[(train['item_id']==9842)&(train['date']=='14.08.2014')]
+               date  date_block_num  shop_id  item_id  item_price
+1940056  14.08.2014              19       31     9842        99.0
+1940058  14.08.2014              19       31     9842        98.0
+

@@ -1,0 +1,26 @@
+1.特征工程
+    1)每行不同列生成tfidf/bow向量。
+    2)计算某行与不同类别的行，对应列之间距离的(最大值、最小值、中位数、平均值、方差)
+      例如：每行计算与label为1的行之间的距离(最大值、最小值、中位数、平均值、方差)
+    3)计算每行的不同特征之间的comsim相似度作为特征
+    4)各列包含的单词相互组合，转换成特征
+
+
+
+
+
+
+1.每个样本权重计算
+    # [1+（最大标准差-标准差数组）/最大标准差]/2   --->标准差越大，权重越小  （0.5-1)
+    weight = (1 + np.power(((max_var - var ** raise_to) / max_var), 1)) / 2.
+    样本权重是通过下面方式应用到算法中：
+    matrix.dtrain = xgb.DMatrix(X_train[index_base], label=labels_train[index_base], weight=matrix.weight_train[index_base])
+
+2.自举法抽样
+  放回抽样：rng.randint(numTrain, size=sampleSize)
+  非放回抽样：randnum = rng.uniform(size=numTrain)
+
+3.多个结果：p1,p2,p3,...,pn ;权值:w1,w2,w3,...,wn 整合
+  w1/Σwi*p1+w2/Σwi*p2+,...+wn/Σwi*pi ,权重归一化后，线性组合
+
+
