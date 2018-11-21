@@ -61,7 +61,7 @@ class IdFeat(AbstractBaseFeat):
 
         print("For cross-validation...")
         for run in range(config.n_runs):
-            ## use 33% for training and 67 % for validation so we switch trainInd and validInd
+            # use 33% for training and 67 % for validation so we switch trainInd and validInd
             for fold, (validInd, trainInd) in enumerate(skf[run]):
                 print("Run: %d, Fold: %d" % (run + 1, fold + 1))
                 path = "%s/Run%d/Fold%d" % (config.solution_feat_base, run + 1, fold + 1)

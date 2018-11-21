@@ -83,8 +83,8 @@ class BasicTfidfFeat(AbstractBaseFeat):
         :return:
         """
         try:
-            # reshape(-1,1) 否则警告
-            d = cosine_similarity(x.reshape(-1, 1), y.reshape(-1, 1))
+            # reshape(-1,1) 否则警告 bug
+            d = cosine_similarity(x.reshape(1, -1), y.reshape(1, -1))
             d = d[0][0]
         except:
             print(x)
@@ -94,6 +94,14 @@ class BasicTfidfFeat(AbstractBaseFeat):
 
     @staticmethod
     def pairwise_dist(X_test, X_train, dist_metric):
+        """
+        consine sim
+        euclidean distance
+        :param X_test:
+        :param X_train:
+        :param dist_metric:
+        :return:
+        """
         if dist_metric == "cosine":
             # sim 0-1 1完全相同 ；余弦距离也是越大越远 ，用1减后 变成相似度
             sim = 1. - pairwise_distances(X_test, X_train, metric=dist_metric, n_jobs=1)
