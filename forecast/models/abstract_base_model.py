@@ -271,7 +271,8 @@ class AbstractBaseModel(ModelInter):
         # all result
         all_set_obj = self.gen_set_obj_all(self.all_matrix)
         # 输出路径赋值给all_matrix
-        self.all_matrix['raw_pred_test_path'], self.all_matrix['rank_pred_test_path'], self.all_matrix['subm_path'] = self.get_output_all_path(feat_folder, feat_name, kappa_cv_mean, kappa_cv_std)
+        self.all_matrix['raw_pred_test_path'], self.all_matrix['rank_pred_test_path'], self.all_matrix['subm_path'] = self.get_output_all_path(feat_folder, feat_name,
+                                                                                                                                               kappa_cv_mean, kappa_cv_std)
         pred_raw, pred_rank = self.gen_bagging(param, all_set_obj, all=True)
         # 生成提交结果
         self.out_put_all(feat_folder, feat_name, kappa_cv_mean, kappa_cv_std, pred_raw, pred_rank)
@@ -308,7 +309,7 @@ class AbstractBaseModel(ModelInter):
                 param[f] = int(param[f])
 
         print("------------------------------------------------------------")
-        print "Trial %d" % self.trial_counter
+        print("Trial %d" % self.trial_counter)
 
         print(" Model")
         print(" %s" % feat_name)

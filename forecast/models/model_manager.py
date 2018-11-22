@@ -69,7 +69,7 @@ def make_opt_predict_by_models(specified_models):
         print("************************************************************")
         print("Best params")
         for k, v in best_params.items():
-            print "        %s: %s" % (k, v)
+            print("        %s: %s" % (k, v))
         # 获取尝试的losses
         trial_kappas = -np.asarray(trials.losses(), dtype=float)
         best_kappa_mean = max(trial_kappas)

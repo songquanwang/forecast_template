@@ -177,7 +177,7 @@ class BasicTfidfFeat(AbstractBaseFeat):
     def extract_cosine_sim_feat(path, feat_names, mode, vec_type):
         """
         cosine sim feat
-        各特征之间的相似度
+        各特征向量之间的相似度
         :param path:
         :param feat_names:
             columns_names = ["query", "title", "description"]

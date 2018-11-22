@@ -15,15 +15,14 @@ __author__
     songquanwang
 
 """
-
+import abc
 import _pickle as pickle
 
 from sklearn.preprocessing import LabelBinarizer
 
 import forecast.conf.model_params_conf as config
 
-import abc
-from  forecast.feat.abstract_base_feat import AbstractBaseFeat
+from forecast.feat.abstract_base_feat import AbstractBaseFeat
 
 
 class IdFeat(AbstractBaseFeat):
