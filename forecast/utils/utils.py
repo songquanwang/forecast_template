@@ -24,8 +24,8 @@ __author__
 
 import numpy as np
 
-from forecast.utils.ml_metrics import quadratic_weighted_kappa
 import forecast.conf.model_params_conf as config
+from forecast.utils.ml_metrics import quadratic_weighted_kappa
 
 
 ######################
@@ -213,7 +213,7 @@ def softkappaObj(preds, dtrain):
             for l in range(N):
                 indicator = float(n == k)
                 d2E += pow(k - l, 2.0) * hist_label[l] * preds[:, n] * (1 - 2. * preds[:, n]) * (
-                    indicator - preds[:, k])
+                        indicator - preds[:, k])
         ## the hess
         hess[:, n] = -M * ((d2O * E - O * d2E) * (E ** 2) - (dO * E - O * dE) * 2. * E * dE) / (E ** 4)
 

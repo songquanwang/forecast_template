@@ -38,7 +38,8 @@ import numpy as np
 
 import forecast.conf.model_params_conf as  config
 from forecast.feat.basic_tfidf_feat import AbstractBaseFeat
-import forecast.utils.utils as utils
+import forecast.utils.distance_utils as utils
+
 import forecast.conf.feat_params_conf as feat_params_conf
 
 
@@ -52,72 +53,6 @@ class DistanceFeat(AbstractBaseFeat):
         self.stats_func = [np.mean, np.std]
         self.stats_feat_num = len(self.quantiles_range) + len(self.stats_func)
 
-    #####################
-    ## Distance metric ##
-    #####################
-    @staticmethod
-    def JaccardCoef(A, B):
-        A, B = set(A), set(B)
-        intersect = len(A.intersection(B))
-        union = len(A.union(B))
-        coef = utils.try_divide(intersect, union)
-        return coef
-
-    @staticmethod
-    def DiceDist(A, B):
-        A, B = set(A), set(B)
-        intersect = len(A.intersection(B))
-        union = len(A) + len(B)
-        d = utils.try_divide(2 * intersect, union)
-        return d
-
-    @staticmethod
-    def compute_dist(A, B, dist="jaccard_coef"):
-        """
-        jaccard 、dice距离
-        :param A:
-        :param B:
-        :param dist:
-        :return:
-        """
-        if dist == "jaccard_coef":
-            d = DistanceFeat.JaccardCoef(A, B)
-        elif dist == "dice_dist":
-            d = DistanceFeat.DiceDist(A, B)
-        return d
-
-    # pairwise distance
-    @staticmethod
-    def pairwise_jaccard_coef(A, B):
-        coef = np.zeros((A.shape[0], B.shape[0]), dtype=float)
-        for i in range(A.shape[0]):
-            for j in range(B.shape[0]):
-                coef[i, j] = DistanceFeat.JaccardCoef(A[i], B[j])
-        return coef
-
-    @staticmethod
-    def pairwise_dice_dist(A, B):
-        d = np.zeros((A.shape[0], B.shape[0]), dtype=float)
-        for i in range(A.shape[0]):
-            for j in range(B.shape[0]):
-                d[i, j] = DistanceFeat.DiceDist(A[i], B[j])
-        return d
-
-    @staticmethod
-    def pairwise_dist(A, B, dist="jaccard_coef"):
-        """
-        批量 jaccard 、dice距离
-        :param A:
-        :param B:
-        :param dist:
-        :return:
-        """
-        if dist == "jaccard_coef":
-            d = DistanceFeat.pairwise_jaccard_coef(A, B)
-        elif dist == "dice_dist":
-            d = DistanceFeat.pairwise_dice_dist(A, B)
-        return d
-
     @staticmethod
     def extract_basic_distance_feat(df):
         """
@@ -127,7 +62,7 @@ class DistanceFeat(AbstractBaseFeat):
         """
         # jaccard coef/dice dist of n-gram
         print("generate jaccard coef and dice dist for n-gram")
-        dists = ["jaccard_coef", "dice_dist"]
+        dists = ["jaccard_coef", "dice_coef"]
         grams = ["unigram", "bigram", "trigram"]
         # 计算 queyr title description的 jaccard dice距离
         feat_names = ["query", "title", "description"]
@@ -138,7 +73,7 @@ class DistanceFeat(AbstractBaseFeat):
                         target_name = feat_names[i]
                         obs_name = feat_names[j]
                         df["%s_of_%s_between_%s_%s" % (dist, gram, target_name, obs_name)] = list(
-                            df.apply(lambda x: DistanceFeat.compute_dist(x[target_name + "_" + gram], x[obs_name + "_" + gram], dist), axis=1))
+                            df.apply(lambda x: utils.compute_jaccard_dice_dist(x[target_name + "_" + gram], x[obs_name + "_" + gram], dist), axis=1))
 
     def extract_statistical_distance_feat(self, path, dfTrain, dfTest, mode):
         """

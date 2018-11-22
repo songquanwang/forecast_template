@@ -94,8 +94,7 @@ class CountingFeat(AbstractBaseFeat):
         :param grams:
         :return:
         """
-        print
-        "generate intersect word counting features"
+        print("generate intersect word counting features")
         # unigram
         for gram in grams:
             for obs_name in feat_names:

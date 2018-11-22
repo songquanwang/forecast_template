@@ -28,6 +28,7 @@ solution_data = "%s/Data" % solution_folder
 solution_info = "%s/Info" % solution_folder
 # 基本特征
 solution_feat_base = "%s/base" % solution_feat
+solution_feat_combined = "%s/combined" % solution_feat
 
 feat_folder = solution_feat
 original_train_data_path = "%s/train.csv" % data_folder
