@@ -54,6 +54,7 @@ class CountingFeat(AbstractBaseFeat):
         """
         pos_of_obs_in_target = [0]
         if len(obs) != 0:
+            # 如果 obs 中元素在target中，保留obs的序号
             pos_of_obs_in_target = [j for j, w in enumerate(obs, start=1) if w in target]
             if len(pos_of_obs_in_target) == 0:
                 pos_of_obs_in_target = [0]
@@ -199,7 +200,6 @@ class CountingFeat(AbstractBaseFeat):
 
         :return:
         """
-
         with open(config.processed_train_data_path, "rb") as f:
             dfTrain = pickle.load(f)
         with open(config.processed_test_data_path, "rb") as f:
@@ -219,11 +219,7 @@ class CountingFeat(AbstractBaseFeat):
         self.extract_feat(dfTest)
 
         feat_names = [
-            name for name in dfTrain.columns \
-            if "count" in name \
-               or "ratio" in name \
-               or "div" in name \
-               or "pos_of" in name
+            name for name in dfTrain.columns  if "count" in name  or "ratio" in name or "div" in name or "pos_of" in name
         ]
         feat_names.append("description_missing")
 

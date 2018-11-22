@@ -212,6 +212,8 @@ class BasicTfidfFeat(AbstractBaseFeat):
                                           query_relevance_indices_dict):
         """
         svd sim stats feat
+        train_train 2(字段)*2(dict) *20 个特征
+        test_train  2(字段)*2(dict) *20 个特征
         :param path:
         :param feat_name:
         :param column_name:
@@ -317,10 +319,10 @@ class BasicTfidfFeat(AbstractBaseFeat):
                 with open("%s/%s.%s_common_svd%d.feat.pkl" % (path, mod, feat_names[j], n_components), "rb") as f:
                     obs_vec = pickle.load(f)
                 sim = np.asarray(map(utils.cosine_sim, target_vec, obs_vec))[:, np.newaxis]
-                ## dump feat
+                #dump feat
                 with open("%s/%s.%s_%s_%s_common_svd%d_cosine_sim.feat.pkl" % (path, mod, feat_names[i], feat_names[j], vec_type, n_components), "wb") as f:
                     pickle.dump(sim, f, -1)
-            ## update feat names
+            #update feat names
             new_feat_names.append("%s_%s_%s_common_svd%d_cosine_sim" % (feat_names[i], feat_names[j], vec_type, n_components))
         return new_feat_names
 
@@ -356,7 +358,7 @@ class BasicTfidfFeat(AbstractBaseFeat):
             with open("%s/train.%s_individual_svd%d_cosine_sim_stats_feat_by_query_relevance.feat.pkl" % (
                     path, feat_name, n_components), "wb") as f:
                 pickle.dump(cosine_sim_stats_feat_by_query_relevance_train, f, -1)
-            ## test
+            # test
             cosine_sim_stats_feat_by_relevance_test = self.generate_dist_stats_feat("cosine", X_svd_train, dfTrain["id"].values, X_svd_test, dfTest["id"].values,
                                                                                     relevance_indices_dict)
             cosine_sim_stats_feat_by_query_relevance_test = self.generate_dist_stats_feat("cosine", X_svd_train, dfTrain["id"].values, X_svd_test, dfTest["id"].values,
@@ -368,7 +370,7 @@ class BasicTfidfFeat(AbstractBaseFeat):
                     path, mode, feat_name, n_components), "wb") as f:
                 pickle.dump(cosine_sim_stats_feat_by_query_relevance_test, f, -1)
 
-            ## update feat names
+            # update feat names
             new_feat_names.append("%s_individual_svd%d_cosine_sim_stats_feat_by_relevance" % (feat_name, n_components))
             new_feat_names.append("%s_individual_svd%d_cosine_sim_stats_feat_by_query_relevance" % (feat_name, n_components))
 
@@ -440,7 +442,7 @@ class BasicTfidfFeat(AbstractBaseFeat):
         feat_list = BasicTfidfFeat.extract_cosine_sim_feat(path, feat_names, mode, vec_type)
         new_feat_names.extend(feat_list)
 
-        # vstack 所有的feat
+        # vstack feat_names(最原始的 query title description)
         for i, feat_name in enumerate(feat_names):
             with open("%s/train.%s.feat.pkl" % (path, feat_name), "rb") as f:
                 X_vec_train = pickle.load(f)
