@@ -16,7 +16,7 @@ __author__
 
 import _pickle as pickle
 
-from sklearn.cross_validation import StratifiedKFold
+from sklearn.model_selection import StratifiedKFold
 
 import forecast.conf.model_params_conf as config
 
