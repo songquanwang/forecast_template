@@ -277,6 +277,8 @@ class BasicTfidfFeat(AbstractBaseFeat):
         """
         cosine sim feat
         各特征向量之间的相似度
+        0-1 0-2
+        1-2
         :param path:
         :param feat_names:
             columns_names = ["query", "title", "description"]
@@ -297,7 +299,7 @@ class BasicTfidfFeat(AbstractBaseFeat):
                         target_vec = pickle.load(f)
                     with open("%s/%s.%s.feat.pkl" % (path, mod, feat_names[j]), "rb") as f:
                         obs_vec = pickle.load(f)
-                    sim = np.asarray(map(utils.cosine_sim, target_vec, obs_vec))[:, np.newaxis]
+                    sim = np.fromiter(map(utils.cosine_sim, target_vec, obs_vec), dtype=np.float32)[:, np.newaxis]
                     # 计算两个特征之间的余弦相似度
                     with open("%s/%s.%s_%s_%s_cosine_sim.feat.pkl" % (path, mod, feat_names[i], feat_names[j], vec_type),
                               "wb") as f:
@@ -370,7 +372,7 @@ class BasicTfidfFeat(AbstractBaseFeat):
                     target_vec = pickle.load(f)
                 with open("%s/%s.%s_common_svd%d.feat.pkl" % (path, mod, feat_names[j], n_components), "rb") as f:
                     obs_vec = pickle.load(f)
-                sim = np.asarray(map(utils.cosine_sim, target_vec, obs_vec))[:, np.newaxis]
+                sim = np.fromiter(map(utils.cosine_sim, target_vec, obs_vec), dtype=np.float32)[:, np.newaxis]
                 # dump feat
                 with open("%s/%s.%s_%s_%s_common_svd%d_cosine_sim.feat.pkl" % (path, mod, feat_names[i], feat_names[j], vec_type, n_components), "wb") as f:
                     pickle.dump(sim, f, -1)

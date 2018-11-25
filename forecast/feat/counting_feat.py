@@ -79,12 +79,12 @@ class CountingFeat(AbstractBaseFeat):
                 # 唯一单词个数
                 df["count_of_unique_%s_%s" % (feat_name, gram)] = list(df.apply(lambda x: len(set(x[feat_name + "_" + gram])), axis=1))
                 # 唯一单词占比
-                df["ratio_of_unique_%s_%s" % (feat_name, gram)] = map(utils.try_divide, df["count_of_unique_%s_%s" % (feat_name, gram)], df["count_of_%s_%s" % (feat_name, gram)])
+                df["ratio_of_unique_%s_%s" % (feat_name, gram)] = list(map(utils.try_divide, df["count_of_unique_%s_%s" % (feat_name, gram)], df["count_of_%s_%s" % (feat_name, gram)]))
 
             # unigram中数值个数
             df["count_of_digit_in_%s" % feat_name] = list(df.apply(lambda x: count_digit(x[feat_name + "_unigram"]), axis=1))
             # unigram中数值个数/unigram中所有单词数量
-            df["ratio_of_digit_in_%s" % feat_name] = map(utils.try_divide, df["count_of_digit_in_%s" % feat_name], df["count_of_%s_unigram" % (feat_name)])
+            df["ratio_of_digit_in_%s" % feat_name] = list(map(utils.try_divide, df["count_of_digit_in_%s" % feat_name], df["count_of_%s_unigram" % (feat_name)]))
 
         # 是否没有描述信息
         df["description_missing"] = list(df.apply(lambda x: int(x["description_unigram"] == ""), axis=1))
@@ -108,15 +108,15 @@ class CountingFeat(AbstractBaseFeat):
                         # 两个不同字段中交集的词语个数
                         df["count_of_%s_%s_in_%s" % (obs_name, gram, target_name)] = list(df.apply(lambda x: sum([1. for w in x[obs_name + "_" + gram] if w in set(x[target_name + "_" + gram])]), axis=1))
                         # 交集占单词个数比例
-                        df["ratio_of_%s_%s_in_%s" % (obs_name, gram, target_name)] = map(utils.try_divide, df["count_of_%s_%s_in_%s" % (obs_name, gram, target_name)],df["count_of_%s_%s" % (obs_name, gram)])
+                        df["ratio_of_%s_%s_in_%s" % (obs_name, gram, target_name)] = list(map(utils.try_divide, df["count_of_%s_%s_in_%s" % (obs_name, gram, target_name)],df["count_of_%s_%s" % (obs_name, gram)]))
 
             # title_query_count/query_count
-            df["title_%s_in_query_div_query_%s" % (gram, gram)] = map(utils.try_divide, df["count_of_title_%s_in_query" % gram], df["count_of_query_%s" % gram])
+            df["title_%s_in_query_div_query_%s" % (gram, gram)] = list(map(utils.try_divide, df["count_of_title_%s_in_query" % gram], df["count_of_query_%s" % gram]))
             # title
-            df["title_%s_in_query_div_query_%s_in_title" % (gram, gram)] = map(utils.try_divide, df["count_of_title_%s_in_query" % gram], df["count_of_query_%s_in_title" % gram])
-            df["description_%s_in_query_div_query_%s" % (gram, gram)] = map(utils.try_divide, df["count_of_description_%s_in_query" % gram], df["count_of_query_%s" % gram])
-            df["description_%s_in_query_div_query_%s_in_description" % (gram, gram)] = map(utils.try_divide, df["count_of_description_%s_in_query" % gram],
-                                                                                           df["count_of_query_%s_in_description" % gram])
+            df["title_%s_in_query_div_query_%s_in_title" % (gram, gram)] = list(map(utils.try_divide, df["count_of_title_%s_in_query" % gram], df["count_of_query_%s_in_title" % gram]))
+            df["description_%s_in_query_div_query_%s" % (gram, gram)] = list(map(utils.try_divide, df["count_of_description_%s_in_query" % gram], df["count_of_query_%s" % gram]))
+            df["description_%s_in_query_div_query_%s_in_description" % (gram, gram)] = list(map(utils.try_divide, df["count_of_description_%s_in_query" % gram],
+                                                                                           df["count_of_query_%s_in_description" % gram]))
 
     @staticmethod
     def extract_interset_word_pos_feat(df, feat_names, grams):
@@ -135,27 +135,27 @@ class CountingFeat(AbstractBaseFeat):
                     if target_name != obs_name:
                         pos = list(df.apply(lambda x: CountingFeat.get_position_list(x[target_name + "_" + gram], obs=x[obs_name + "_" + gram]), axis=1))
                         ## stats feat on pos
-                        df["pos_of_%s_%s_in_%s_min" % (obs_name, gram, target_name)] = map(np.min, pos)
-                        df["pos_of_%s_%s_in_%s_mean" % (obs_name, gram, target_name)] = map(np.mean, pos)
-                        df["pos_of_%s_%s_in_%s_median" % (obs_name, gram, target_name)] = map(np.median, pos)
-                        df["pos_of_%s_%s_in_%s_max" % (obs_name, gram, target_name)] = map(np.max, pos)
-                        df["pos_of_%s_%s_in_%s_std" % (obs_name, gram, target_name)] = map(np.std, pos)
+                        df["pos_of_%s_%s_in_%s_min" % (obs_name, gram, target_name)] = list(map(np.min, pos))
+                        df["pos_of_%s_%s_in_%s_mean" % (obs_name, gram, target_name)] = list(map(np.mean, pos))
+                        df["pos_of_%s_%s_in_%s_median" % (obs_name, gram, target_name)] =list(map(np.median, pos))
+                        df["pos_of_%s_%s_in_%s_max" % (obs_name, gram, target_name)] = list(map(np.max, pos))
+                        df["pos_of_%s_%s_in_%s_std" % (obs_name, gram, target_name)] = list(map(np.std, pos))
                         ## stats feat on normalized_pos
-                        df["normalized_pos_of_%s_%s_in_%s_min" % (obs_name, gram, target_name)] = map(utils.try_divide,
+                        df["normalized_pos_of_%s_%s_in_%s_min" % (obs_name, gram, target_name)] = list(map(utils.try_divide,
                                                                                                       df["pos_of_%s_%s_in_%s_min" % (obs_name, gram, target_name)],
-                                                                                                      df["count_of_%s_%s" % (obs_name, gram)])
-                        df["normalized_pos_of_%s_%s_in_%s_mean" % (obs_name, gram, target_name)] = map(utils.try_divide,
+                                                                                                      df["count_of_%s_%s" % (obs_name, gram)]))
+                        df["normalized_pos_of_%s_%s_in_%s_mean" % (obs_name, gram, target_name)] = list(map(utils.try_divide,
                                                                                                        df["pos_of_%s_%s_in_%s_mean" % (obs_name, gram, target_name)],
-                                                                                                       df["count_of_%s_%s" % (obs_name, gram)])
-                        df["normalized_pos_of_%s_%s_in_%s_median" % (obs_name, gram, target_name)] = map(utils.try_divide,
+                                                                                                       df["count_of_%s_%s" % (obs_name, gram)]))
+                        df["normalized_pos_of_%s_%s_in_%s_median" % (obs_name, gram, target_name)] = list(map(utils.try_divide,
                                                                                                          df["pos_of_%s_%s_in_%s_median" % (obs_name, gram, target_name)],
-                                                                                                         df["count_of_%s_%s" % (obs_name, gram)])
-                        df["normalized_pos_of_%s_%s_in_%s_max" % (obs_name, gram, target_name)] = map(utils.try_divide,
+                                                                                                         df["count_of_%s_%s" % (obs_name, gram)]))
+                        df["normalized_pos_of_%s_%s_in_%s_max" % (obs_name, gram, target_name)] = list(map(utils.try_divide,
                                                                                                       df["pos_of_%s_%s_in_%s_max" % (obs_name, gram, target_name)],
-                                                                                                      df["count_of_%s_%s" % (obs_name, gram)])
-                        df["normalized_pos_of_%s_%s_in_%s_std" % (obs_name, gram, target_name)] = map(utils.try_divide,
+                                                                                                      df["count_of_%s_%s" % (obs_name, gram)]))
+                        df["normalized_pos_of_%s_%s_in_%s_std" % (obs_name, gram, target_name)] = list(map(utils.try_divide,
                                                                                                       df["pos_of_%s_%s_in_%s_std" % (obs_name, gram, target_name)],
-                                                                                                      df["count_of_%s_%s" % (obs_name, gram)])
+                                                                                                      df["count_of_%s_%s" % (obs_name, gram)]))
 
     def extract_feat(self, df):
         """

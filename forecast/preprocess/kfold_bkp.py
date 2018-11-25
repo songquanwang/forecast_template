@@ -16,7 +16,7 @@ __author__
 
 import _pickle as pickle
 
-from sklearn.model_selection import StratifiedKFold
+from sklearn.cross_validation import StratifiedKFold
 
 import forecast.conf.model_params_conf as config
 
@@ -33,18 +33,16 @@ def gen_stratified_kfold():
      ]
     """
 
-    # load data
+    ## load data
     with open(config.processed_train_data_path, "rb") as f:
         dfTrain = pickle.load(f)
 
     skf = [0] * config.n_runs
     for stratified_label, key in zip(["relevance", "query"], ["median_relevance", "qid"]):
         for run in range(config.n_runs):
-            # skf[i].random_state 保留种子，就能重现随机数
             random_seed = 2015 + 1000 * (run + 1)
-            # n_folds ==3表示只能迭代三次
-            sf = StratifiedKFold(n_splits=config.n_folds, shuffle=True, random_state=random_seed)
-            # skf[run] = sf.split(dfTrain[key], dfTrain[key])
+            skf[run] = StratifiedKFold(dfTrain[key], n_folds=config.n_folds,
+                                       shuffle=True, random_state=random_seed)
             for fold, (validInd, trainInd) in enumerate(skf[run]):
                 print("================================")
                 print("Index for run: %s, fold: %s" % (run + 1, fold + 1))
@@ -54,7 +52,3 @@ def gen_stratified_kfold():
                 print(validInd[:10])
         with open("%s/stratifiedKFold.%s.pkl" % (config.solution_data, stratified_label), "wb") as f:
             pickle.dump(skf, f, -1)
-
-
-if __name__ == "__main__":
-    gen_stratified_kfold()
