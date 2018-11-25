@@ -27,6 +27,13 @@ import forecast.conf.model_params_conf as config
 
 def preprocess():
     """
+    dolumns =['id', 'query', 'product_title', 'product_description',
+       'median_relevance', 'relevance_variance',
+        'index', 'median_relevance_1','median_relevance_2', 'median_relevance_3', 'median_relevance_4',
+        'qid']
+    id: 唯一编号 Train Test 1-32671  train test 混合在一起
+    dfTrain:10158
+    dfTest:22513
     1.load  train and test data
     2.add index: 从0 开始编号
     3.dummy median_relevance：生成median_relevance_1 median_relevance_2 median_relevance_3 median_relevance_4
@@ -48,11 +55,11 @@ def preprocess():
     ######################
     print("Pre-process data...")
 
-    # insert fake label for test
+    # median_relevance=1  relevance_variance=0
     dfTest["median_relevance"] = np.ones((num_test))
     dfTest["relevance_variance"] = np.zeros((num_test))
 
-    # insert sample index
+    # 从0 开始编号
     dfTrain["index"] = np.arange(num_train)
     dfTest["index"] = np.arange(num_test)
 
@@ -61,14 +68,14 @@ def preprocess():
         dfTrain["median_relevance_%d" % (i + 1)] = 0
         dfTrain["median_relevance_%d" % (i + 1)][dfTrain["median_relevance"] == (i + 1)] = 1
 
-    # query ids 从1开始编号
+    # query ids 从1开始编号 query train test 具有相同的集合
     qid_dict = dict()
     for i, q in enumerate(np.unique(dfTrain["query"]), start=1):
         qid_dict[q] = i
 
-    # insert query id
-    dfTrain["qid"] = map(lambda q: qid_dict[q], dfTrain["query"])
-    dfTest["qid"] = map(lambda q: qid_dict[q], dfTest["query"])
+    # query id 1-261 个唯一的查询（train test)都相同
+    dfTrain["qid"] = list(map(lambda q: qid_dict[q], dfTrain["query"]))
+    dfTest["qid"] = list(map(lambda q: qid_dict[q], dfTest["query"]))
 
     # clean text
     clean = lambda line: clean_text(line, drop_html_flag=config.drop_html_flag)

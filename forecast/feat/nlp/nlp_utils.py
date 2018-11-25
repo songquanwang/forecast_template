@@ -226,8 +226,8 @@ replace_dict = {
 def clean_text(line, drop_html_flag=False):
     """
     使用正则表达式替换 re.sub
-    替换 gb g dg -->dgb
-    替换 tb      -->dtb
+    替换 d gb d g dg -->dgb
+    替换 d tb      -->dtb
     替换 replace_dict
     替换 synonyms.csv 同义词
     :param line:
@@ -264,6 +264,11 @@ def clean_text(line, drop_html_flag=False):
 ## Drop html tag ##
 ###################
 def drop_html(html):
+    """
+    删除html标签，保留换行符和制表符  \t\n
+    :param html:
+    :return:
+    """
     return BeautifulSoup(html).get_text(separator=" ")
 
 
@@ -282,7 +287,8 @@ def preprocess_data(line, token_pattern=token_pattern, exclude_stopword=config.c
     :param encode_digit:
     :return:
     """
-    token_pattern = re.compile(token_pattern, flags=re.UNICODE | re.LOCALE)
+    # token_pattern = re.compile(token_pattern, flags=re.UNICODE | re.LOCALE)
+    token_pattern = re.compile(token_pattern, flags=re.UNICODE)
     # 分词 转小写
     tokens = [x.lower() for x in token_pattern.findall(line)]
     # stem 词根

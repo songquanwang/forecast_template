@@ -40,7 +40,9 @@ def gen_stratified_kfold():
     skf = [0] * config.n_runs
     for stratified_label, key in zip(["relevance", "query"], ["median_relevance", "qid"]):
         for run in range(config.n_runs):
+            # skf[i].random_state 保留种子，就能重现随机数
             random_seed = 2015 + 1000 * (run + 1)
+            # n_folds ==3表示只能迭代三次
             skf[run] = StratifiedKFold(dfTrain[key], n_folds=config.n_folds, shuffle=True, random_state=random_seed)
             for fold, (validInd, trainInd) in enumerate(skf[run]):
                 print("================================")

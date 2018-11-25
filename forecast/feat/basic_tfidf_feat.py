@@ -55,6 +55,7 @@ class BasicTfidfFeat(AbstractBaseFeat):
 
     def __init__(self):
         # 分位数，分别计算 0 0.5 1 分位数。 也就是 最小值、中位数、最大值
+        # 0,0.5,1
         quantiles_range = np.arange(0, 1.5, 0.5)
         # 平均值 、标准差
         self.stats_func = [np.mean, np.std]
@@ -78,7 +79,7 @@ class BasicTfidfFeat(AbstractBaseFeat):
         """
         根据vocabulary_type 生成
         :param vec_type:tfidf tfidf
-        :return: vocabulary_ dict 类型，字典
+        :return: vocabulary_ dict 类型，字典 values(0-16361)
         """
         # 生成 vocabulary
         if self.vocabulary_type == "individual":
@@ -254,7 +255,7 @@ class BasicTfidfFeat(AbstractBaseFeat):
                 vec = getTFV(ngram_range=self.ngram_range, vocabulary=vocabulary)
             elif vec_type == "bow":
                 vec = getBOW(ngram_range=self.ngram_range, vocabulary=vocabulary)
-            # 生成bow tfidf词向量 稀疏矩阵,宽度为字典宽度
+            # 生成bow tfidf词向量 稀疏矩阵,宽度为字典宽度 (3470, 16361)
             X_train = vec.fit_transform(dfTrain[column_name])
             X_test = vec.transform(dfTest[column_name])
             print("generate %s feat for %s" % (vec_type, column_name))
@@ -468,6 +469,8 @@ class BasicTfidfFeat(AbstractBaseFeat):
         """
         入口函数
         共22个属性
+        feat_names=['query_tfidf_common_vocabulary', 'title_tfidf_common_vocabulary', 'description_tfidf_common_vocabulary',
+                   'query_bow_common_vocabulary', 'title_bow_common_vocabulary', 'description_bow_common_vocabulary']
         :return:
         """
         # 读取训练数据和测试数据

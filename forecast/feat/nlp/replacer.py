@@ -31,7 +31,6 @@ class CsvWordReplacer(WordReplacer):
     """
     读取同义词表，#为注释
     """
-
     def __init__(self, fname):
         word_map = {}
         for line in csv.reader(open(fname)):
@@ -57,8 +56,8 @@ class AntonymReplacer(object):
     def replace(self, word, pos=None):
         antonyms = set()
         for syn in wordnet.synsets(word, pos=pos):
-            # 同义词集中的所有词条
-            for lemma in syn.lemmas:
+            # 同义词集中的所有词条 update attr to method
+            for lemma in syn.lemmas():
                 # 反义词
                 for antonym in lemma.antonyms():
                     antonyms.add(antonym.name)
