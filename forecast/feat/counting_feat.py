@@ -74,22 +74,26 @@ class CountingFeat(AbstractBaseFeat):
         count_digit = lambda x: sum([1. for w in x if w.isdigit()])
         for feat_name in feat_names:
             for gram in grams:
-                ## word count
+                # 单词个数
                 df["count_of_%s_%s" % (feat_name, gram)] = list(df.apply(lambda x: len(x[feat_name + "_" + gram]), axis=1))
+                # 唯一单词个数
                 df["count_of_unique_%s_%s" % (feat_name, gram)] = list(df.apply(lambda x: len(set(x[feat_name + "_" + gram])), axis=1))
+                # 唯一单词占比
                 df["ratio_of_unique_%s_%s" % (feat_name, gram)] = map(utils.try_divide, df["count_of_unique_%s_%s" % (feat_name, gram)], df["count_of_%s_%s" % (feat_name, gram)])
 
-            # digit count
+            # unigram中数值个数
             df["count_of_digit_in_%s" % feat_name] = list(df.apply(lambda x: count_digit(x[feat_name + "_unigram"]), axis=1))
+            # unigram中数值个数/unigram中所有单词数量
             df["ratio_of_digit_in_%s" % feat_name] = map(utils.try_divide, df["count_of_digit_in_%s" % feat_name], df["count_of_%s_unigram" % (feat_name)])
 
-        ## description missing indicator
+        # 是否没有描述信息
         df["description_missing"] = list(df.apply(lambda x: int(x["description_unigram"] == ""), axis=1))
 
     @staticmethod
     def extract_interset_digit_count_feat(df, feat_names, grams):
         """
         intersect word count 48个
+        query title des-->query title ;query des;title des
         :param df:
         :param feat_names:
         :param grams:
@@ -101,14 +105,14 @@ class CountingFeat(AbstractBaseFeat):
             for obs_name in feat_names:
                 for target_name in feat_names:
                     if target_name != obs_name:
-                        # query 交集
-                        df["count_of_%s_%s_in_%s" % (obs_name, gram, target_name)] = list(
-                            df.apply(lambda x: sum([1. for w in x[obs_name + "_" + gram] if w in set(x[target_name + "_" + gram])]), axis=1))
-                        df["ratio_of_%s_%s_in_%s" % (obs_name, gram, target_name)] = map(utils.try_divide, df["count_of_%s_%s_in_%s" % (obs_name, gram, target_name)],
-                                                                                         df["count_of_%s_%s" % (obs_name, gram)])
+                        # 两个不同字段中交集的词语个数
+                        df["count_of_%s_%s_in_%s" % (obs_name, gram, target_name)] = list(df.apply(lambda x: sum([1. for w in x[obs_name + "_" + gram] if w in set(x[target_name + "_" + gram])]), axis=1))
+                        # 交集占单词个数比例
+                        df["ratio_of_%s_%s_in_%s" % (obs_name, gram, target_name)] = map(utils.try_divide, df["count_of_%s_%s_in_%s" % (obs_name, gram, target_name)],df["count_of_%s_%s" % (obs_name, gram)])
 
-            ## some other feat
+            # title_query_count/query_count
             df["title_%s_in_query_div_query_%s" % (gram, gram)] = map(utils.try_divide, df["count_of_title_%s_in_query" % gram], df["count_of_query_%s" % gram])
+            # title
             df["title_%s_in_query_div_query_%s_in_title" % (gram, gram)] = map(utils.try_divide, df["count_of_title_%s_in_query" % gram], df["count_of_query_%s_in_title" % gram])
             df["description_%s_in_query_div_query_%s" % (gram, gram)] = map(utils.try_divide, df["count_of_description_%s_in_query" % gram], df["count_of_query_%s" % gram])
             df["description_%s_in_query_div_query_%s_in_description" % (gram, gram)] = map(utils.try_divide, df["count_of_description_%s_in_query" % gram],
@@ -124,8 +128,7 @@ class CountingFeat(AbstractBaseFeat):
         :param grams:
         :return:
         """
-        print
-        "generate intersect word position features"
+        print("generate intersect word position features")
         for gram in grams:
             for target_name in feat_names:
                 for obs_name in feat_names:
@@ -246,3 +249,7 @@ class CountingFeat(AbstractBaseFeat):
         self.dump_feat_name(new_feat_names, feat_name_file)
 
         print("All Done.")
+
+if __name__ == "__main__":
+    counting_feat = CountingFeat()
+    counting_feat.gen_feat_cv()

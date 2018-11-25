@@ -122,3 +122,7 @@ class GbdtModelImp(AbstractBaseModel):
     @staticmethod
     def get_name():
         return "gdbt_model"
+
+
+if __name__ == "__main__":
+    pass

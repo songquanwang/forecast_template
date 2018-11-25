@@ -51,3 +51,7 @@ def gen_stratified_kfold():
                 print(validInd[:10])
         with open("%s/stratifiedKFold.%s.pkl" % (config.solution_data, stratified_label), "wb") as f:
             pickle.dump(skf, f, -1)
+
+
+if __name__ == "__main__":
+    gen_stratified_kfold()

@@ -202,3 +202,8 @@ class DistanceFeat(AbstractBaseFeat):
         self.dump_feat_name(new_feat_names, feat_name_file)
 
         print("All Done.")
+
+
+if __name__ == "__main__":
+    distance_feat = DistanceFeat()
+    distance_feat.gen_feat_cv()

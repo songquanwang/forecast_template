@@ -89,3 +89,7 @@ def preprocess():
         pickle.dump(dfTest, f, -1)
 
     print("Done.")
+
+
+if __name__ == "__main__":
+    preprocess()

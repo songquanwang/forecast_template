@@ -19,8 +19,9 @@ n_runs = 3
 n_folds = 3
 stratified_label = "query"
 
-# 路径配置
+# 原始数据路径
 data_folder = "./data"
+# solution的跟路径
 solution_folder = "./outputs/solution"
 solution_feat = "%s/Feat" % solution_folder
 solution_output = "%s/Output" % solution_folder
@@ -28,9 +29,11 @@ solution_data = "%s/Data" % solution_folder
 solution_info = "%s/Info" % solution_folder
 # 基本特征
 solution_feat_base = "%s/base" % solution_feat
+# combine特征
 solution_feat_combined = "%s/combined" % solution_feat
 
-feat_folder = solution_feat
+# feat_folder = solution_feat
+# 数据文件路径
 original_train_data_path = "%s/train.csv" % data_folder
 original_test_data_path = "%s/test.csv" % data_folder
 processed_train_data_path = "%s/train.processed.csv.pkl" % solution_data

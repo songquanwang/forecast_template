@@ -81,3 +81,8 @@ class IdFeat(AbstractBaseFeat):
         self.dump_feat_name(feat_names, feat_name_file)
 
         print("All Done.")
+
+
+if __name__ == "__main__":
+    id_feat = IdFeat()
+    id_feat.gen_feat_cv()

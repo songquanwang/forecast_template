@@ -37,7 +37,14 @@ class CooccurenceTfidfFeat(AbstractBaseFeat):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self):
-        # cooccurrence terms column names
+        """
+        多个字段里 不同单词组合在一起作为一个整体
+        query title    11 12  21 22
+        query des      11 12  21 22
+        query_id title u  b
+        query_id dex   u  b
+
+        """
         self.column_names = [
             "query_unigram_title_unigram",
             "query_unigram_title_bigram",
@@ -191,3 +198,8 @@ class CooccurenceTfidfFeat(AbstractBaseFeat):
         self.dump_feat_name(new_feat_names, feat_name_file)
 
         print("All Done.")
+
+
+if __name__ == "__main__":
+    cooccurence_tfidf_feat = CooccurenceTfidfFeat()
+    cooccurence_tfidf_feat.gen_feat_cv()

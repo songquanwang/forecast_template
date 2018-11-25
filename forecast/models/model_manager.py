@@ -83,3 +83,26 @@ def make_opt_predict_by_models(specified_models):
         models_best_params.append((feat_name, best_kappa_mean, best_kappa_std))
 
     return models_best_params
+
+
+if __name__ == "__main__":
+    specified_models = [
+        # LSA_and_stats_feat_Jun09 (Low)
+        # "[Pre@solution]_[Feat@LSA_and_stats_feat_Jun09]_[Model@reg_xgb_tree]",
+        # "[Pre@solution]_[Feat@LSA_and_stats_feat_Jun09]_[Model@reg_xgb_linear]",
+        # "[Pre@solution]_[Feat@LSA_and_stats_feat_Jun09]_[Model@cocr_xgb_linear]",
+        # "[Pre@solution]_[Feat@LSA_and_stats_feat_Jun09]_[Model@kappa_xgb_linear]",
+        # "[Pre@solution]_[Feat@LSA_and_stats_feat_Jun09]_[Model@reg_skl_etr]",
+        # "[Pre@solution]_[Feat@LSA_and_stats_feat_Jun09]_[Model@reg_skl_rf]",
+        # "[Pre@solution]_[Feat@LSA_and_stats_feat_Jun09]_[Model@reg_skl_gbm]",
+        # "[Pre@solution]_[Feat@LSA_and_stats_feat_Jun09]_[Model@reg_skl_svr]",
+        # "[Pre@solution]_[Feat@LSA_and_stats_feat_Jun09]_[Model@reg_skl_ridge]",
+        # "[Pre@solution]_[Feat@LSA_and_stats_feat_Jun09]_[Model@reg_skl_lasso]",
+        # "[Pre@solution]_[Feat@LSA_and_stats_feat_Jun09]_[Model@clf_skl_lr]",
+        # "[Pre@solution]_[Feat@LSA_and_stats_feat_Jun09]_[Model@reg_libfm]",
+        "[Pre@solution]_[Feat@LSA_and_stats_feat_Jun09]_[Model@reg_keras_dnn]",
+        # "[Pre@solution]_[Feat@LSA_and_stats_feat_Jun09]_[Model@reg_rgf]"
+    ]
+    models_best_params = make_opt_predict_by_models(specified_models)
+    for model_name, best_kappa_mean, best_kappa_std in models_best_params:
+        print("Model:%s Mean: %.6f\n Std: %.6f" % (model_name, best_kappa_mean, best_kappa_std))

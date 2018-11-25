@@ -43,8 +43,8 @@ def init():
     :return:
     """
     init_path()
-    # preprocess()
-    # gen_stratified_kfold()
+    preprocess()
+    gen_stratified_kfold()
 
 
 def gen_info():
@@ -60,19 +60,19 @@ def gen_feat():
     # 不仅生成特征文件，还生成四个特征文件名字的文件 在Feat/solution/counting.feat_name等..
     # 生成所有的特征+label
     # 生成basic tfidf feat
-    # basic_tfidf_feat = BasicTfidfFeat()
-    # basic_tfidf_feat.gen_feat_cv()
-    # # 生成coocrrence tfidf feat
-    # cooccurence_tfidf_feat = CooccurenceTfidfFeat()
-    # cooccurence_tfidf_feat.gen_feat_cv()
-    # # 生成 counting feat
-    # counting_feat = CountingFeat()
-    # counting_feat.gen_feat_cv()
-    # # 生成 distance feat
-    # distance_feat = DistanceFeat()
-    # distance_feat.gen_feat_cv()
-    # id_feat = IdFeat()
-    # id_feat.gen_feat_cv()
+    basic_tfidf_feat = BasicTfidfFeat()
+    basic_tfidf_feat.gen_feat_cv()
+    # 生成coocrrence tfidf feat
+    cooccurence_tfidf_feat = CooccurenceTfidfFeat()
+    cooccurence_tfidf_feat.gen_feat_cv()
+    # 生成 counting feat
+    counting_feat = CountingFeat()
+    counting_feat.gen_feat_cv()
+    # 生成 distance feat
+    distance_feat = DistanceFeat()
+    distance_feat.gen_feat_cv()
+    id_feat = IdFeat()
+    id_feat.gen_feat_cv()
 
     # 合并所有的feat 生成四个目录，文件名字 train.feat valid.feat test.feat
     AbstractBaseFeat.extract_feats_cv(LSA_and_stats_feat_Jun09_Low.feat_names, feat_path_name="LSA_and_stats_feat_Jun09")

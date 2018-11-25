@@ -109,7 +109,7 @@ class BasicTfidfFeat(AbstractBaseFeat):
         :param mode: 'valid','test'
         :param relevance_indices_dict:
         :param query_relevance_indices_dict:
-        :return:
+        :return:new_feat_names :train valid (test)保存8个文件，返回4个文件名
          """
         # 方法生成的新特征名字
         new_feat_names = []
@@ -129,13 +129,111 @@ class BasicTfidfFeat(AbstractBaseFeat):
                                                                                           query_relevance_indices_dict, dfTest["qid"].values)
             with open("%s/%s.%s_cosine_sim_stats_feat_by_relevance.feat.pkl" % (path, mode, feat_name), "wb") as f:
                 pickle.dump(cosine_sim_stats_feat_by_relevance_test, f, -1)
-            with open("%s/%s.%s_cosine_sim_stats_feat_by_query_relevance.feat.pkl" % (path, mode, feat_name),
-                      "wb") as f:
+            with open("%s/%s.%s_cosine_sim_stats_feat_by_query_relevance.feat.pkl" % (path, mode, feat_name), "wb") as f:
                 pickle.dump(cosine_sim_stats_feat_by_query_relevance_test, f, -1)
 
             new_feat_names.append("%s_cosine_sim_stats_feat_by_relevance" % feat_name)
             new_feat_names.append("%s_cosine_sim_stats_feat_by_query_relevance" % feat_name)
             return new_feat_names
+
+    def extract_svd_cosine_sim_stats_feat(self, path, dfTrain, dfTest, feat_name, column_name, X_svd_train, X_svd_test, vec_type, mode, n_components, relevance_indices_dict,
+                                          query_relevance_indices_dict):
+        """
+        svd sim stats feat
+        train_train 2(字段)*2(dict) *20 个特征
+        test_train  2(字段)*2(dict) *20 个特征
+        :param path:
+        :param feat_name:
+        :param column_name:
+        :param X_svd_train:
+        :param X_svd_test:
+        :param mode:
+        :param n_components:
+        :param relevance_indices_dict:
+        :param query_relevance_indices_dict:
+        :param new_feat_names:
+        :return:
+        """
+        # 方法生成的新特征名字
+        new_feat_names = []
+        if column_name in ["product_title", "product_description"]:
+            # bug
+            print("generate common %s-svd%d stats feat for %s" % (vec_type, n_components, column_name))
+            # train
+            cosine_sim_stats_feat_by_relevance_train = self.generate_dist_stats_feat("cosine", X_svd_train, dfTrain["id"].values, X_svd_train, dfTrain["id"].values,
+                                                                                     relevance_indices_dict)
+            cosine_sim_stats_feat_by_query_relevance_train = self.generate_dist_stats_feat("cosine", X_svd_train, dfTrain["id"].values, X_svd_train, dfTrain["id"].values,
+                                                                                           query_relevance_indices_dict,
+                                                                                           dfTrain["qid"].values)
+            with open("%s/train.%s_common_svd%d_cosine_sim_stats_feat_by_relevance.feat.pkl" % (path, feat_name, n_components), "wb") as f:
+                pickle.dump(cosine_sim_stats_feat_by_relevance_train, f, -1)
+            with open("%s/train.%s_common_svd%d_cosine_sim_stats_feat_by_query_relevance.feat.pkl" % (path, feat_name, n_components), "wb") as f:
+                pickle.dump(cosine_sim_stats_feat_by_query_relevance_train, f, -1)
+            # test
+            cosine_sim_stats_feat_by_relevance_test = self.generate_dist_stats_feat("cosine", X_svd_train, dfTrain["id"].values, X_svd_test, dfTest["id"].values,
+                                                                                    relevance_indices_dict)
+            cosine_sim_stats_feat_by_query_relevance_test = self.generate_dist_stats_feat("cosine", X_svd_train, dfTrain["id"].values, X_svd_test, dfTest["id"].values,
+                                                                                          query_relevance_indices_dict, dfTest["qid"].values)
+            with open("%s/%s.%s_common_svd%d_cosine_sim_stats_feat_by_relevance.feat.pkl" % (path, mode, feat_name, n_components), "wb") as f:
+                pickle.dump(cosine_sim_stats_feat_by_relevance_test, f, -1)
+            with open("%s/%s.%s_common_svd%d_cosine_sim_stats_feat_by_query_relevance.feat.pkl" % (path, mode, feat_name, n_components), "wb") as f:
+                pickle.dump(cosine_sim_stats_feat_by_query_relevance_test, f, -1)
+            # update feat names
+            new_feat_names.append("%s_common_svd%d_cosine_sim_stats_feat_by_relevance" % (feat_name, n_components))
+            new_feat_names.append("%s_common_svd%d_cosine_sim_stats_feat_by_query_relevance" % (feat_name, n_components))
+
+        return new_feat_names
+
+    def extract_svd_cosine_sim_stats_feat_individual(self, path, dfTrain, dfTest, feat_name, column_name, X_svd_train, X_svd_test, vec_type, mode, n_components,
+                                                     relevance_indices_dict, query_relevance_indices_dict):
+        """
+        好像跟extract_svd_cosine_sim_stats_feat 完全一样
+        svd fit不同
+        :param path:
+        :param feat_name:
+        :param column_name:
+        :param X_svd_train:
+        :param X_svd_test:
+        :param mode:
+        :param n_components:
+        :param relevance_indices_dict:
+        :param query_relevance_indices_dict:
+        :param new_feat_names:
+        :return:
+        """
+        # 方法生成的新特征名字
+        new_feat_names = []
+        if column_name in ["product_title", "product_description"]:
+            print("generate individual %s-svd%d stats feat for %s" % (vec_type, n_components, column_name))
+            # train
+            cosine_sim_stats_feat_by_relevance_train = self.generate_dist_stats_feat("cosine", X_svd_train, dfTrain["id"].values, X_svd_train, dfTrain["id"].values,
+                                                                                     relevance_indices_dict)
+            cosine_sim_stats_feat_by_query_relevance_train = self.generate_dist_stats_feat("cosine", X_svd_train, dfTrain["id"].values, X_svd_train, dfTrain["id"].values,
+                                                                                           query_relevance_indices_dict,
+                                                                                           dfTrain["qid"].values)
+            with open("%s/train.%s_individual_svd%d_cosine_sim_stats_feat_by_relevance.feat.pkl" % (
+                    path, feat_name, n_components), "wb") as f:
+                pickle.dump(cosine_sim_stats_feat_by_relevance_train, f, -1)
+            with open("%s/train.%s_individual_svd%d_cosine_sim_stats_feat_by_query_relevance.feat.pkl" % (
+                    path, feat_name, n_components), "wb") as f:
+                pickle.dump(cosine_sim_stats_feat_by_query_relevance_train, f, -1)
+            # test
+            cosine_sim_stats_feat_by_relevance_test = self.generate_dist_stats_feat("cosine", X_svd_train, dfTrain["id"].values, X_svd_test, dfTest["id"].values,
+                                                                                    relevance_indices_dict)
+            cosine_sim_stats_feat_by_query_relevance_test = self.generate_dist_stats_feat("cosine", X_svd_train, dfTrain["id"].values, X_svd_test, dfTest["id"].values,
+                                                                                          query_relevance_indices_dict, dfTest["qid"].values)
+            with open("%s/%s.%s_individual_svd%d_cosine_sim_stats_feat_by_relevance.feat.pkl" % (
+                    path, mode, feat_name, n_components), "wb") as f:
+                pickle.dump(cosine_sim_stats_feat_by_relevance_test, f, -1)
+            with open("%s/%s.%s_individual_svd%d_cosine_sim_stats_feat_by_query_relevance.feat.pkl" % (
+                    path, mode, feat_name, n_components), "wb") as f:
+                pickle.dump(cosine_sim_stats_feat_by_query_relevance_test, f, -1)
+
+            # update feat names
+            new_feat_names.append("%s_individual_svd%d_cosine_sim_stats_feat_by_relevance" % (feat_name, n_components))
+            new_feat_names.append("%s_individual_svd%d_cosine_sim_stats_feat_by_query_relevance" % (feat_name, n_components))
+
+        return new_feat_names
 
     def gen_bow_tfidf_by_feat_column_names(self, path, dfTrain, dfTest, vec_type, mode, vocabulary, feat_names):
         """
@@ -156,7 +254,7 @@ class BasicTfidfFeat(AbstractBaseFeat):
                 vec = getTFV(ngram_range=self.ngram_range, vocabulary=vocabulary)
             elif vec_type == "bow":
                 vec = getBOW(ngram_range=self.ngram_range, vocabulary=vocabulary)
-            # 生成bow tfidf词向量
+            # 生成bow tfidf词向量 稀疏矩阵,宽度为字典宽度
             X_train = vec.fit_transform(dfTrain[column_name])
             X_test = vec.transform(dfTest[column_name])
             print("generate %s feat for %s" % (vec_type, column_name))
@@ -208,53 +306,6 @@ class BasicTfidfFeat(AbstractBaseFeat):
 
         return new_feat_names
 
-    def extract_svd_cosine_sim_stats_feat(self, path, dfTrain, dfTest, feat_name, column_name, X_svd_train, X_svd_test, mode, n_components, relevance_indices_dict,
-                                          query_relevance_indices_dict):
-        """
-        svd sim stats feat
-        train_train 2(字段)*2(dict) *20 个特征
-        test_train  2(字段)*2(dict) *20 个特征
-        :param path:
-        :param feat_name:
-        :param column_name:
-        :param X_svd_train:
-        :param X_svd_test:
-        :param mode:
-        :param n_components:
-        :param relevance_indices_dict:
-        :param query_relevance_indices_dict:
-        :param new_feat_names:
-        :return:
-        """
-        # 方法生成的新特征名字
-        new_feat_names = []
-        if column_name in ["product_title", "product_description"]:
-            print("generate common %s-svd%d stats feat for %s" % (self.vec_type, n_components, column_name))
-            # train
-            cosine_sim_stats_feat_by_relevance_train = self.generate_dist_stats_feat("cosine", X_svd_train, dfTrain["id"].values, X_svd_train, dfTrain["id"].values,
-                                                                                     relevance_indices_dict)
-            cosine_sim_stats_feat_by_query_relevance_train = self.generate_dist_stats_feat("cosine", X_svd_train, dfTrain["id"].values, X_svd_train, dfTrain["id"].values,
-                                                                                           query_relevance_indices_dict,
-                                                                                           dfTrain["qid"].values)
-            with open("%s/train.%s_common_svd%d_cosine_sim_stats_feat_by_relevance.feat.pkl" % (path, feat_name, n_components), "wb") as f:
-                pickle.dump(cosine_sim_stats_feat_by_relevance_train, f, -1)
-            with open("%s/train.%s_common_svd%d_cosine_sim_stats_feat_by_query_relevance.feat.pkl" % (path, feat_name, n_components), "wb") as f:
-                pickle.dump(cosine_sim_stats_feat_by_query_relevance_train, f, -1)
-            # test
-            cosine_sim_stats_feat_by_relevance_test = self.generate_dist_stats_feat("cosine", X_svd_train, dfTrain["id"].values, X_svd_test, dfTest["id"].values,
-                                                                                    relevance_indices_dict)
-            cosine_sim_stats_feat_by_query_relevance_test = self.generate_dist_stats_feat("cosine", X_svd_train, dfTrain["id"].values, X_svd_test, dfTest["id"].values,
-                                                                                          query_relevance_indices_dict, dfTest["qid"].values)
-            with open("%s/%s.%s_common_svd%d_cosine_sim_stats_feat_by_relevance.feat.pkl" % (path, mode, feat_name, n_components), "wb") as f:
-                pickle.dump(cosine_sim_stats_feat_by_relevance_test, f, -1)
-            with open("%s/%s.%s_common_svd%d_cosine_sim_stats_feat_by_query_relevance.feat.pkl" % (path, mode, feat_name, n_components), "wb") as f:
-                pickle.dump(cosine_sim_stats_feat_by_query_relevance_test, f, -1)
-            # update feat names
-            new_feat_names.append("%s_common_svd%d_cosine_sim_stats_feat_by_relevance" % (feat_name, n_components))
-            new_feat_names.append("%s_common_svd%d_cosine_sim_stats_feat_by_query_relevance" % (feat_name, n_components))
-
-        return new_feat_names
-
     def gen_common_svd_by_feat_column_names(self, path, dfTrain, dfTest, X_vec_all_train, n_components, vec_type, mode, feat_names):
         """
         使用svd transform  单个特征
@@ -291,7 +342,7 @@ class BasicTfidfFeat(AbstractBaseFeat):
                 #####################################
                 ## bow/tfidf-svd cosine sim stats feat ##
                 #####################################
-                feat_list = self.extract_svd_cosine_sim_stats_feat(path, dfTrain, dfTest, feat_name, column_name, X_svd_train, X_svd_test, mode, n_components,
+                feat_list = self.extract_svd_cosine_sim_stats_feat(path, dfTrain, dfTest, feat_name, column_name, X_svd_train, X_svd_test, vec_type, mode, n_components,
                                                                    self.relevance_indices_dict,
                                                                    self.query_relevance_indices_dict)
                 new_feat_names.extend(feat_list)
@@ -319,61 +370,11 @@ class BasicTfidfFeat(AbstractBaseFeat):
                 with open("%s/%s.%s_common_svd%d.feat.pkl" % (path, mod, feat_names[j], n_components), "rb") as f:
                     obs_vec = pickle.load(f)
                 sim = np.asarray(map(utils.cosine_sim, target_vec, obs_vec))[:, np.newaxis]
-                #dump feat
+                # dump feat
                 with open("%s/%s.%s_%s_%s_common_svd%d_cosine_sim.feat.pkl" % (path, mod, feat_names[i], feat_names[j], vec_type, n_components), "wb") as f:
                     pickle.dump(sim, f, -1)
-            #update feat names
-            new_feat_names.append("%s_%s_%s_common_svd%d_cosine_sim" % (feat_names[i], feat_names[j], vec_type, n_components))
-        return new_feat_names
-
-    def extract_svd_cosine_sim_stats_feat_individual(self, path, dfTrain, dfTest, feat_name, column_name, X_svd_train, X_svd_test, vec_type, mode, n_components,
-                                                     relevance_indices_dict, query_relevance_indices_dict):
-        """
-        好像跟extract_svd_cosine_sim_stats_feat 完全一样
-        :param path:
-        :param feat_name:
-        :param column_name:
-        :param X_svd_train:
-        :param X_svd_test:
-        :param mode:
-        :param n_components:
-        :param relevance_indices_dict:
-        :param query_relevance_indices_dict:
-        :param new_feat_names:
-        :return:
-        """
-        # 方法生成的新特征名字
-        new_feat_names = []
-        if column_name in ["product_title", "product_description"]:
-            print("generate individual %s-svd%d stats feat for %s" % (vec_type, n_components, column_name))
-            # train
-            cosine_sim_stats_feat_by_relevance_train = self.generate_dist_stats_feat("cosine", X_svd_train, dfTrain["id"].values, X_svd_train, dfTrain["id"].values,
-                                                                                     relevance_indices_dict)
-            cosine_sim_stats_feat_by_query_relevance_train = self.generate_dist_stats_feat("cosine", X_svd_train, dfTrain["id"].values, X_svd_train, dfTrain["id"].values,
-                                                                                           query_relevance_indices_dict,
-                                                                                           dfTrain["qid"].values)
-            with open("%s/train.%s_individual_svd%d_cosine_sim_stats_feat_by_relevance.feat.pkl" % (
-                    path, feat_name, n_components), "wb") as f:
-                pickle.dump(cosine_sim_stats_feat_by_relevance_train, f, -1)
-            with open("%s/train.%s_individual_svd%d_cosine_sim_stats_feat_by_query_relevance.feat.pkl" % (
-                    path, feat_name, n_components), "wb") as f:
-                pickle.dump(cosine_sim_stats_feat_by_query_relevance_train, f, -1)
-            # test
-            cosine_sim_stats_feat_by_relevance_test = self.generate_dist_stats_feat("cosine", X_svd_train, dfTrain["id"].values, X_svd_test, dfTest["id"].values,
-                                                                                    relevance_indices_dict)
-            cosine_sim_stats_feat_by_query_relevance_test = self.generate_dist_stats_feat("cosine", X_svd_train, dfTrain["id"].values, X_svd_test, dfTest["id"].values,
-                                                                                          query_relevance_indices_dict, dfTest["qid"].values)
-            with open("%s/%s.%s_individual_svd%d_cosine_sim_stats_feat_by_relevance.feat.pkl" % (
-                    path, mode, feat_name, n_components), "wb") as f:
-                pickle.dump(cosine_sim_stats_feat_by_relevance_test, f, -1)
-            with open("%s/%s.%s_individual_svd%d_cosine_sim_stats_feat_by_query_relevance.feat.pkl" % (
-                    path, mode, feat_name, n_components), "wb") as f:
-                pickle.dump(cosine_sim_stats_feat_by_query_relevance_test, f, -1)
-
             # update feat names
-            new_feat_names.append("%s_individual_svd%d_cosine_sim_stats_feat_by_relevance" % (feat_name, n_components))
-            new_feat_names.append("%s_individual_svd%d_cosine_sim_stats_feat_by_query_relevance" % (feat_name, n_components))
-
+            new_feat_names.append("%s_%s_%s_common_svd%d_cosine_sim" % (feat_names[i], feat_names[j], vec_type, n_components))
         return new_feat_names
 
     def gen_individual_svd_by_feat_column_names(self, path, dfTrain, dfTest, n_components, vec_type, mode, feat_names):
@@ -517,3 +518,8 @@ class BasicTfidfFeat(AbstractBaseFeat):
         self.dump_feat_name(new_feat_names, feat_name_file)
 
         print("All Done.")
+
+
+if __name__ == "__main__":
+    basic_tfidf_feat = BasicTfidfFeat()
+    basic_tfidf_feat.gen_feat_cv()
