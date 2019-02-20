@@ -23,7 +23,7 @@ A2, D2, D1 = pywt.wavedec(index_list, 'db4', mode='sym', level=2)
 coeff = [A2, D2, D1]
 
 # 对各层系数简历Arima模型并重构
-# AIC准则，求解模型阶数p,q
+# AIC准则,求解模型阶数p,q
 order_A2 = sm.tsa.arma_order_select_ic(A2, ic='aic')['aic_min_order']
 order_D2 = sm.tsa.arma_order_select_ic(D2, ic='aic')['aic_min_order']
 order_D1 = sm.tsa.arma_order_select_ic(D1, ic='aic')['aic_min_order']
@@ -56,9 +56,9 @@ plt.plot(results_D1.fittedvalues, 'red')
 plt.title('model_D1')
 
 # 预测最后10个数据
-# 1.计算每个小波系数ARIMA模型需要预测多少步，方法就是查看所有数据小波分解后的系数个数，并求出差值，具体如下:
+# 1.计算每个小波系数ARIMA模型需要预测多少步,方法就是查看所有数据小波分解后的系数个数,并求出差值,具体如下:
 A2_all, D2_all, D1_all = pywt.wavedec(np.array(data_index), 'db4', mode='sym', level=2)
-# 求出差值，则delta序列对应的为每层小波系数ARIMA模型需要预测的步数
+# 求出差值,则delta序列对应的为每层小波系数ARIMA模型需要预测的步数
 delta = [len(A2_all) - len(A2), len(D2_all) - len(D2), len(D1_all) - len(D1)]
 
 print(delta)
@@ -86,3 +86,19 @@ temp_data_wt = {
 }
 predict_wt = pd.DataFrame(temp_data_wt, index=date_list2, columns=['real_value', 'pre_value_wt', 'err_wt', 'err_rate_wt/%'])
 print(predict_wt)
+
+##################
+# pacf计算
+X = np.array([2, 4, 15, 20])
+#XC = sm.add_constant(X)
+Y = np.array([1, 2, 3, 4])
+#YC = sm.add_constant(Y)
+z = np.array([0, 0, 1, 1])
+res1 = sm.OLS(z, X).fit()
+RES1 = z - res1.predict(X)
+res2 = sm.OLS(z, Y).fit()
+RES2 = z - res2.predict(Y)
+# 相关系数 0.9695015519208121
+np.corrcoef(X, Y)[0,1]
+# 偏相关系数 0.9087389347953037
+np.corrcoef(RES1, RES2)[0,1]
