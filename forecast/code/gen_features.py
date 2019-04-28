@@ -67,6 +67,15 @@ def merge_raw_data():
     return data
 
 
+def get_plan_df():
+    """
+    获取
+    :return:
+    """
+    plans_df = pd.read_csv('../data/data_set_phase1/plans.csv')
+    return plans_df
+
+
 def gen_od_feas(data):
     """
     经度、维度分开
@@ -96,6 +105,8 @@ def gen_plan_feas(data):
     tfidf_vec.toarray() ;词向量跟词典长度相同
     array([0.33517574, 0.47107781, 0.        , 0.47107781, 0.47107781, 0.        , 0.        , 0.47107781, 0.        ])
     array([0.33517574, 0.        , 0.47107781, 0.        , 0.        ,0.47107781, 0.47107781, 0.        , 0.47107781])
+
+    需要处理 4 distance
     :param data:
     :return:
     """
@@ -118,7 +129,7 @@ def gen_plan_feas(data):
             cur_plan_list = json.loads(plan)
         except:
             cur_plan_list = []
-        # 如果没有推荐计划则生成空计划
+        # 如果没有推荐计划则生成空计划(没有这种情况)
         if len(cur_plan_list) == 0:
             # 没推荐 mode =0
             mode_list_feas[i, 0] = 1
@@ -223,6 +234,7 @@ def gen_plan_feas(data):
     feature_data['min_price_mode'] = min_price_mode
     feature_data['max_eta_mode'] = max_eta_mode
     feature_data['min_eta_mode'] = min_eta_mode
+
     feature_data['first_mode'] = first_mode
     print('mode tfidf...')
     tfidf_enc = TfidfVectorizer(ngram_range=(1, 2))
