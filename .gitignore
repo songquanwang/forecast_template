@@ -16,3 +16,7 @@ tmp/
 /spark_flow_baolei_yangdongyue.py
 .cache/
 /data
+/forecast/recommend/data
+/forecast/recommend/models
+forecast/recommend/submit
+
