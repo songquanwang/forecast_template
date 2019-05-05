@@ -18,5 +18,7 @@ tmp/
 /data
 /forecast/recommend/data
 /forecast/recommend/models
+/outputs
 forecast/recommend/submit
-
+forecast/recommend/*.ipynb
+forecast/recommend/*.ipynb*
