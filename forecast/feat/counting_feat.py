@@ -61,7 +61,7 @@ class CountingFeat(AbstractBaseFeat):
         return pos_of_obs_in_target
 
     @staticmethod
-    def extract_digit_count_feat(self, df, feat_names, grams):
+    def extract_digit_count_feat(df, feat_names, grams):
         """
          word count and digit count 22个 +1
         :param df:

@@ -34,6 +34,7 @@ import forecast.conf.model_params_conf as  config
 def gen_run_fold_info(run, fold, dfTrain, trainInd, validInd, dfTrain_original, Y):
     """
     注意，没有 dfTest，dfTest_original 。 run fold是把训练数据分成 训练和验证两部分
+    权重文件，行数文件，label cdf文件,训练、验证集文件
     :param feat_path_name:
     :param run:
     :param fold:
@@ -70,7 +71,9 @@ def gen_run_fold_info(run, fold, dfTrain, trainInd, validInd, dfTrain_original, 
     ######################
     ## get and dump cdf ##
     ######################
+    # 从0开始计算频率 np.bincount([2,2,3,3,3,1,2,1,8]) [0, 2, 3, 3, 0, 0, 0, 0, 1],
     hist = np.bincount(Y[trainInd])
+    # cumsum包含当前值的数量
     overall_cdf_valid = np.cumsum(hist) / float(sum(hist))
     np.savetxt("%s/valid.cdf" % path, overall_cdf_valid)
 
@@ -95,20 +98,22 @@ def gen_all_info(dfTrain, dfTest, dfTrain_original, dfTest_original, Y):
     print("For training and testing...")
     path = "%s/All" % config.solution_info
     raise_to = 0.5
+    # 方差
     var = dfTrain["relevance_variance"].values
     if not os.path.exists(path):
         os.makedirs(path)
-    ## weight
+    # 最大的标准差
     max_var = np.max(var ** raise_to)
+    # 如果var =0 weight =1;如果var=max_var**2 weight=0.5 方差越小，weight接近1
     weight = (1 + np.power(((max_var - var ** raise_to) / max_var), 1)) / 2.
     np.savetxt("%s/train.feat.weight" % path, weight, fmt="%.6f")
 
-    ## group
+    ## train样本个数；test样本个数
     np.savetxt("%s/train.feat.group" % path, [dfTrain.shape[0]], fmt="%d")
     np.savetxt("%s/test.feat.group" % path, [dfTest.shape[0]], fmt="%d")
     ## cdf
     hist_full = np.bincount(Y)
-    print (hist_full) / float(sum(hist_full))
+    print(len(hist_full) / float(sum(hist_full)))
     overall_cdf_full = np.cumsum(hist_full) / float(sum(hist_full))
     np.savetxt("%s/test.cdf" % path, overall_cdf_full)
     ## info
@@ -133,7 +138,7 @@ def gen_info():
     # 为test插入假的label（test没有label） 相关性全置1；方差全置0
     dfTest_original["median_relevance"] = np.ones((dfTest_original.shape[0]))
     dfTest_original["relevance_variance"] = np.zeros((dfTest_original.shape[0]))
-    # change it to zero-based for classification
+    # 变成从0开始的分类符号，因为bincount从零开始
     Y = dfTrain_original["median_relevance"].values - 1
 
     # load pre-defined stratified k-fold index
@@ -145,14 +150,15 @@ def gen_info():
     for run in range(config.n_runs):
         ## use 33% for training and 67 % for validation so we switch trainInd and validInd
         for fold, (validInd, trainInd) in enumerate(skf[run]):
-            gen_run_fold_info( run, fold, dfTrain, trainInd, validInd, dfTrain_original, Y)
+            gen_run_fold_info(run, fold, dfTrain, trainInd, validInd, dfTrain_original, Y)
 
     print("Done.")
 
     print("For training and testing...")
     # 生成all
-    gen_all_info( dfTrain, dfTest, dfTrain_original, dfTest_original, Y)
+    gen_all_info(dfTrain, dfTest, dfTrain_original, dfTest_original, Y)
     print("All Done.")
 
 
-
+if __name__ == "__main__":
+    gen_info()

@@ -26,6 +26,16 @@ from forecast.feat.abstract_base_feat import AbstractBaseFeat
 
 
 class IdFeat(AbstractBaseFeat):
+    """
+    生成qid 的onehot 261维
+        d=[3,4,10,8,9,3]
+        le=LabelEncoder().fit_transform(d)
+        oe=OneHotEncoder().fit_transform(le.reshape(-1,1))
+        #
+        lb = LabelBinarizer(sparse_output=True)
+        a=lb.fit_transform(d)
+    两者相同
+    """
     __metaclass__ = abc.ABCMeta
 
     @staticmethod
@@ -34,8 +44,10 @@ class IdFeat(AbstractBaseFeat):
             # 返回 numpy array or CSR matrix of shape [n_samples, n_classes]
             X_train = lb.fit_transform(dfTrain[feat_name])
             X_test = lb.transform(dfTest[feat_name])
+            # (10158,261)
             with open("%s/train.%s.feat.pkl" % (path, feat_name), "wb") as f:
                 pickle.dump(X_train, f, -1)
+            # (22513, 261)
             with open("%s/%s.%s.feat.pkl" % (path, mode, feat_name), "wb") as f:
                 pickle.dump(X_test, f, -1)
 
