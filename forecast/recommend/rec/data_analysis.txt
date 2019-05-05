@@ -31,3 +31,26 @@ transport_mode
 9     0.000068
 10    0.000000 *
 11    0.002147
+
+
+添加
+用户喜好特征：用户使用工具次数 最大、最少；距离分箱
+添加推荐列表特征：
+
+{Interval(-224.863, 22587.3, closed='right'),
+ Interval(22587.3, 45173.6, closed='right'),
+ Interval(45173.6, 67759.9, closed='right'),
+ Interval(67759.9, 90346.2, closed='right'),
+ Interval(90346.2, 112932.5, closed='right'),
+ Interval(112932.5, 135518.8, closed='right'),
+ Interval(135518.8, 158105.1, closed='right'),
+ Interval(158105.1, 180691.4, closed='right'),
+ Interval(180691.4, 203277.7, closed='right'),
+ Interval(203277.7, 225864.0, closed='right')}
+
+ pd.cut(ages, [0,5000,10000,15000,20000,250000,10000000]
+
+ sorted(c, key=c.get)[-1]
+
+
+

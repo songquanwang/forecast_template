@@ -32,10 +32,29 @@ def read_profile_data():
 
 def merge_raw_data():
     """
-    req_time plan_time click_time 基本相等
+    1.tr_queries 中没有tr_plans 的8946
+    2.tr_plans 中没有 tr_click 的占37718；tr_click是tr_plans的子集
+    3.te_queries中没有te_plans的占1787
+    结论:
+    1.有tr_plans 的没有tr_click 37718的需要把click_mode=0 作为训练数据
+    2.没有tr_plans的 8946 不需要作为训练数据
+    3.没有te_plans的tr_queries 1787 直接预测为0
+
+    d1=feature_df[(feature_df['click_mode'] ==0)&(feature_df['max_dist'] !=-1)]
+    d2=feature_df[(feature_df['click_mode'] ==0)&(feature_df['max_dist'] ==-1)]
+    d3=feature_df[(feature_df['click_mode'] ==-1)&(feature_df['max_dist'] ==-1)]
+    # 同一个sid，有相同的transoport 推荐 110208
+    110208
+    395
+    290
+    1
+    tr_plans[tr_plans['sid']==3190603].iloc[0].plans
+
+    没有plans的query 直接预测为0(没点击)
     :return:
     """
-    # 500000 sid 唯一 ;163979 pid为null;8946 个sid没有tr_plans;46664 没有tr_click
+    # 500000 sid 唯一 ;163979 pid为null;8946 个sid没有 tr_plans;46664 没有tr_click
+    # 有plans 没有 click 37718
     # sid pid req_time o d
     tr_queries = pd.read_csv('../data/data_set_phase1/train_queries.csv')
     # 94358 sid 唯一;30878 pid 为null ;1787个sid没有te_plans
@@ -50,13 +69,13 @@ def merge_raw_data():
     # sid click_time click_mode：[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
     tr_click = pd.read_csv('../data/data_set_phase1/train_clicks.csv')
     # 训练数据
-    tr_data = tr_queries.merge(tr_click, on='sid', how='inner')
-    tr_data = tr_data.merge(tr_plans, on='sid', how='inner')
+    tr_data = tr_queries.merge(tr_click, on='sid', how='left')
+    tr_data = tr_data.merge(tr_plans, on='sid', how='left')
     tr_data = tr_data.drop(['click_time'], axis=1)
     # 左连接不上的label置0
     tr_data['click_mode'] = tr_data['click_mode'].fillna(0)
     # 测试数据
-    te_data = te_queries.merge(te_plans, on='sid', how='inner')
+    te_data = te_queries.merge(te_plans, on='sid', how='left')
     # label置-1
     te_data['click_mode'] = -1
 
@@ -68,7 +87,7 @@ def merge_raw_data():
     return data
 
 
-def get_plan_df(data):
+def get_plan_df_bkp(data):
     """
     获取 dj mdj -->dj1 distance1 price1
     生成
@@ -76,6 +95,7 @@ def get_plan_df(data):
     """
     data.loc[data['click_mode'] != -1, 'is_train'] = 1
     data.loc[data['click_mode'] == -1, 'is_train'] = 0
+    data.loc[data['plans'].isnull(), 'plans'] = '[]'
     data['plans'] = data['plans'].apply(lambda line: eval(line))
     lens = [len(item) for item in data['plans']]
     # plan_time distance eta price transport_mode
@@ -122,6 +142,54 @@ def get_plan_df(data):
     return plans_df
 
 
+def get_plan_df(data):
+    """
+    获取 dj mdj -->dj1 distance1 price1
+    生成
+    :return:
+    """
+    data.loc[data['click_mode'] != -1, 'is_train'] = 1
+    data.loc[data['click_mode'] == -1, 'is_train'] = 0
+    data.loc[data['plans'].isnull(), 'plans'] = '[]'
+    data['plans'] = data['plans'].apply(lambda line: eval(line))
+    lens = [len(item) for item in data['plans']]
+    # plan_time distance eta price transport_mode
+    sid_list = np.repeat(data['sid'].values, lens)
+    is_train_list = np.repeat(data['is_train'].values, lens)
+    plan_time_list = np.repeat(data['plan_time'].values, lens)
+    plans = np.concatenate(data['plans'].values)
+    df_data = []
+    for s, it, t, p in zip(sid_list, is_train_list, plan_time_list, plans):
+        p['sid'] = s
+        p['is_train'] = it
+        p['plan_time'] = t
+        df_data.append(p)
+    # 生成新的plans_df
+    plans_df = pd.DataFrame(df_data)
+    plans_df = plans_df[['sid', 'is_train', 'plan_time', 'distance', 'eta', 'price', 'transport_mode']]
+    plans_df['plan_time'] = pd.to_datetime(plans_df['plan_time'])
+    # '' 替换成np.nan
+    plans_df['price'] = plans_df['price'].replace(r'', np.NaN)
+
+    ###############
+    def convert_time(d, m):
+        return (d.hour * 60 + d.minute) // m
+
+    # 3 5 6 价格填充为0
+    plans_df.loc[plans_df['transport_mode'].isin([3, 5, 6]), 'price'] = 0
+    plans_df['time_num30'] = plans_df['plan_time'].apply(lambda x: convert_time(x, 30))
+    plans_df['dj'] = plans_df['price'] * 100 / plans_df['distance']
+    plans_df['mdj'] = plans_df.groupby(['transport_mode', 'time_num30'])['dj'].transform(lambda x: np.nanmedian(x))
+
+    # 填充 price dj[1, 2, 7, 9, 11]
+    plans_df['price1'] = plans_df['price']
+    plans_df.loc[plans_df['price'].isnull(), 'dj'] = plans_df.loc[plans_df['price'].isnull(), 'mdj']
+    df2 = plans_df.loc[plans_df['price'].isnull()]
+    plans_df.loc[plans_df['price'].isnull(), 'price'] = df2['dj'] * df2['distance'] / 100
+    # sid, plan_time, distance, eta, price, transport_mode
+    return plans_df[['sid',  'plan_time', 'distance', 'eta', 'price', 'transport_mode']]
+
+
 def gen_od_feas(data):
     """
     经度、维度分开
@@ -142,7 +210,7 @@ def gen_plan_feas_bkp(plans_df):
     plan字段:distance ,eta, price, transport_mode
     transport_mode: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
     [1, 2, 7, 9, 11] price 存在''
-    [3,5,6] price全是0
+    [3,5,6] price全是''
     4 8 10 price不为''
     0 未知(没推荐);-1 待预测
     词向量:
@@ -216,7 +284,7 @@ def gen_plan_feas_bkp(plans_df):
     return feature_df
 
 
-def gen_plan_feas(plans_df):
+def gen_plan_feas_by_plans(plans_df):
     """
 
     :param data:
@@ -242,9 +310,10 @@ def gen_plan_feas(plans_df):
         tl = ' '.join(['word_{}'.format(mode) for mode in x.values])
         return tl
 
-    agg_fun = {'transport_mode': [get_first, gen_mode_texts], 'distance': ['max', 'min', 'mean', 'std'],
-               'price': ['max', 'min', 'mean', 'std'],
-               'eta': ['max', 'min', 'mean', 'std']}
+    agg_fun = {'transport_mode': [get_first, gen_mode_texts],
+               'distance': ['max', 'min', 'mean', lambda x: np.std(x)],
+               'price': ['max', 'min', 'mean', lambda x: np.std(x)],
+               'eta': ['max', 'min', 'mean', lambda x: np.std(x)]}
     # std ddof =1
     agg_columns = ['sid', 'first_mode', 'mode_texts', 'max_dist', 'min_dist', 'mean_dist', 'std_dist',
                    'max_price', 'min_price', 'mean_price', 'std_price',
@@ -252,22 +321,22 @@ def gen_plan_feas(plans_df):
     agg_df = plans_df.groupby('sid').agg(agg_fun).reset_index()
     agg_df.columns = agg_columns
     merge_df = pd.merge(plans_df, agg_df, on=['sid'], how='inner')
-
+    # 原来版本是 keep='last'
     max_dist_mode_df = merge_df.loc[merge_df['distance'] == merge_df['max_dist'], ['sid', 'transport_mode']]
     max_dist_mode_df.columns = ['sid', 'max_dist_mode']
-    max_dist_mode_df.drop_duplicates(subset='sid', keep='first', inplace=True)
+    max_dist_mode_df.drop_duplicates(subset='sid', keep='last', inplace=True)
     min_dist_mode_df = merge_df.loc[merge_df['distance'] == merge_df['min_dist'], ['sid', 'transport_mode']]
     min_dist_mode_df.columns = ['sid', 'min_dist_mode']
     min_dist_mode_df.drop_duplicates(subset='sid', keep='first', inplace=True)
     max_price_mode_df = merge_df.loc[merge_df['price'] == merge_df['max_price'], ['sid', 'transport_mode']]
     max_price_mode_df.columns = ['sid', 'max_price_mode']
-    max_price_mode_df.drop_duplicates(subset='sid', keep='first', inplace=True)
+    max_price_mode_df.drop_duplicates(subset='sid', keep='last', inplace=True)
     min_price_mode_df = merge_df.loc[merge_df['price'] == merge_df['min_price'], ['sid', 'transport_mode']]
     min_price_mode_df.columns = ['sid', 'min_price_mode']
     min_price_mode_df.drop_duplicates(subset='sid', keep='first', inplace=True)
     max_eta_mode_df = merge_df.loc[merge_df['eta'] == merge_df['max_eta'], ['sid', 'transport_mode']]
     max_eta_mode_df.columns = ['sid', 'max_eta_mode']
-    max_eta_mode_df.drop_duplicates(subset='sid', keep='first', inplace=True)
+    max_eta_mode_df.drop_duplicates(subset='sid', keep='last', inplace=True)
     min_eta_mode_df = merge_df.loc[merge_df['eta'] == merge_df['min_eta'], ['sid', 'transport_mode']]
     min_eta_mode_df.columns = ['sid', 'min_eta_mode']
     min_eta_mode_df.drop_duplicates(subset='sid', keep='first', inplace=True)
@@ -275,23 +344,75 @@ def gen_plan_feas(plans_df):
     complex_feature_df = reduce(lambda ldf, rdf: pd.merge(ldf, rdf, on=['sid'], how='inner'),
                                 [max_dist_mode_df, min_dist_mode_df, max_price_mode_df, min_price_mode_df,
                                  max_eta_mode_df, min_eta_mode_df])
-    feature_df = reduce(lambda ldf, rdf: pd.merge(ldf, rdf, on=['sid'], how='inner'),
-                        [mode_df, agg_df, complex_feature_df])
-    print('mode tfidf...')
-    tfidf_enc = TfidfVectorizer(ngram_range=(1, 2))
+    plan_feature_df = reduce(lambda ldf, rdf: pd.merge(ldf, rdf, on=['sid'], how='inner'),
+                             [mode_df, agg_df, complex_feature_df])
 
-    tfidf_vec = tfidf_enc.fit_transform(feature_df['mode_texts'])
-    svd_enc = TruncatedSVD(n_components=10, n_iter=20, random_state=2019)
-    mode_svd = svd_enc.fit_transform(tfidf_vec)
-    mode_svd = pd.DataFrame(mode_svd)
-    mode_svd.columns = ['svd_mode_{}'.format(i) for i in range(10)]
-    feature_df = pd.concat([feature_df, mode_svd], axis=1)
-    return feature_df
+    return plan_feature_df
+
+
+def gen_empty_plan_feas(data):
+    """
+    生成empty plans
+    :param data:
+    :return:
+    """
+    mode_columns_names = ['mode_feas_{}'.format(i) for i in range(12)]
+
+    mode_data = np.zeros((len(data), 12))
+    mode_data[:, 0] = 1
+    sid_data = data['sid'].values.reshape(len(data), 1)
+    mode_columns = ['sid'] + mode_columns_names
+    plan_feature_df = pd.DataFrame(np.hstack([sid_data, mode_data]), columns=mode_columns)
+
+    plan_feature_df['first_mode'] = 0
+    plan_feature_df['mode_texts'] = 'word_null'
+    plan_feature_df['max_dist'] = -1
+    plan_feature_df['min_dist'] = -1
+    plan_feature_df['mean_dist'] = -1
+    plan_feature_df['std_dist'] = -1
+
+    plan_feature_df['max_price'] = -1
+    plan_feature_df['min_price'] = -1
+    plan_feature_df['mean_price'] = -1
+    plan_feature_df['std_price'] = -1
+
+    plan_feature_df['max_eta'] = -1
+    plan_feature_df['min_eta'] = -1
+    plan_feature_df['mean_eta'] = -1
+    plan_feature_df['std_eta'] = -1
+    plan_feature_df['max_dist_mode'] = -1
+    plan_feature_df['min_dist_mode'] = -1
+    plan_feature_df['max_price_mode'] = -1
+    plan_feature_df['min_price_mode'] = -1
+    plan_feature_df['max_eta_mode'] = -1
+    plan_feature_df['min_eta_mode'] = -1
+
+    return plan_feature_df
 
 
 def get_plan_feas():
     plan_featurns = pd.read_csv('../data/data_set_phase1/plan_features.csv')
     return plan_featurns
+
+
+def gen_plan_feas(data):
+    # plans_df = get_plan_df(data)
+    # tr_plans + te_plans =583625
+    plans_df = pd.read_csv('../data/plans_new.csv')
+    data_empty = data[~data['sid'].isin(plans_df.sid.unique())]
+    plans_features = gen_plan_feas_by_plans(plans_df)
+    empty_plans_features = gen_empty_plan_feas(data_empty)
+    plan_feature_df = pd.concat([plans_features, empty_plans_features], axis=0).reset_index(drop=True)
+    print('mode tfidf...')
+    tfidf_enc = TfidfVectorizer(ngram_range=(1, 2))
+    # 添加tdidf svd
+    tfidf_vec = tfidf_enc.fit_transform(plan_feature_df['mode_texts'])
+    svd_enc = TruncatedSVD(n_components=10, n_iter=20, random_state=2019)
+    mode_svd = svd_enc.fit_transform(tfidf_vec)
+    mode_svd_df = pd.DataFrame(mode_svd)
+    mode_svd_df.columns = ['svd_mode_{}'.format(i) for i in range(10)]
+    feature_df = pd.concat([plan_feature_df, mode_svd_df], axis=1)
+    return feature_df
 
 
 def gen_profile_feas(data):
@@ -348,23 +469,44 @@ def gen_train_test_feas_data():
     data = merge_raw_data()
     data = data.drop(['plans'], axis=1)
     data = gen_od_feas(data)
-    # plans_df = get_plan_df(data)
-    plans_df = pd.read_csv('../data/plans_new.csv')
-    plans_features = gen_plan_feas(plans_df)
-    data = pd.merge(data, plans_features, on=['sid'], how='inner')
+    plans_features = gen_plan_feas(data)
+    # union没有plans的 innner=left
+    data = pd.merge(data, plans_features, on=['sid'], how='left')
     data = gen_profile_feas(data)
     data = gen_time_feas(data)
     data = data[feature_columns]
+    # 545907 = tr_click + te_plans
     data.to_csv('../data/features_new.csv', index=False)
     train_x, train_y, test_x, submit = split_train_test(data)
     return train_x, train_y, test_x, submit
 
 
-def get_train_test_feas_data():
-    data = pd.read_csv('../data/features_new.csv')
+def get_train_test_feas_data_1():
+    data = pd.read_csv('../data/features_new_v1.csv')
     train_x, train_y, test_x, submit = split_train_test(data)
     return train_x, train_y, test_x, submit
 
 
+def gen_plan_new():
+    data = merge_raw_data()
+    data = gen_od_feas(data)
+    plans_df = get_plan_df(data)
+    plans_df.to_csv('../data/plans_new.csv')
+    return plans_df
+
+
+def get_train_test_feas_data_2():
+    data_all = pd.read_csv('../data/features_new.csv')
+    # 排除训练、测试数中没有plan的数据 8946+1787=10733
+    data_exclude = data_all[(data_all['click_mode'].isin([0, -1]) & (data_all['max_dist'] == -1))]
+    data = data_all[~data_all.sid.isin(data_exclude.sid)]
+    submit1 = data.loc[data['click_mode'] == -1, ['sid']].copy()
+    submit2 = data_exclude.loc[data_exclude['click_mode'] == -1, ['sid']].copy()
+    train_x, train_y, test_x, submit = split_train_test(data)
+
+    return train_x, train_y, test_x, submit1, submit2
+
+
 if __name__ == '__main__':
-    pass
+    gen_plan_new()
+    #

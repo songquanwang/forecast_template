@@ -61,7 +61,7 @@ class BasicTfidfFeat(AbstractBaseFeat):
         self.stats_func = [np.mean, np.std]
         # 特征包括 最小值 中位数 最大值，平均值、标准差 五个
         self.stats_feat_num = len(quantiles_range) + len(self.stats_func)
-        # tfidf bow两种
+        # tfidf bow两种;tdidf考虑词文档频率和逆文档频率;cbow 只考虑词文档频率
         self.vec_types = ["tfidf", "bow"]
         # 1-3 元语法模型
         self.ngram_range = config.basic_tfidf_ngram_range

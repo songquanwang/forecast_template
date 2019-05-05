@@ -8,9 +8,10 @@
 import numpy as np
 
 import lightgbm as lgb
+import pandas as pd
 
 import gen_features_sqw
-
+import gen_features
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import f1_score
 from time import gmtime, strftime
@@ -28,8 +29,7 @@ def submit_result(submit, result, model_name):
     now_time = strftime("%Y-%m-%d-%H-%M-%S", gmtime())
 
     submit['recommend_mode'] = result
-    submit.to_csv(
-        '../submit/{}_result_{}.csv'.format(model_name, now_time), index=False)
+    submit.to_csv('../submit/{}_result_{}.csv'.format(model_name, now_time), index=False)
 
 
 def train_lgb(train_x, train_y, test_x):
@@ -48,7 +48,8 @@ def train_lgb(train_x, train_y, test_x):
         'bagging_freq': 4,
     }
     cate_cols = ['max_dist_mode', 'min_dist_mode', 'max_price_mode',
-                 'min_price_mode', 'max_eta_mode', 'min_eta_mode', 'first_mode', 'weekday', 'hour']
+                 'min_price_mode', 'max_eta_mode', 'min_eta_mode', 'first_mode', 'weekday', 'hour', 'pre_mode1',
+                 'pre_mode2', 'pre_mode3']
     scores = []
     result_proba = []
     i = 0
@@ -58,7 +59,7 @@ def train_lgb(train_x, train_y, test_x):
         train_set = lgb.Dataset(tr_x, tr_y, categorical_feature=cate_cols)
         val_set = lgb.Dataset(val_x, val_y, categorical_feature=cate_cols)
         lgb_model = lgb.train(lgb_paras, train_set,
-                              valid_sets=[val_set], early_stopping_rounds=50, num_boost_round=40000, verbose_eval=50,
+                              valid_sets=[val_set], early_stopping_rounds=500, num_boost_round=40000, verbose_eval=50,
                               feval=eval_f)
         lgb_model.save_model('../models/model_{}'.format(i))
         val_pred = np.argmax(lgb_model.predict(
@@ -73,7 +74,24 @@ def train_lgb(train_x, train_y, test_x):
     return pred_test
 
 
-if __name__ == '__main__':
-    train_x, train_y, test_x, submit = gen_features_sqw.get_train_test_feas_data()
+def tp_1():
+    train_x, train_y, test_x, submit = gen_features_sqw.get_train_test_feas_data_1()
+    # train_x, train_y, test_x, submit = gen_features.get_train_test_feas_data()
     result_lgb = train_lgb(train_x, train_y, test_x)
     submit_result(submit, result_lgb, 'lgb')
+
+
+def tp_2():
+    train_x, train_y, test_x, submit1, submit2 = gen_features_sqw.get_train_test_feas_data_2()
+
+    # train_x, train_y, test_x, submit = gen_features.get_train_test_feas_data()
+    result_lgb = train_lgb(train_x, train_y, test_x)
+    now_time = strftime("%Y-%m-%d-%H-%M-%S", gmtime())
+    submit1['recommend_mode'] = result_lgb
+    submit2['recommend_mode'] = 0
+    submit = pd.concat([submit1, submit2], axis=0).reset_index(drop=True)
+    submit.to_csv('../submit/{}_result_{}.csv'.format('lgb', now_time), index=False)
+
+
+if __name__ == '__main__':
+    tp_1()

@@ -18,6 +18,8 @@ def cosine_sim(x, y):
     """
     计算余弦相似性距离(夹角越小，相似度越高)
         cosine_similarity(np.array([1,2,3]).reshape(1,-1),np.array([1,2,3]).reshape(1,-1)) # array([[1.]])
+        a=[[1,3],[2,2]]
+        cosine_similarity(a)==1-pairwise_distances(a,metric="cosine")
     :param x:
     :param y:
     :return:
@@ -32,7 +34,7 @@ def cosine_sim(x, y):
     return d
 
 
-def compute_cosine_euc_dist(X_test, X_train, dist_metric):
+def pairwise_cosine_euc_dist(X_test, X_train, dist_metric):
     """
     consine 距离
     euclidean distance 距离
@@ -42,11 +44,11 @@ def compute_cosine_euc_dist(X_test, X_train, dist_metric):
     :return:
     """
     if dist_metric == "cosine":
-        # sim 0-1 1完全相同 ；余弦距离也是越大越远 ，用1减后 变成相似度
+        # 1-余弦距离=余弦相似度
         sim = 1. - pairwise_distances(X_test, X_train, metric=dist_metric, n_jobs=1)
     elif dist_metric == "euclidean":
-        # 返回xtest行 xtrain列的array 欧式距离，越大越远
-        sim = pairwise_distances(X_test, X_train, metric=dist_metric, n_jobs=1)
+        # 返回xtest行 xtrain列的array 欧式距离，越大越远；update sqw
+        sim = 1 - pairwise_distances(X_test, X_train, metric=dist_metric, n_jobs=1)
     return sim
 
 

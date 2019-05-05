@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-  @Author: zzn 
-  @Date: 2019-04-17 19:32:26 
-  @Last Modified by:   zzn 
-  @Last Modified time: 2019-04-17 19:32:26 
+  @Author: zzn
+  @Date: 2019-04-17 19:32:26
+  @Last Modified by:   zzn
+  @Last Modified time: 2019-04-17 19:32:26
 """
 
 import json
@@ -75,6 +75,7 @@ def gen_plan_feas(data):
     mode_texts = []
     for i, plan in tqdm(enumerate(data['plans'].values)):
         try:
+            # None 返回空数组
             cur_plan_list = json.loads(plan)
         except:
             cur_plan_list = []
