@@ -47,11 +47,12 @@ def init_path():
     for run in range(1, config.n_runs + 1):
         for fold in range(1, config.n_folds + 1):
             path_base = "%s/Run%d/Fold%d" % (config.solution_feat_base, run, fold)
-            path_combined = "%s/Run%d/Fold%d" % (config.solution_feat_combined, run, fold)
             if not os.path.exists(path_base):
                 os.makedirs(path_base)
-            if not os.path.exists(path_combined):
-                os.makedirs(path_combined)
+
+    path_combined = config.solution_feat_combined
+    if not os.path.exists(path_combined):
+        os.makedirs(path_combined)
 
 
 if __name__ == "__main__":

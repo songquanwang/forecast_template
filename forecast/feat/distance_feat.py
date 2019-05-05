@@ -56,7 +56,7 @@ class DistanceFeat(AbstractBaseFeat):
     @staticmethod
     def extract_basic_distance_feat(df):
         """
-        Extract basic distance features
+        计算 query title description的 jaccard dice距离
         :param df:
         :return:
         """
@@ -64,7 +64,7 @@ class DistanceFeat(AbstractBaseFeat):
         print("generate jaccard coef and dice dist for n-gram")
         dists = ["jaccard_coef", "dice_coef"]
         grams = ["unigram", "bigram", "trigram"]
-        # 计算 queyr title description的 jaccard dice距离
+        # 计算 query title description的 jaccard dice距离
         feat_names = ["query", "title", "description"]
         for dist in dists:
             for gram in grams:
@@ -77,7 +77,7 @@ class DistanceFeat(AbstractBaseFeat):
 
     def extract_statistical_distance_feat(self, path, dfTrain, dfTest, mode):
         """
-
+        计算 title description 的 一元 二元 三元 统计信息 (使用 jaccard_coef，dice_coef)两种距离方式
         :param path:
         :param dfTrain:
         :param dfTest:
@@ -90,10 +90,11 @@ class DistanceFeat(AbstractBaseFeat):
         relevance_indices_dict = self.get_sample_indices_by_relevance(dfTrain)
         query_relevance_indices_dict = self.get_sample_indices_by_relevance(dfTrain, "qid")
         # very time consuming
-        for dist in ["jaccard_coef", "dice_dist"]:
+        # 只计算title description 没有计算query
+        for dist in ["jaccard_coef", "dice_coef"]:
             for name in ["title", "description"]:
                 for gram in ["unigram", "bigram", "trigram"]:
-                    ## train
+                    # title 的 一元 二元 三元 计算统计信息
                     dist_stats_feat_by_relevance_train = self.generate_dist_stats_feat(dist, dfTrain[name + "_" + gram].values, dfTrain["id"].values,
                                                                                        dfTrain[name + "_" + gram].values, dfTrain["id"].values,
                                                                                        relevance_indices_dict)
@@ -121,9 +122,10 @@ class DistanceFeat(AbstractBaseFeat):
                               "wb") as f:
                         pickle.dump(dist_stats_feat_by_query_relevance_test, f, -1)
 
-                    ## update feat names
+                    # update feat names
                     new_feat_names.append("%s_%s_%s_stats_feat_by_relevance" % (name, gram, dist))
                     new_feat_names.append("%s_%s_%s_stats_feat_by_query_relevance" % (name, gram, dist))
+
 
         return new_feat_names
 
@@ -173,7 +175,7 @@ class DistanceFeat(AbstractBaseFeat):
         DistanceFeat.extract_basic_distance_feat(dfTrain)
         DistanceFeat.extract_basic_distance_feat(dfTest)
 
-        feat_names = [name for name in dfTrain.columns if "jaccard_coef" in name or "dice_dist" in name]
+        feat_names = [name for name in dfTrain.columns if "jaccard_coef" in name or "dice_coef" in name]
 
         print("For cross-validation...")
         for run in range(config.n_runs):
@@ -195,7 +197,6 @@ class DistanceFeat(AbstractBaseFeat):
 
         # 保存所有的特征名字 ：distance.feat_name
         new_feat_names = []
-        new_feat_names.extend(feat_names)
         new_feat_names.extend(added_feat_names)
         feat_name_file = "%s/distance.feat_name" % config.solution_feat_combined
         print("Feature names are stored in %s" % feat_name_file)

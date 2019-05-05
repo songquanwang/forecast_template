@@ -68,7 +68,7 @@ def preprocess():
         dfTrain["median_relevance_%d" % (i + 1)] = 0
         dfTrain["median_relevance_%d" % (i + 1)][dfTrain["median_relevance"] == (i + 1)] = 1
 
-    # query ids 从1开始编号 query train test 具有相同的集合
+    # query ids 从1开始编号,按照从上到下顺序； query train test 具有相同的集合
     qid_dict = dict()
     for i, q in enumerate(np.unique(dfTrain["query"]), start=1):
         qid_dict[q] = i
@@ -77,7 +77,7 @@ def preprocess():
     dfTrain["qid"] = list(map(lambda q: qid_dict[q], dfTrain["query"]))
     dfTest["qid"] = list(map(lambda q: qid_dict[q], dfTest["query"]))
 
-    # clean text
+    # clean text : query title description
     clean = lambda line: clean_text(line, drop_html_flag=config.drop_html_flag)
     # axis =1 传入每行(多个列)
     dfTrain = dfTrain.apply(clean, axis=1)

@@ -122,7 +122,7 @@ def getTFV(token_pattern=token_pattern,
     :param norm:
     :param max_df:
     :param min_df: 文档中一个词语频率少于该值则被忽略
-    :param ngram_range:
+    :param ngram_range:(1,3)元语法模型
     :param vocabulary:
     :param stop_words:
     :return:

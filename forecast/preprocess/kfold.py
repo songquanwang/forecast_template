@@ -43,8 +43,9 @@ def gen_stratified_kfold():
             # skf[i].random_state 保留种子，就能重现随机数
             random_seed = 2015 + 1000 * (run + 1)
             # n_folds ==3表示只能迭代三次
-            sf = StratifiedKFold(n_splits=config.n_folds, shuffle=True, random_state=random_seed)
+            skf_obj = StratifiedKFold(n_splits=config.n_folds, shuffle=True, random_state=random_seed)
             # skf[run] = sf.split(dfTrain[key], dfTrain[key])
+            skf[run] = list(skf_obj.split(dfTrain[key], dfTrain[key]))
             for fold, (validInd, trainInd) in enumerate(skf[run]):
                 print("================================")
                 print("Index for run: %s, fold: %s" % (run + 1, fold + 1))

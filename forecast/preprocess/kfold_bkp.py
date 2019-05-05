@@ -41,8 +41,7 @@ def gen_stratified_kfold():
     for stratified_label, key in zip(["relevance", "query"], ["median_relevance", "qid"]):
         for run in range(config.n_runs):
             random_seed = 2015 + 1000 * (run + 1)
-            skf[run] = StratifiedKFold(dfTrain[key], n_folds=config.n_folds,
-                                       shuffle=True, random_state=random_seed)
+            skf[run] = StratifiedKFold(dfTrain[key], n_folds=config.n_folds,shuffle=True, random_state=random_seed)
             for fold, (validInd, trainInd) in enumerate(skf[run]):
                 print("================================")
                 print("Index for run: %s, fold: %s" % (run + 1, fold + 1))
