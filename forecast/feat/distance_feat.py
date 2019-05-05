@@ -107,7 +107,7 @@ class DistanceFeat(AbstractBaseFeat):
                     with open("%s/train.%s_%s_%s_stats_feat_by_query_relevance.feat.pkl" % (path, name, gram, dist),
                               "wb") as f:
                         pickle.dump(dist_stats_feat_by_query_relevance_train, f, -1)
-                    ## test
+                    # test  与train 各个类别距离统计信息
                     dist_stats_feat_by_relevance_test = self.generate_dist_stats_feat(dist, dfTrain[name + "_" + gram].values, dfTrain["id"].values,
                                                                                       dfTest[name + "_" + gram].values, dfTest["id"].values,
                                                                                       relevance_indices_dict)
