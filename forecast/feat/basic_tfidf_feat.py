@@ -299,6 +299,8 @@ class BasicTfidfFeat(AbstractBaseFeat):
                         target_vec = pickle.load(f)
                     with open("%s/%s.%s.feat.pkl" % (path, mod, feat_names[j]), "rb") as f:
                         obs_vec = pickle.load(f)
+                    # 计算两个字段之间的相似性；同一行之间注意：不能直接调用 cosine_similarity
+                    # fromiter 转成1维array
                     sim = np.fromiter(map(utils.cosine_sim, target_vec, obs_vec), dtype=np.float32)[:, np.newaxis]
                     # 计算两个特征之间的余弦相似度
                     with open("%s/%s.%s_%s_%s_cosine_sim.feat.pkl" % (path, mod, feat_names[i], feat_names[j], vec_type),
@@ -324,6 +326,7 @@ class BasicTfidfFeat(AbstractBaseFeat):
         """
         new_feat_names = []
         svd = TruncatedSVD(n_components=n_components, n_iter=15)
+        # fit 多个 分批transform
         svd.fit(X_vec_all_train)
         for feat_name, column_name in zip(feat_names, self.column_names):
             print("generate common %s-svd%d feat for %s" % (vec_type, n_components, column_name))
@@ -355,6 +358,7 @@ class BasicTfidfFeat(AbstractBaseFeat):
     def extract_svd_cosine_sim_feat(path, feat_names, vec_type, mode, n_components):
         """
         svd cosine sim feat
+        svd向量之间距离
         :param path:
         :param feat_names:
         :param mode:
@@ -367,17 +371,17 @@ class BasicTfidfFeat(AbstractBaseFeat):
         for i in range(len(feat_names) - 1):
             for j in range(i + 1, len(feat_names)):
                 print("generate common %s-svd%d cosine sim feat for %s and %s" % (vec_type, n_components, feat_names[i], feat_names[j]))
-            for mod in ["train", mode]:
-                with open("%s/%s.%s_common_svd%d.feat.pkl" % (path, mod, feat_names[i], n_components), "rb") as f:
-                    target_vec = pickle.load(f)
-                with open("%s/%s.%s_common_svd%d.feat.pkl" % (path, mod, feat_names[j], n_components), "rb") as f:
-                    obs_vec = pickle.load(f)
-                sim = np.fromiter(map(utils.cosine_sim, target_vec, obs_vec), dtype=np.float32)[:, np.newaxis]
-                # dump feat
-                with open("%s/%s.%s_%s_%s_common_svd%d_cosine_sim.feat.pkl" % (path, mod, feat_names[i], feat_names[j], vec_type, n_components), "wb") as f:
-                    pickle.dump(sim, f, -1)
-            # update feat names
-            new_feat_names.append("%s_%s_%s_common_svd%d_cosine_sim" % (feat_names[i], feat_names[j], vec_type, n_components))
+                for mod in ["train", mode]:
+                    with open("%s/%s.%s_common_svd%d.feat.pkl" % (path, mod, feat_names[i], n_components), "rb") as f:
+                        target_vec = pickle.load(f)
+                    with open("%s/%s.%s_common_svd%d.feat.pkl" % (path, mod, feat_names[j], n_components), "rb") as f:
+                        obs_vec = pickle.load(f)
+                    sim = np.fromiter(map(utils.cosine_sim, target_vec, obs_vec), dtype=np.float32)[:, np.newaxis]
+                    # dump feat
+                    with open("%s/%s.%s_%s_%s_common_svd%d_cosine_sim.feat.pkl" % (path, mod, feat_names[i], feat_names[j], vec_type, n_components), "wb") as f:
+                        pickle.dump(sim, f, -1)
+                # update feat names
+                new_feat_names.append("%s_%s_%s_common_svd%d_cosine_sim" % (feat_names[i], feat_names[j], vec_type, n_components))
         return new_feat_names
 
     def gen_individual_svd_by_feat_column_names(self, path, dfTrain, dfTest, n_components, vec_type, mode, feat_names):
@@ -447,6 +451,7 @@ class BasicTfidfFeat(AbstractBaseFeat):
         new_feat_names.extend(feat_list)
 
         # vstack feat_names(最原始的 query title description)
+        # 按照列 stack
         for i, feat_name in enumerate(feat_names):
             with open("%s/train.%s.feat.pkl" % (path, feat_name), "rb") as f:
                 X_vec_train = pickle.load(f)
@@ -454,14 +459,14 @@ class BasicTfidfFeat(AbstractBaseFeat):
                 X_vec_all_train = X_vec_train
             else:
                 X_vec_all_train = vstack([X_vec_all_train, X_vec_train])
-
+        # 把vstack的特征svd降维
         for n_components in self.svd_n_components:
             feat_list = self.gen_common_svd_by_feat_column_names(path, dfTrain, dfTest, X_vec_all_train, n_components, vec_type, mode, feat_names)
             new_feat_names.extend(feat_list)
             # cosine sim feat ##
             feat_list = BasicTfidfFeat.extract_svd_cosine_sim_feat(path, feat_names, vec_type, mode, n_components)
             new_feat_names.extend(feat_list)
-
+            # 单独fit 单独transform
             feat_list = self.gen_individual_svd_by_feat_column_names(path, dfTrain, dfTest, n_components, vec_type, mode, feat_names)
             new_feat_names.extend(feat_list)
 

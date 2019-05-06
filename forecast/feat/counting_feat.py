@@ -49,7 +49,7 @@ class CountingFeat(AbstractBaseFeat):
     def get_position_list(target, obs):
         """
             Get the list of positions of obs in target
-            把在target列表中存在的obs列表的index保存到数组里，index从1开始
+            从obs中找到（在target存在的词）的index（index从1开始）
             如果obs中没有target中的元素，返回[0]
         """
         pos_of_obs_in_target = [0]
@@ -86,7 +86,7 @@ class CountingFeat(AbstractBaseFeat):
             # unigram中数值个数/unigram中所有单词数量
             df["ratio_of_digit_in_%s" % feat_name] = list(map(utils.try_divide, df["count_of_digit_in_%s" % feat_name], df["count_of_%s_unigram" % (feat_name)]))
 
-        # 是否没有描述信息
+        # 1 没有描述信息 ；0 有描述信息
         df["description_missing"] = list(df.apply(lambda x: int(x["description_unigram"] == ""), axis=1))
 
     @staticmethod
@@ -106,6 +106,7 @@ class CountingFeat(AbstractBaseFeat):
                 for target_name in feat_names:
                     if target_name != obs_name:
                         # 两个不同字段中交集的词语个；因为有重复词语，A&B ！=B&A
+
                         df["count_of_%s_%s_in_%s" % (obs_name, gram, target_name)] = list(df.apply(lambda x: sum([1. for w in x[obs_name + "_" + gram] if w in set(x[target_name + "_" + gram])]), axis=1))
                         # 交集占单词个数比例
                         df["ratio_of_%s_%s_in_%s" % (obs_name, gram, target_name)] = list(map(utils.try_divide, df["count_of_%s_%s_in_%s" % (obs_name, gram, target_name)],df["count_of_%s_%s" % (obs_name, gram)]))
@@ -141,7 +142,7 @@ class CountingFeat(AbstractBaseFeat):
                         df["pos_of_%s_%s_in_%s_median" % (obs_name, gram, target_name)] =list(map(np.median, pos))
                         df["pos_of_%s_%s_in_%s_max" % (obs_name, gram, target_name)] = list(map(np.max, pos))
                         df["pos_of_%s_%s_in_%s_std" % (obs_name, gram, target_name)] = list(map(np.std, pos))
-                        ## stats feat on normalized_pos
+                        # stats feat on normalized_pos
                         df["normalized_pos_of_%s_%s_in_%s_min" % (obs_name, gram, target_name)] = list(map(utils.try_divide,
                                                                                                       df["pos_of_%s_%s_in_%s_min" % (obs_name, gram, target_name)],
                                                                                                       df["count_of_%s_%s" % (obs_name, gram)]))

@@ -20,6 +20,7 @@ def cosine_sim(x, y):
         cosine_similarity(np.array([1,2,3]).reshape(1,-1),np.array([1,2,3]).reshape(1,-1)) # array([[1.]])
         a=[[1,3],[2,2]]
         cosine_similarity(a)==1-pairwise_distances(a,metric="cosine")
+        返回 shape=[len(A),len(B)]矩阵
     :param x:
     :param y:
     :return:
@@ -48,7 +49,8 @@ def pairwise_cosine_euc_dist(X_test, X_train, dist_metric):
         sim = 1. - pairwise_distances(X_test, X_train, metric=dist_metric, n_jobs=1)
     elif dist_metric == "euclidean":
         # 返回xtest行 xtrain列的array 欧式距离，越大越远；update sqw
-        sim = 1 - pairwise_distances(X_test, X_train, metric=dist_metric, n_jobs=1)
+        # 欧式距离超过1 不能用1-作为相似度
+        sim = pairwise_distances(X_test, X_train, metric=dist_metric, n_jobs=1)
     return sim
 
 
