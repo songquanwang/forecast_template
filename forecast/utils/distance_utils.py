@@ -48,7 +48,8 @@ def pairwise_cosine_euc_dist(X_test, X_train, dist_metric):
         sim = 1. - pairwise_distances(X_test, X_train, metric=dist_metric, n_jobs=1)
     elif dist_metric == "euclidean":
         # 返回xtest行 xtrain列的array 欧式距离，越大越远；update sqw
-        sim = 1 - pairwise_distances(X_test, X_train, metric=dist_metric, n_jobs=1)
+        # 欧式距离超过1 不能用1-作为相似度
+        sim = pairwise_distances(X_test, X_train, metric=dist_metric, n_jobs=1)
     return sim
 
 
