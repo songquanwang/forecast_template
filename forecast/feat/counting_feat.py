@@ -49,7 +49,7 @@ class CountingFeat(AbstractBaseFeat):
     def get_position_list(target, obs):
         """
             Get the list of positions of obs in target
-            根据target列表，从obs中找到它的index（index从1开始）
+            从obs中找到（在target存在的词）的index（index从1开始）
             如果obs中没有target中的元素，返回[0]
         """
         pos_of_obs_in_target = [0]

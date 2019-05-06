@@ -20,6 +20,7 @@ def cosine_sim(x, y):
         cosine_similarity(np.array([1,2,3]).reshape(1,-1),np.array([1,2,3]).reshape(1,-1)) # array([[1.]])
         a=[[1,3],[2,2]]
         cosine_similarity(a)==1-pairwise_distances(a,metric="cosine")
+        返回 shape=[len(A),len(B)]矩阵
     :param x:
     :param y:
     :return:
