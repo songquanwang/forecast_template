@@ -14,6 +14,7 @@ from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
 from tqdm import tqdm
 from six.moves import reduce
+import common
 
 
 def read_profile_data():
@@ -187,7 +188,7 @@ def get_plan_df(data):
     df2 = plans_df.loc[plans_df['price'].isnull()]
     plans_df.loc[plans_df['price'].isnull(), 'price'] = df2['dj'] * df2['distance'] / 100
     # sid, plan_time, distance, eta, price, transport_mode
-    return plans_df[['sid',  'plan_time', 'distance', 'eta', 'price', 'transport_mode']]
+    return plans_df[['sid', 'plan_time', 'distance', 'eta', 'price', 'transport_mode']]
 
 
 def gen_od_feas(data):
@@ -415,6 +416,43 @@ def gen_plan_feas(data):
     return feature_df
 
 
+def add_sta_feas(data):
+    """
+    添加统计特征
+    :param data:
+    :return:
+    """
+    dist = 'cosine'
+    svd_columns = ['svd_mode_{}'.format(i) for i in range(10)]
+    train_data = data[data['click_mode'] != -1]
+    test_data = data[data['click_mode'] == -1]
+    mode_indices_dict = common.get_sample_indices_by_relevance(train_data)
+    pid_mode_indices_dict = common.get_sample_indices_by_relevance(train_data, "pid")
+    stat_columns_sid = ['stat_{0}_{1}'.format(c, i) for c in ['min', 'median', 'max', 'mean', 'std'] for i in range(12)]
+    cut_data = data[['sid'] + svd_columns]
+    cut_data.loc[data['click_mode'] != -1, stat_columns_sid] = common.generate_dist_stats_feat(dist, train_data[svd_columns].values, train_data["sid"].values,
+                                                                                               train_data[svd_columns].values, train_data["sid"].values,
+                                                                                               mode_indices_dict)
+    cut_data.loc[data['click_mode'] == -1, stat_columns_sid] = common.generate_dist_stats_feat(dist, train_data[svd_columns].values, train_data["sid"].values,
+                                                                                               test_data[svd_columns].values, test_data["sid"].values,
+                                                                                               mode_indices_dict)
+    pid_stat_columns_sid = ['stat_pid_{0}'.format(c) for c in ['min', 'median', 'max', 'mean', 'std']]
+    cut_data.loc[data['click_mode'] != -1, pid_stat_columns_sid] = common.generate_dist_stats_feat(dist, train_data[svd_columns.values], train_data["sid"].values,
+                                                                                                   train_data[svd_columns.values], train_data["sid"].values,
+                                                                                                   pid_mode_indices_dict)
+    cut_data.loc[data['click_mode'] == -1, pid_stat_columns_sid] = common.generate_dist_stats_feat(dist, train_data[svd_columns.values], train_data["sid"].values,
+                                                                                                   test_data[svd_columns.values], test_data["sid"].values,
+                                                                                                   pid_mode_indices_dict)
+
+    svd_enc = TruncatedSVD(n_components=10, n_iter=20, random_state=2019)
+    stat_svd = svd_enc.fit_transform(cut_data[stat_columns_sid].values)
+    stat_svd_df = pd.DataFrame(stat_svd)
+    stat_svd_df.columns = ['stat_fea_{}'.format(i) for i in range(20)]
+
+    data = pd.merge(data, stat_svd_df, on=['sid'], how='inner')
+    return data
+
+
 def gen_profile_feas(data):
     profile_data = read_profile_data()
     x = profile_data.drop(['pid'], axis=1).values
@@ -466,6 +504,10 @@ def gen_train_test_feas_data():
                        'svd_fea_9', 'svd_fea_10', 'svd_fea_11', 'svd_fea_12', 'svd_fea_13',
                        'svd_fea_14', 'svd_fea_15', 'svd_fea_16', 'svd_fea_17', 'svd_fea_18',
                        'svd_fea_19', 'weekday', 'hour']
+    # 添加统计特征
+    stat_columns_sid = ['stat_{0}'.format(c) for c in ['min', 'median', 'max', 'mean', 'std']]
+    pid_stat_columns_sid = ['stat_pid_{0}'.format(c) for c in ['min', 'median', 'max', 'mean', 'std']]
+
     data = merge_raw_data()
     data = data.drop(['plans'], axis=1)
     data = gen_od_feas(data)
@@ -474,7 +516,8 @@ def gen_train_test_feas_data():
     data = pd.merge(data, plans_features, on=['sid'], how='left')
     data = gen_profile_feas(data)
     data = gen_time_feas(data)
-    data = data[feature_columns]
+    data = add_sta_feas(data)
+    data = data[feature_columns + stat_columns_sid + pid_stat_columns_sid]
     # 545907 = tr_click + te_plans
     data.to_csv('../data/features_new.csv', index=False)
     train_x, train_y, test_x, submit = split_train_test(data)
