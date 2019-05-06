@@ -105,7 +105,7 @@ class CountingFeat(AbstractBaseFeat):
             for obs_name in feat_names:
                 for target_name in feat_names:
                     if target_name != obs_name:
-                        # 两个不同字段中交集的词语个数
+                        # 两个不同字段中交集的词语个；因为有重复词语，A&B ！=B&A
                         df["count_of_%s_%s_in_%s" % (obs_name, gram, target_name)] = list(df.apply(lambda x: sum([1. for w in x[obs_name + "_" + gram] if w in set(x[target_name + "_" + gram])]), axis=1))
                         # 交集占单词个数比例
                         df["ratio_of_%s_%s_in_%s" % (obs_name, gram, target_name)] = list(map(utils.try_divide, df["count_of_%s_%s_in_%s" % (obs_name, gram, target_name)],df["count_of_%s_%s" % (obs_name, gram)]))
@@ -117,6 +117,7 @@ class CountingFeat(AbstractBaseFeat):
             df["description_%s_in_query_div_query_%s" % (gram, gram)] = list(map(utils.try_divide, df["count_of_description_%s_in_query" % gram], df["count_of_query_%s" % gram]))
             df["description_%s_in_query_div_query_%s_in_description" % (gram, gram)] = list(map(utils.try_divide, df["count_of_description_%s_in_query" % gram],
                                                                                            df["count_of_query_%s_in_description" % gram]))
+
 
     @staticmethod
     def extract_interset_word_pos_feat(df, feat_names, grams):

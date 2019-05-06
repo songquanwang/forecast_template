@@ -44,6 +44,8 @@ class CooccurenceTfidfFeat(AbstractBaseFeat):
         query_id title u  b
         query_id dex   u  b
 
+        没有title des组合
+
         """
         self.column_names = [
             "query_unigram_title_unigram",

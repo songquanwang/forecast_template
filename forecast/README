@@ -10,13 +10,34 @@ id feat: qid one hot 编码。
 distance feat:
     距离特征：
         距离度量：jaccard、dice
-        N元语法分词：一元、二元、三元 【分词列表】
+        N元语法分词：unigram, bigram, trigram 【分词列表】
         同一语法模型不同字段之间的距离：query_ngram, title_ngram, description_ngram
     统计特征：
         距离度量：jaccard、dice
         字段：title, description
         同一字段、同一语法模型：【训练样本中】每个样本与某一个类别样本集合的距离统计信息
         同一字段、同一语法模型：【测试样本】每个样本与【训练样本】某一个类别样本集合的距离统计信息
+
+count feat:
+    计数特征：
+        字段：query, title, description
+        N元语法分词：unigram, bigram, trigram 【分词列表】
+        同一字段、同一语法模型： 单词数量 唯一词数量 唯一词占比
+        同一字段：unigram 数字分词数量/所有分词数量
+
+    交集数量特征：
+        N元语法分词：unigram, bigram, trigram 【分词列表】
+        不同语法模型/不同字段【分词列表】之间（query, title, description）：交集数量；交集数量/原集合数量
+        不同语法模型：title_in_query_div_query;title_in_query_div_query_in_title;description_in_query_div_query;description_in_query_div_query_in_description
+
+    交集位置特征：
+        N元语法分词：unigram, bigram, trigram 【分词列表】
+        不同语法模型/不同字段【分词列表】之间（query, title, description）：位置坐标统计特征（最大值/最小值/中位数/平均值/方差；标准化值（统计特征/源分词列表长度）
+
+coocurrence feat:
+      字段【unigram, bigram】：query title；query des ；query_id title ；query_id dex 之间进行组合，用X连接
+      使用TFIDF 生成词向量
+      100个主成分
 
 
 1.每个样本权重计算
