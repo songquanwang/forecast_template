@@ -75,14 +75,14 @@ class DataReader(object):
             mode_encode = np.zeros([len(batch), max_plan_length])
             # 为计划赋值，不足7 后面补充0
             for i in range(len(batch)):
-                plan_len = len(batch[i].distance_list)
-                encode_len[i] = plan_len
-                distance_encode[0:plan_len] = batch[i].distance_list[0:plan_len]
-                eta_encode[0:plan_len] = batch[i].eta_encode[0:plan_len]
-                price_encode[0:plan_len] = batch[i].price_encode[0:plan_len]
-                mode_encode[0:plan_len] = batch[i].mode_encode[0:plan_len]
+                plan_len = int(batch[i]['plan_len'])
+                # encode_len[i] = plan_len
+                distance_encode[i, 0:plan_len] = batch[i].distance_list[0:plan_len]
+                eta_encode[i, 0:plan_len] = batch[i].eta_list[0:plan_len]
+                price_encode[i, 0:plan_len] = batch[i].price_list[0:plan_len]
+                mode_encode[i, 0:plan_len] = batch[i].transport_mode_list[0:plan_len]
 
-            # place_holder 包含：'page_id','project','access','agent' 不包含：'test_data','test_is_nan','data', 'is_nan',
+            # 把特征放到batch中
             batch['distance_encode'] = distance_encode
             batch['eta_encode'] = eta_encode
             batch['price_encode'] = price_encode

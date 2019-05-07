@@ -62,6 +62,7 @@ def merge_raw_data():
     print('raw data columns: {}'.format(', '.join(data.columns)))
     # 填充plans 为空数组
     data.loc[data['plans'].isnull(), 'plans'] = '[]'
+    data['pid'] = data['pid'].fillna(-1)
     return data
 
 
@@ -116,7 +117,7 @@ def add_plan_columns(data):
     def add_mask(x):
         mask = np.zeros(class_num)
         mask[x] = 1
-        return mask
+        return list(mask)
 
     data['plan_mask'] = data['transport_mode_list'].apply(lambda x: add_mask(x))
     return data
@@ -124,15 +125,14 @@ def add_plan_columns(data):
 
 if __name__ == '__main__':
     base_columns = ['sid', 'pid', 'weekday', 'hour', 'o1', 'o2', 'd1', 'd2', 'click_mode',
-                    'distance_list', 'eta_list', 'price_list', 'transport_mode_list']
+                    'distance_list', 'eta_list', 'price_list', 'transport_mode_list', 'plan_mask','plan_len']
     profile_columns = ['pid'] + ['p{}'.format(i) for i in range(66)]
     data = merge_raw_data()
     data = add_od_feas(data)
     data = add_plan_columns(data)
     data = add_time_feas(data)
-    data = data
     profile_df = read_profile_data()
-    data['pid'] = data['pid'].fillna(-1)
+    # data['pid'] = data['pid'].fillna(-1)
     data = data.merge(profile_df, on='pid', how='left')
     data[base_columns + profile_columns[1:]].to_csv('./data/processed_data.csv', index=False)
     # data[profile_columns].to_csv('profile_data.csv', index=False)

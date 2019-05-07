@@ -10,6 +10,7 @@ import numpy as np
 import tensorflow as tf
 
 from utils import shape
+import pandas as pd
 
 
 class TFBaseModel(object):
@@ -140,7 +141,6 @@ class TFBaseModel(object):
             restarts = 0
             # 20万个batch
             while step < self.num_training_steps:
-
                 # 验证数
                 print('******************{0}'.format(step))
                 val_batch_df = next(val_generator)
@@ -159,13 +159,15 @@ class TFBaseModel(object):
                 # 验证时 不用训练
                 if hasattr(self, 'is_training'):
                     val_feed_dict.update({self.is_training: False})
-                # 这里报错？？？？？
-                print("err_before*************************")
+                # debug
+                # vlist=[v.shape for v in list(val_feed_dict.values())[:-3]]
+                # print(list(zip(val_feed_dict.keys(),vlist)))                # vlist=[v.shape for v in list(val_feed_dict.values())[:-3]]
+                # print(list(zip(val_feed_dict.keys(),vlist)))
+
                 [val_loss] = self.session.run(
                     fetches=[self.loss],
                     feed_dict=val_feed_dict
                 )
-                print("err_after*************************")
                 val_loss_history.append(val_loss)
                 # 监控tensor
                 if hasattr(self, 'monitor_tensors'):
@@ -266,9 +268,11 @@ class TFBaseModel(object):
                 )
                 for tensor_name, tensor in zip(tensor_names, np_tensors):
                     prediction_dict[tensor_name].append(tensor)
-
+            # 返回预测结果
+            result_df = pd.DataFrame()
             for tensor_name, tensor in prediction_dict.items():
                 np_tensor = np.concatenate(tensor, 0)
+                result_df[tensor_name] = np_tensor
                 save_file = os.path.join(self.prediction_dir, '{}.npy'.format(tensor_name))
                 logging.info('saving {} with shape {} to {}'.format(tensor_name, np_tensor.shape, save_file))
                 np.save(save_file, np_tensor)
@@ -280,6 +284,7 @@ class TFBaseModel(object):
                 save_file = os.path.join(self.prediction_dir, '{}.npy'.format(tensor_name))
                 logging.info('saving {} with shape {} to {}'.format(tensor_name, np_tensor.shape, save_file))
                 np.save(save_file, np_tensor)
+        return result_df
 
     def save(self, step, averaged=False):
         """
