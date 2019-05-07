@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import copy
 
 import numpy as np
@@ -6,7 +7,8 @@ from sklearn.model_selection import train_test_split
 
 
 class DataFrame(object):
-    """Minimal pd.DataFrame analog for handling n-dimensional numpy matrices with additional
+    """
+    Minimal pd.DataFrame analog for handling n-dimensional numpy matrices with additional
     support for shuffling, batching, and train/test splitting.
 
     Args:
@@ -81,6 +83,12 @@ class DataFrame(object):
         return self.length
 
     def __getitem__(self, key):
+        """
+        传入字符串：返回 numpy array
+        传入数字：返回一行pandas Series
+        :param key:
+        :return:
+        """
         if isinstance(key, str):
             return self.dict[key]
 
@@ -88,6 +96,12 @@ class DataFrame(object):
             return pd.Series(dict(zip(self.columns, [mat[self.idx[key]] for mat in self.data])))
 
     def __setitem__(self, key, value):
+        """
+        给对象赋值时，自动添加到columns
+        :param key:
+        :param value:
+        :return:
+        """
         assert value.shape[0] == len(self), 'matrix first dimension does not match'
         if key not in self.columns:
             self.columns.append(key)

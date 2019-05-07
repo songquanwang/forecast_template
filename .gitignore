@@ -22,3 +22,4 @@ tmp/
 forecast/recommend/submit
 forecast/recommend/*.ipynb
 forecast/recommend/*.ipynb*
+forecast/code

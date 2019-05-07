@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 """
-  @Author: zzn 
-  @Date: 2019-04-17 19:32:26 
-  @Last Modified by:   zzn 
-  @Last Modified time: 2019-04-17 19:32:26 
+  @Author: songquanwang
+  @Date: 2019-04-17 19:32:26
+  @Last Modified time: 2019-04-17 19:32:26
 """
 
 import numpy as np
 import pandas as pd
-from sklearn.decomposition import TruncatedSVD
+
+class_num = 12
 
 
 def read_profile_data():
@@ -78,38 +78,16 @@ def add_od_feas(data):
     return data
 
 
-def gen_profile_feas():
+def add_time_feas(data):
     """
-    获取用户特征信息
+    查询时间特征
+    :param data:
     :return:
     """
-    profile_data = read_profile_data()
-    x = profile_data.drop(['pid'], axis=1).values
-    svd = TruncatedSVD(n_components=20, n_iter=20, random_state=2019)
-    svd_x = svd.fit_transform(x)
-    svd_feas = pd.DataFrame(svd_x)
-    svd_feas.columns = ['svd_fea_{}'.format(i) for i in range(20)]
-    svd_feas['pid'] = profile_data['pid'].values
-    return svd_feas
-
-
-def add_time_feas(data):
     data['req_time'] = pd.to_datetime(data['req_time'])
     data['weekday'] = data['req_time'].dt.dayofweek
     data['hour'] = data['req_time'].dt.hour
     return data
-
-
-def split_train_test(data):
-    train_data = data[data['click_mode'] != -1]
-    test_data = data[data['click_mode'] == -1]
-    submit = test_data[['sid']].copy()
-    train_data = train_data.drop(['sid', 'pid'], axis=1)
-    test_data = test_data.drop(['sid', 'pid'], axis=1)
-    test_data = test_data.drop(['click_mode'], axis=1)
-    train_y = train_data['click_mode'].values
-    train_x = train_data.drop(['click_mode'], axis=1)
-    return train_x, train_y, test_data, submit
 
 
 def add_plan_columns(data):
@@ -133,6 +111,14 @@ def add_plan_columns(data):
     data['price_list'] = data['plans'].apply(lambda x: process_plan(x, 'price'))
     data['transport_mode_list'] = data['plans'].apply(lambda x: process_plan(x, 'transport_mode'))
     data['plan_len'] = data['plans'].apply(lambda x: len(x))
+
+    # 添加plan mask
+    def add_mask(x):
+        mask = np.zeros(class_num)
+        mask[x] = 1
+        return mask
+
+    data['plan_mask'] = data['transport_mode_list'].apply(lambda x: add_mask(x))
     return data
 
 
@@ -144,9 +130,9 @@ if __name__ == '__main__':
     data = add_od_feas(data)
     data = add_plan_columns(data)
     data = add_time_feas(data)
-    data = data[base_columns]
+    data = data
     profile_df = read_profile_data()
     data['pid'] = data['pid'].fillna(-1)
     data = data.merge(profile_df, on='pid', how='left')
-    data[base_columns].to_csv('base_data.csv', index=False)
-    data[profile_columns].to_csv('profile_data.csv', index=False)
+    data[base_columns + profile_columns[1:]].to_csv('./data/processed_data.csv', index=False)
+    # data[profile_columns].to_csv('profile_data.csv', index=False)
