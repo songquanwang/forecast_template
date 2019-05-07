@@ -134,9 +134,10 @@ def get_raw_data():
     :return:
     """
     all_df = pd.read_csv('./data/recommend/processed_data.csv')
-    train_df = all_df[all_df['click_mode'] != -1].head(1000)
-    test_df = all_df[all_df['click_mode'] == -1].head(1000)
-    processed_df = pd.concat([train_df, test_df], axis=0)
+    # train_df = all_df[all_df['click_mode'] != -1].head(1000)
+    # test_df = all_df[all_df['click_mode'] == -1].head(1000)
+    # processed_df = pd.concat([train_df, test_df], axis=0)
+    processed_df = all_df
     processed_df['distance_list'] = processed_df['distance_list'].apply(lambda x: eval(x))
     processed_df['eta_list'] = processed_df['eta_list'].apply(lambda x: eval(x))
     processed_df['price_list'] = processed_df['price_list'].apply(lambda x: eval(x))
