@@ -19,6 +19,7 @@ from time import gmtime, strftime
 
 def eval_f(y_pred, train_data):
     y_true = train_data.label
+    # 分类在前，行号在后
     y_pred = y_pred.reshape((12, -1)).T
     y_pred = np.argmax(y_pred, axis=1)
     score = f1_score(y_true, y_pred, average='weighted')
@@ -48,8 +49,7 @@ def train_lgb(train_x, train_y, test_x):
         'bagging_freq': 4,
     }
     cate_cols = ['max_dist_mode', 'min_dist_mode', 'max_price_mode',
-                 'min_price_mode', 'max_eta_mode', 'min_eta_mode', 'first_mode', 'weekday', 'hour', 'pre_mode1',
-                 'pre_mode2', 'pre_mode3']
+                 'min_price_mode', 'max_eta_mode', 'min_eta_mode', 'first_mode', 'weekday', 'hour']
     scores = []
     result_proba = []
     i = 0

@@ -4,7 +4,7 @@ import tensorflow as tf
 
 from tf_base_model import TFBaseModel
 from utils import create_variable, LSTM
-from data_reader import DataReader
+from combine_data_reader import DataReader
 from data_frame import DataFrame
 import os
 import pandas as pd
@@ -12,6 +12,20 @@ import numpy as np
 from time import gmtime, strftime
 
 from tensorflow.contrib.metrics import f1_score
+
+mnn_feat_columns = ['sid', 'first_mode', 'max_dist', 'min_dist', 'mean_dist', 'std_dist', 'max_price', 'min_price',
+                    'mean_price', 'std_price', 'max_eta', 'min_eta', 'mean_eta', 'std_eta',
+                    'max_dist_mode', 'min_dist_mode', 'max_price_mode', 'min_price_mode',
+                    'max_eta_mode', 'min_eta_mode', 'mode_feas_1', 'mode_feas_2',
+                    'mode_feas_3', 'mode_feas_4', 'mode_feas_5', 'mode_feas_6',
+                    'mode_feas_7', 'mode_feas_8', 'mode_feas_9', 'mode_feas_10',
+                    'mode_feas_11', 'svd_mode_0', 'svd_mode_1', 'svd_mode_2', 'svd_mode_3',
+                    'svd_mode_4', 'svd_mode_5', 'svd_mode_6', 'svd_mode_7', 'svd_mode_8',
+                    'svd_mode_9', 'svd_fea_0', 'svd_fea_1', 'svd_fea_2', 'svd_fea_3',
+                    'svd_fea_4', 'svd_fea_5', 'svd_fea_6', 'svd_fea_7', 'svd_fea_8',
+                    'svd_fea_9', 'svd_fea_10', 'svd_fea_11', 'svd_fea_12', 'svd_fea_13',
+                    'svd_fea_14', 'svd_fea_15', 'svd_fea_16', 'svd_fea_17', 'svd_fea_18',
+                    'svd_fea_19']
 
 
 class Lstm_Model(TFBaseModel):
@@ -22,6 +36,7 @@ class Lstm_Model(TFBaseModel):
         self.batch_size = 128
         self.n_hidden_units = 64
         self.num_class = 12
+        self.mnn_feat_num = 60
         super(Lstm_Model, self).__init__(**kwargs)
 
     def create_features(self):
@@ -50,17 +65,28 @@ class Lstm_Model(TFBaseModel):
         self.o2 = tf.placeholder(tf.float32, [None], name='ph_o2')
         self.d1 = tf.placeholder(tf.float32, [None], name='ph_d1')
         self.d2 = tf.placeholder(tf.float32, [None], name='ph_d2')
+        self.d2 = tf.placeholder(tf.float32, [None], name='ph_d2')
         self.euc_dis = tf.placeholder(tf.float32, [None], name='ph_euc_dis')
+        # 多层神经网络
+        self.mnn_feat = tf.placeholder(tf.float32, [None, self.mnn_feat_num], name='ph_mnn_feat')
         # mask
         self.plan_mask = tf.placeholder(tf.float32, [None, self.num_class], name='ph_plan_mask')
         # dropout
         self.keep_prob = tf.placeholder(tf.float32, name='ph_keep_prob')
         self.is_training = tf.placeholder(tf.bool, name='ph_is_training')
         #  batch feature 66+7+24=97 需要embedding的特征
-        self.profile_features = tf.tile(tf.expand_dims(self.profile_data, 1), (1, self.num_encode_steps, 1))
-        self.weekday_features = tf.tile(tf.expand_dims(self.weekday, 1), (1, self.num_encode_steps))
-        self.hour_features = tf.tile(tf.expand_dims(self.hour, 1), (1, self.num_encode_steps))
+        self.profile_features = tf.expand_dims(self.profile_data, 1)
+        self.weekday_features = tf.expand_dims(self.weekday, 1)
+        self.hour_features = tf.expand_dims(self.hour, 1)
         # batch features 19
+
+        return self.encode_features
+
+    def create_lstm_net(self):
+        """
+        生成lstm网络
+        :return:
+        """
         self.encode_features = tf.concat([
             tf.expand_dims(self.distance_encode, 2),
             tf.expand_dims(self.eta_encode, 2),
@@ -72,8 +98,27 @@ class Lstm_Model(TFBaseModel):
             tf.tile(tf.reshape(self.d2, shape=(tf.shape(self.d2)[0], 1, 1)), (1, self.num_encode_steps, 1)),
             tf.tile(tf.reshape(self.euc_dis, shape=(tf.shape(self.euc_dis)[0], 1, 1)), (1, self.num_encode_steps, 1))
         ], axis=2)
+        embedding_dic = self.create_embedding()
+        # 对时间属性embedding
+        embedding_featrues = self.encoder_embedding(embedding_dic)
+        # 使用全连接网络对用户特征降维
+        embedding_profile_feature = tf.layers.dense(self.profile_features, 10, activation=tf.nn.relu)
+        encoder_features = tf.concat([self.encode_features, embedding_featrues, embedding_profile_feature], axis=2)
 
-        return self.encode_features
+        outputs, final_state = LSTM(encoder_features, self.encode_len, self.batch_size, self.n_hidden_units)
+
+        return outputs, final_state
+
+    def create_mnn_net(self):
+        """
+        生成mnn网络
+        :return:
+        """
+        # 加5层全连接网络
+
+        output_d1 = tf.layers.dense(h, self.n_hidden_units, activation=tf.nn.relu)
+        z = tf.layers.batch_normalization(z, training=batch_norm, reuse=reuse)
+        output_d2 = tf.layers.dense(output_d1 + h, self.num_class, activation=None)
 
     def create_embedding(self):
         """
@@ -150,12 +195,21 @@ def process_label_imbalance(raw_df):
     :param raw_df:
     :return:
     """
-
-    raw_df = raw_df.append([raw_df[raw_df['click_mode'] == 4]] * 2, ignore_index=True)
-    raw_df = raw_df.append([raw_df[raw_df['click_mode'] == 8]] * 5, ignore_index=True)
-    raw_df = raw_df.append([raw_df[raw_df['click_mode'] == 10]] * 3, ignore_index=True)
-    raw_df = raw_df.append([raw_df[raw_df['click_mode'] == 11]] * 1.5, ignore_index=True)
+    raw_df = raw_df.append([raw_df[raw_df['click_mode'] == 3]] * 3, ignore_index=True)
+    raw_df = raw_df.append([raw_df[raw_df['click_mode'] == 4]] * 4, ignore_index=True)
+    raw_df = raw_df.append([raw_df[raw_df['click_mode'] == 8]] * 10, ignore_index=True)
+    raw_df = raw_df.append([raw_df[raw_df['click_mode'] == 11]] * 4, ignore_index=True)
     return raw_df
+
+
+def get_feat_data():
+    """
+    获取gbdt 所有特征
+    :return:
+    """
+
+    mnn_feature_df = pd.read_csv('./data/recommend/features_new.csv')
+    return mnn_feature_df[mnn_feat_columns]
 
 
 def get_raw_data():
@@ -163,10 +217,10 @@ def get_raw_data():
     获取原始数据
     :return:
     """
-    all_df = pd.read_csv('./data/recommend/processed_data.csv')
-    train_df = all_df[all_df['click_mode'] != -1].head(1000)
-    test_df = all_df[all_df['click_mode'] == -1].head(1000)
-    all_df = pd.concat([train_df, test_df], axis=0)
+    all_df = pd.read_csv('./data/recommend/all_features.csv')
+    # train_df = all_df[all_df['click_mode'] != -1].head(1000)
+    # test_df = all_df[all_df['click_mode'] == -1].head(1000)
+    # processed_df = pd.concat([train_df, test_df], axis=0)
     processed_df = process_label_imbalance(all_df)
     processed_df['distance_list'] = processed_df['distance_list'].apply(lambda x: eval(x))
     processed_df['eta_list'] = processed_df['eta_list'].apply(lambda x: eval(x))
@@ -183,19 +237,21 @@ if __name__ == '__main__':
     """
         整个程序入口
     """
-    base_columns = ['sid', 'pid', 'weekday', 'hour', 'o1', 'o2', 'd1', 'd2', 'euc_dis', 'click_mode',
+    base_columns = ['sid', 'pid', 'weekday', 'hour', 'o1', 'o2', 'd1', 'd2', 'click_mode',
                     'distance_list', 'eta_list', 'price_list', 'transport_mode_list', 'plan_len']
     profile_columns = ['pid'] + ['p{}'.format(i) for i in range(66)]
 
     all_train_data, all_test_data = get_raw_data()
-    columns = base_columns + ['plan_mask', 'profile_data']
+    columns = base_columns + ['plan_mask', 'profile_data', 'mnn_feat']
     # 构造训练data
     train_data = [all_train_data[c].values for c in base_columns]
     train_data.append(np.stack(all_train_data['plan_mask'], axis=0))
+    train_data.append(all_train_data[mnn_feat_columns[1:]].values)
     train_data.append(all_train_data[profile_columns[1:]].values)
     # 构造测试data
     test_data = [all_test_data[c].values for c in base_columns]
     test_data.append(np.stack(all_test_data['plan_mask'], axis=0))
+    test_data.append(all_test_data[mnn_feat_columns[1:]].values)
     test_data.append(all_test_data[profile_columns[1:]].values)
 
     # 构造DataFrame

@@ -136,6 +136,7 @@ class TFBaseModel(object):
             # 构建连个双端队列 长度100
             train_loss_history = deque(maxlen=self.loss_averaging_window)
             val_loss_history = deque(maxlen=self.loss_averaging_window)
+            val_score_history = deque(maxlen=self.loss_averaging_window)
             # inf ,0
             best_validation_loss, best_validation_tstep = float('inf'), 0
             restarts = 0
@@ -164,11 +165,12 @@ class TFBaseModel(object):
                 # print(list(zip(val_feed_dict.keys(),vlist)))                # vlist=[v.shape for v in list(val_feed_dict.values())[:-3]]
                 # print(list(zip(val_feed_dict.keys(),vlist)))
 
-                [val_loss] = self.session.run(
-                    fetches=[self.loss],
+                [val_loss, score] = self.session.run(
+                    fetches=[self.loss, self.score],
                     feed_dict=val_feed_dict
                 )
                 val_loss_history.append(val_loss)
+                val_score_history.append(score)
                 # 监控tensor
                 if hasattr(self, 'monitor_tensors'):
                     for name, tensor in self.monitor_tensors.items():
@@ -202,11 +204,13 @@ class TFBaseModel(object):
                     # 100次平均
                     avg_train_loss = sum(train_loss_history) / len(train_loss_history)
                     avg_val_loss = sum(val_loss_history) / len(val_loss_history)
+                    avg_val_score = sum(val_score_history) / len(val_score_history)
                     metric_log = (
-                        "[[step {:>8}]]     "
-                        "[[train]]     loss: {:<12}     "
-                        "[[val]]     loss: {:<12}     "
-                    ).format(step, round(avg_train_loss, 8), round(avg_val_loss, 8))
+                        "[[step {:>8}]     "
+                        "[train     loss: {:<12}]     "
+                        "[val     loss: {:<12} ]    "
+                        "[score     score: {:<12}]     "
+                    ).format(step, round(avg_train_loss, 8), round(avg_val_loss, 8), round(avg_val_score, 8))
                     logging.info(metric_log)
                     # 最佳平均
                     if avg_val_loss < best_validation_loss:

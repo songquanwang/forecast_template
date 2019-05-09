@@ -183,7 +183,7 @@ def get_plan_df(data):
     plans_df['mdj'] = plans_df.groupby(['transport_mode', 'time_num30'])['dj'].transform(lambda x: np.nanmedian(x))
 
     # 填充 price dj[1, 2, 7, 9, 11]
-    plans_df['price1'] = plans_df['price']
+    # plans_df['price1'] = plans_df['price']
     plans_df.loc[plans_df['price'].isnull(), 'dj'] = plans_df.loc[plans_df['price'].isnull(), 'mdj']
     df2 = plans_df.loc[plans_df['price'].isnull()]
     plans_df.loc[plans_df['price'].isnull(), 'price'] = df2['dj'] * df2['distance'] / 100
@@ -505,7 +505,7 @@ def gen_train_test_feas_data():
                        'svd_fea_14', 'svd_fea_15', 'svd_fea_16', 'svd_fea_17', 'svd_fea_18',
                        'svd_fea_19', 'weekday', 'hour']
     # 添加统计特征
-    stat_columns_sid = ['stat_{0}'.format(c) for c in ['min', 'median', 'max', 'mean', 'std']]
+    # stat_columns_sid = ['stat_{0}'.format(c) for c in ['min', 'median', 'max', 'mean', 'std']]
     pid_stat_columns_sid = ['stat_pid_{0}'.format(c) for c in ['min', 'median', 'max', 'mean', 'std']]
 
     data = merge_raw_data()
@@ -516,8 +516,8 @@ def gen_train_test_feas_data():
     data = pd.merge(data, plans_features, on=['sid'], how='left')
     data = gen_profile_feas(data)
     data = gen_time_feas(data)
-    data = add_sta_feas(data)
-    data = data[feature_columns + stat_columns_sid + pid_stat_columns_sid]
+    # data = add_sta_feas(data)
+    data = data[feature_columns]
     # 545907 = tr_click + te_plans
     data.to_csv('../data/features_new.csv', index=False)
     train_x, train_y, test_x, submit = split_train_test(data)
@@ -525,7 +525,7 @@ def gen_train_test_feas_data():
 
 
 def get_train_test_feas_data_1():
-    data = pd.read_csv('../data/features_new_v1.csv')
+    data = pd.read_csv('../data/features_new.csv')
     train_x, train_y, test_x, submit = split_train_test(data)
     return train_x, train_y, test_x, submit
 
@@ -551,5 +551,9 @@ def get_train_test_feas_data_2():
 
 
 if __name__ == '__main__':
-    gen_plan_new()
+    import os
+
+    os.chdir('D:/github/recommend/recommend/Context-Aware-Multi-Modal-Transportation-Recommendation-master/code')
+    # gen_plan_new()
+    gen_train_test_feas_data()
     #
