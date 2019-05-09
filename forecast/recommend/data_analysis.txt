@@ -31,3 +31,11 @@ transport_mode
 9     0.000068
 10    0.000000 *
 11    0.002147
+
+
+distance/eta ËÙ¶È
+price/eta
+price/distance
+
+price/(eta*distance)
+(eta*price)/distance

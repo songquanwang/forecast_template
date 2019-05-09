@@ -74,13 +74,6 @@ class Lstm_Model(TFBaseModel):
         # dropout
         self.keep_prob = tf.placeholder(tf.float32, name='ph_keep_prob')
         self.is_training = tf.placeholder(tf.bool, name='ph_is_training')
-        #  batch feature 66+7+24=97 需要embedding的特征
-        self.profile_features = tf.expand_dims(self.profile_data, 1)
-        self.weekday_features = tf.expand_dims(self.weekday, 1)
-        self.hour_features = tf.expand_dims(self.hour, 1)
-        # batch features 19
-
-        return self.encode_features
 
     def create_lstm_net(self):
         """
@@ -98,14 +91,8 @@ class Lstm_Model(TFBaseModel):
             tf.tile(tf.reshape(self.d2, shape=(tf.shape(self.d2)[0], 1, 1)), (1, self.num_encode_steps, 1)),
             tf.tile(tf.reshape(self.euc_dis, shape=(tf.shape(self.euc_dis)[0], 1, 1)), (1, self.num_encode_steps, 1))
         ], axis=2)
-        embedding_dic = self.create_embedding()
-        # 对时间属性embedding
-        embedding_featrues = self.encoder_embedding(embedding_dic)
-        # 使用全连接网络对用户特征降维
-        embedding_profile_feature = tf.layers.dense(self.profile_features, 10, activation=tf.nn.relu)
-        encoder_features = tf.concat([self.encode_features, embedding_featrues, embedding_profile_feature], axis=2)
-
-        outputs, final_state = LSTM(encoder_features, self.encode_len, self.batch_size, self.n_hidden_units)
+        # encoder_features = tf.concat([self.encode_features, embedding_featrues, embedding_profile_feature], axis=2)
+        outputs, final_state = LSTM(self.encode_features, self.encode_len, self.batch_size, self.n_hidden_units)
 
         return outputs, final_state
 
@@ -114,11 +101,33 @@ class Lstm_Model(TFBaseModel):
         生成mnn网络
         :return:
         """
-        # 加5层全连接网络
+        embedding_dic = self.create_embedding()
+        # 对时间属性embedding 5
+        embedding_featrues = self.encoder_embedding(embedding_dic)
+        # 66个用户特征降维24
+        embedding_profile_feature = tf.layers.dense(self.profile_data, 10, activation=tf.nn.relu)
+        # 60个gbdt特征 降维 35
+        mnn_input_feature = tf.layers.dense(self.mnn_feat, 30, activation=tf.nn.relu)
+        # 合并输入特征 64 维
+        mnn_feature = tf.concat([embedding_featrues, embedding_profile_feature, mnn_input_feature], axis=1)
 
-        output_d1 = tf.layers.dense(h, self.n_hidden_units, activation=tf.nn.relu)
-        z = tf.layers.batch_normalization(z, training=batch_norm, reuse=reuse)
-        output_d2 = tf.layers.dense(output_d1 + h, self.num_class, activation=None)
+        # 加5层全连接网络 第一层输出128
+        o1 = tf.layers.dense(mnn_feature, 64, activation=tf.nn.relu)
+        ob1 = tf.layers.batch_normalization(o1, training=self.is_training)
+        od1 = tf.nn.dropout(ob1, self.keep_prob)
+        # 第二层输入128
+        o2 = tf.layers.dense(od1, 64, activation=tf.nn.relu)
+        ob2 = tf.layers.batch_normalization(o2, training=self.is_training)
+        od2 = tf.nn.dropout(ob2, self.keep_prob)
+        # 第三层输入skip
+        o3 = tf.layers.dense(od1 + od2, 64, activation=tf.nn.relu)
+        ob3 = tf.layers.batch_normalization(o3, training=self.is_training)
+        od3 = tf.nn.dropout(ob3, self.keep_prob)
+        # 第四层输入skip
+        o4 = tf.layers.dense(od2 + od3, 64, activation=tf.nn.relu)
+        ob4 = tf.layers.batch_normalization(o4, training=self.is_training)
+        od4 = tf.nn.dropout(ob4, self.keep_prob)
+        return od4
 
     def create_embedding(self):
         """
@@ -137,9 +146,9 @@ class Lstm_Model(TFBaseModel):
         :return:
         """
         # eb_profile_encode = tf.nn.embedding_lookup(embedding_dic['emb_profile_encode'], tf.cast(self.profile_features, tf.int32))
-        eb_weekday = tf.nn.embedding_lookup(embedding_dic['emb_weekday'], tf.cast(self.weekday_features, tf.int32))
-        eb_hour = tf.nn.embedding_lookup(embedding_dic['emb_hour'], tf.cast(self.hour_features, tf.int32))
-        encoder_embedding_features = tf.concat([eb_weekday, eb_hour], axis=2)
+        eb_weekday = tf.nn.embedding_lookup(embedding_dic['emb_weekday'], tf.cast(self.weekday, tf.int32))
+        eb_hour = tf.nn.embedding_lookup(embedding_dic['emb_hour'], tf.cast(self.hour, tf.int32))
+        encoder_embedding_features = tf.concat([eb_weekday, eb_hour], axis=1)
         return encoder_embedding_features
 
     def calculate_loss(self):
@@ -148,30 +157,20 @@ class Lstm_Model(TFBaseModel):
         :return:
         """
         # 销量的对数
-        raw_features = self.create_features()
-        embedding_dic = self.create_embedding()
-        # 对时间属性embedding
-        embedding_featrues = self.encoder_embedding(embedding_dic)
-        # 使用全连接网络对用户特征降维
-        embedding_profile_feature = tf.layers.dense(self.profile_features, 10, activation=tf.nn.relu)
-        encoder_features = tf.concat([raw_features, embedding_featrues, embedding_profile_feature], axis=2)
-
-        outputs, final_state = LSTM(encoder_features, self.encode_len, self.batch_size, self.n_hidden_units)
-        c, h = final_state
+        self.create_features()
+        nnn_outputs = self.create_mnn_net()
+        lstm_outputs, lstm_final_state = self.create_lstm_net()
+        c, h = lstm_final_state
+        cat_outputs = tf.concat([nnn_outputs, h], axis=1)
         # 加两层全连接网络
-        output_d1 = tf.layers.dense(h, self.n_hidden_units, activation=tf.nn.relu)
-        output_d2 = tf.layers.dense(output_d1 + h, self.num_class, activation=None)
+        output_d1 = tf.layers.dense(cat_outputs, self.n_hidden_units, activation=tf.nn.relu)
+        output_d2 = tf.layers.dense(output_d1, self.num_class, activation=None)
         # 对预测结果进行掩码,使预测结果在推荐列表中
         mask_output = output_d2 * self.plan_mask
         # 预测结果 0-1之间
         self.preds = tf.argmax(tf.nn.softmax(mask_output), axis=-1)
         self.labels = tf.one_hot(self.click_mode, 12)
         # 添加权重
-        # weight_list = np.ones(12, dtype=np.float32)
-        # weight_list[[3, 4, 8, 10, 11]] = 0.1
-        # weight_list[[7, 9]] = 2.5
-        # weight_list[[2, 5]] = 3
-        # weight_list = np.array([93., 141., 273., 49., 25., 95., 24., 156., 4., 20., 30., 12.], dtype=np.float32)
         weight_list = np.array([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.], dtype=np.float32)
         weight_tensor = tf.convert_to_tensor(weight_list)
         weight_labels = self.labels * weight_tensor
@@ -218,9 +217,10 @@ def get_raw_data():
     :return:
     """
     all_df = pd.read_csv('./data/recommend/all_features.csv')
-    # train_df = all_df[all_df['click_mode'] != -1].head(1000)
-    # test_df = all_df[all_df['click_mode'] == -1].head(1000)
-    # processed_df = pd.concat([train_df, test_df], axis=0)
+    train_df = all_df[all_df['click_mode'] != -1].head(1000)
+    test_df = all_df[all_df['click_mode'] == -1].head(1000)
+    all_df = pd.concat([train_df, test_df], axis=0)
+
     processed_df = process_label_imbalance(all_df)
     processed_df['distance_list'] = processed_df['distance_list'].apply(lambda x: eval(x))
     processed_df['eta_list'] = processed_df['eta_list'].apply(lambda x: eval(x))
@@ -237,12 +237,12 @@ if __name__ == '__main__':
     """
         整个程序入口
     """
-    base_columns = ['sid', 'pid', 'weekday', 'hour', 'o1', 'o2', 'd1', 'd2', 'click_mode',
+    base_columns = ['sid', 'pid', 'weekday', 'hour', 'o1', 'o2', 'd1', 'd2', 'euc_dis','click_mode',
                     'distance_list', 'eta_list', 'price_list', 'transport_mode_list', 'plan_len']
     profile_columns = ['pid'] + ['p{}'.format(i) for i in range(66)]
 
     all_train_data, all_test_data = get_raw_data()
-    columns = base_columns + ['plan_mask', 'profile_data', 'mnn_feat']
+    columns = base_columns + ['plan_mask', 'mnn_feat', 'profile_data']
     # 构造训练data
     train_data = [all_train_data[c].values for c in base_columns]
     train_data.append(np.stack(all_train_data['plan_mask'], axis=0))
@@ -259,7 +259,7 @@ if __name__ == '__main__':
     # test_df = DataFrame(data=test_data, columns=columns)
 
     ################
-    base_dir = './data/recommend/'
+    base_dir = './data/recommend1/'
     dr = DataReader(train_data, test_data, columns)
     nn = Lstm_Model(
         #

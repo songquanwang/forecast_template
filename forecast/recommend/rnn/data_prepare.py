@@ -196,7 +196,7 @@ def merge_gbdt_features():
     gbdt 特征合并到lstm
     :return:
     """
-    lstm_df = pd.read_csv('./data/recommend/processed_data.csv')
+    lstm_df = pd.read_csv('./data/recommend/processed_data_new.csv')
     # 获取gbdt 所有特征
     mnn_feature_df = pd.read_csv('./data/recommend/features_new.csv')[mnn_feat_columns]
     # 合并两套数据
