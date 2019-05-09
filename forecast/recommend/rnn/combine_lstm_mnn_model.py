@@ -105,9 +105,9 @@ class Lstm_Model(TFBaseModel):
         # 对时间属性embedding 5
         embedding_featrues = self.encoder_embedding(embedding_dic)
         # 66个用户特征降维24
-        embedding_profile_feature = tf.layers.dense(self.profile_data, 10, activation=tf.nn.relu)
+        embedding_profile_feature = tf.layers.dense(self.profile_data, 24, activation=tf.nn.relu)
         # 60个gbdt特征 降维 35
-        mnn_input_feature = tf.layers.dense(self.mnn_feat, 30, activation=tf.nn.relu)
+        mnn_input_feature = tf.layers.dense(self.mnn_feat, 35, activation=tf.nn.relu)
         # 合并输入特征 64 维
         mnn_feature = tf.concat([embedding_featrues, embedding_profile_feature, mnn_input_feature], axis=1)
 
@@ -276,7 +276,7 @@ if __name__ == '__main__':
         warm_start_init_step=0,
         #
         regularization_constant=0.0,
-        keep_prob=1.0,
+        keep_prob=0.5,
         enable_parameter_averaging=False,
         num_restarts=2,
         min_steps_to_checkpoint=500,

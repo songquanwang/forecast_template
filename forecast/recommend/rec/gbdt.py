@@ -93,5 +93,26 @@ def tp_2():
     submit.to_csv('../submit/{}_result_{}.csv'.format('lgb', now_time), index=False)
 
 
+def predict_by_model():
+    """
+    预测训练结果
+    :return:
+    """
+    train_x, train_y, test_x, submit1, submit2 = gen_features_sqw.get_train_test_feas_data_2()
+    result_proba = []
+    scores = []
+    for i in range(5):
+        print('***************************{}'.format(i))
+        lgb_model = lgb.Booster(model_file='../models/model_{}'.format(i))
+        train_pred = np.argmax(lgb_model.predict(train_x, num_iteration=lgb_model.best_iteration), axis=1)
+        val_score = f1_score(train_y, train_pred, average='weighted')
+        result_proba.append(train_pred)
+        scores.append(val_score)
+
+    print('cv f1-score: ', np.mean(scores))
+    pred_test = np.argmax(np.mean(result_proba, axis=0), axis=1)
+    pred_test.to_csv('lgb_train_result.csv', index=False)
+
+
 if __name__ == '__main__':
-    tp_1()
+    predict_by_model()
