@@ -81,6 +81,13 @@ def tp_1():
     submit_result(submit, result_lgb, 'lgb')
 
 
+def tp_valid():
+    train_x, train_y, test_x, submit = gen_features_sqw.get_train_test_feas_data_3()
+    # train_x, train_y, test_x, submit = gen_features.get_train_test_feas_data()
+    result_lgb = train_lgb(train_x, train_y, test_x)
+    submit_result(submit, result_lgb, 'lgb')
+
+
 def tp_2():
     train_x, train_y, test_x, submit1, submit2 = gen_features_sqw.get_train_test_feas_data_2()
 
@@ -98,21 +105,26 @@ def predict_by_model():
     预测训练结果
     :return:
     """
-    train_x, train_y, test_x, submit1, submit2 = gen_features_sqw.get_train_test_feas_data_2()
+    train_x, train_y, test_x, submit1, submit2, train_sid, test_sid = gen_features_sqw.get_train_test_feas_data_2()
     result_proba = []
     scores = []
     for i in range(5):
         print('***************************{}'.format(i))
         lgb_model = lgb.Booster(model_file='../models/model_{}'.format(i))
-        train_pred = np.argmax(lgb_model.predict(train_x, num_iteration=lgb_model.best_iteration), axis=1)
+        pred_onehot = lgb_model.predict(train_x, num_iteration=lgb_model.best_iteration)
+        train_pred = np.argmax(pred_onehot, axis=1)
         val_score = f1_score(train_y, train_pred, average='weighted')
-        result_proba.append(train_pred)
+        result_proba.append(pred_onehot)
         scores.append(val_score)
 
     print('cv f1-score: ', np.mean(scores))
     pred_test = np.argmax(np.mean(result_proba, axis=0), axis=1)
-    pred_test.to_csv('lgb_train_result.csv', index=False)
+    result_df = pd.DataFrame()
+    result_df['sid'] = train_sid.sid
+    result_df['recommend_mode'] = pred_test
+
+    result_df.to_csv('../submit/lgb_train_result.csv', index=False)
 
 
 if __name__ == '__main__':
-    predict_by_model()
+    tp_valid()

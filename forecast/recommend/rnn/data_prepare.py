@@ -191,6 +191,30 @@ def norm_data(raw_df):
     return raw_df
 
 
+def add_stat_feats(raw_df):
+    """
+   'max_dist', 'min_dist', 'mean_dist', 'std_dist',
+   'max_price', 'min_price','mean_price', 'std_price',
+   'max_eta', 'min_eta', 'mean_eta', 'std_eta',
+        'first_mode',
+        'max_dist_mode', 'min_dist_mode', 'max_price_mode', 'min_price_mode',
+        'max_eta_mode', 'min_eta_mode',
+    :return:
+    """
+
+    def gen_st_feat(x):
+        if len(x) == 0:
+            return pd.Series([0, 0, 0, 0])
+        v = [np.max(x), np.min(x), np.mean(x), np.std(x)]
+        return pd.Series(v)
+
+    raw_df[['max_dist', 'min_dist', 'mean_dist', 'std_dist']] = raw_df['distance_list'].apply(gen_st_feat)
+    raw_df[['max_price', 'min_price', 'mean_price', 'std_price']] = raw_df['price_list'].apply(gen_st_feat)
+    raw_df[['max_eta', 'min_eta', 'mean_eta', 'std_eta']] = raw_df['eta_list'].apply(gen_st_feat)
+    raw_df[['max_dist', 'min_dist', 'mean_dist', 'std_dist']] = raw_df['distance_list'].apply(gen_st_feat)
+    return raw_df
+
+
 def merge_gbdt_features():
     """
     gbdt 特征合并到lstm

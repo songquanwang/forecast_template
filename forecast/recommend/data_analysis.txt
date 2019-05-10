@@ -39,3 +39,28 @@ price/distance
 
 price/(eta*distance)
 (eta*price)/distance
+
+
+dropout 0.5
+***********abc*******1260
+[[step     1270]]     [[train]]     loss: 1.35555499       [[val]]     loss: 1.85839174       [[val]]     score: 0.4890625
+saving model to ./data/recommend1/checkpoints/model
+
+È¥µôsvd 20
+[[step        0]]     [[train]]     loss: 2.6203866        [[val]]     loss: 2.39074993       [[val]]     score: 0.24609375
+***********abc*******0
+[[step       10]]     [[train]]     loss: 2.49387113       [[val]]     loss: 2.38536774       [[val]]     score: 0.21164773
+***********abc*******10
+[[step       20]]     [[train]]     loss: 2.40882172       [[val]]     loss: 2.35597989       [[val]]     score: 0.23363095
+***********abc*******20
+[[step       30]]     [[train]]     loss: 2.3354766        [[val]]     loss: 2.33298428       [[val]]     score: 0.25201613
+[[step     1960]]     [[train]]     loss: 1.33731941       [[val]]     loss: 1.8829718        [[val]]     score: 0.52128906
+saving model to ./data/recommend1/checkpoints/model
+***********abc*******1960
+
+# Ìí¼Ól2=0.8
+***********abc*******1060
+[[step     1070]]     [[train]]     loss: 1.35546098       [[val]]     loss: 1.88485792       [[val]]     score: 0.565625
+***********abc*******1070
+[[step     1080]]     [[train]]     loss: 1.36075594       [[val]]     loss: 1.88873474       [[val]]     score: 0.56148438
+***********abc*******1080

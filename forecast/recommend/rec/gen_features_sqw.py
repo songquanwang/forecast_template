@@ -477,13 +477,15 @@ def gen_time_feas(data):
 def split_train_test(data):
     train_data = data[data['click_mode'] != -1]
     test_data = data[data['click_mode'] == -1]
+    train_sid = train_data[['sid']].copy()
+    test_sid = test_data[['sid']].copy()
     submit = test_data[['sid']].copy()
     train_data = train_data.drop(['sid', 'pid'], axis=1)
     test_data = test_data.drop(['sid', 'pid'], axis=1)
     test_data = test_data.drop(['click_mode'], axis=1)
     train_y = train_data['click_mode'].values
     train_x = train_data.drop(['click_mode'], axis=1)
-    return train_x, train_y, test_data, submit
+    return train_x, train_y, test_data, submit, train_sid, test_sid
 
 
 def gen_train_test_feas_data():
@@ -530,6 +532,24 @@ def get_train_test_feas_data_1():
     return train_x, train_y, test_x, submit
 
 
+def get_train_test_feas_data_3():
+    data = pd.read_csv('../data/features_new.csv')
+    train_data = data[data['click_mode'] != -1]
+    from sklearn.model_selection import train_test_split
+    train_data_t, train_data_e = train_test_split(train_data, test_size=0.2)
+
+    submit = train_data_e[['sid']].copy()
+
+    train_data = train_data_t.drop(['sid', 'pid'], axis=1)
+    test_data = train_data_e.drop(['sid', 'pid'], axis=1)
+
+    test_data = test_data.drop(['click_mode'], axis=1)
+    train_x = train_data.drop(['click_mode'], axis=1)
+    train_y = train_data['click_mode'].values
+
+    return train_x, train_y, test_data, submit
+
+
 def gen_plan_new():
     data = merge_raw_data()
     data = gen_od_feas(data)
@@ -545,9 +565,9 @@ def get_train_test_feas_data_2():
     data = data_all[~data_all.sid.isin(data_exclude.sid)]
     submit1 = data.loc[data['click_mode'] == -1, ['sid']].copy()
     submit2 = data_exclude.loc[data_exclude['click_mode'] == -1, ['sid']].copy()
-    train_x, train_y, test_x, submit = split_train_test(data)
+    train_x, train_y, test_x, submit, train_sid, test_sid = split_train_test(data)
 
-    return train_x, train_y, test_x, submit1, submit2
+    return train_x, train_y, test_x, submit1, submit2, train_sid, test_sid
 
 
 if __name__ == '__main__':
