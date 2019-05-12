@@ -483,6 +483,7 @@ def get_train_test_feas_submit():
 def process_label_imbalance(raw_df):
     """
     处理label不均衡问题
+    用了不好
     :param raw_df:
     :return:
     """
@@ -499,7 +500,7 @@ def get_train_test_feas_valid():
     :return:
     """
     data = pd.read_csv('../data/features/features_new_od.csv')[conf.feature_columns]
-    data = process_label_imbalance(data)
+    #data = process_label_imbalance(data)
     # 全部训练数据
     train_data = data[data['click_mode'] != -1]
     # 划分验证集

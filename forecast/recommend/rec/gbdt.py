@@ -127,4 +127,4 @@ def predict_by_model():
 
 
 if __name__ == '__main__':
-    tp_valid()
+    tp_submit()
