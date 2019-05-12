@@ -13,6 +13,8 @@ import numpy as np
 from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
 from tqdm import tqdm
+from collections import OrderedDict
+import common
 
 
 def read_profile_data():
@@ -65,6 +67,86 @@ def merge_raw_data():
     print('total data size: {}'.format(data.shape))
     print('raw data columns: {}'.format(', '.join(data.columns)))
     return data
+
+
+def gen_plan_feas_bkp(plans_df):
+    """
+    太慢了
+    plan字段:distance ,eta, price, transport_mode
+    transport_mode: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+    [1, 2, 7, 9, 11] price 存在''
+    [3,5,6] price全是''
+    4 8 10 price不为''
+    0 未知(没推荐);-1 待预测
+    词向量:
+    mode_texts=['word_1 word_3 word_5','word_1 word_4 word_6'
+    tfidf_enc.vocabulary_
+    {'word_1': 0,'word_1 word_3': 1,'word_1 word_4': 2, 'word_3': 3,'word_3 word_5': 4, 'word_4': 5, 'word_4 word_6': 6,'word_5': 7, 'word_6': 8}
+    tfidf_vec.toarray() ;词向量跟词典长度相同
+    array([0.33517574, 0.47107781, 0.        , 0.47107781, 0.47107781, 0.        , 0.        , 0.47107781, 0.        ])
+    array([0.33517574, 0.        , 0.47107781, 0.        , 0.        ,0.47107781, 0.47107781, 0.        , 0.47107781])
+
+    需要处理 4 distance
+    :param data:
+    :return:
+    """
+    columns_names = ['mode_feas_{}'.format(i) for i in range(12)]
+
+    def gen_mode_code(mode_list):
+        ma = np.zeros(12)
+        ma[mode_list] = 1
+        return ma
+
+    data = []
+    groups = plans_df.groupby('sid')
+
+    def get_row(group):
+        # transport_mode
+        ls = OrderedDict()
+        ls['sid'] = group['sid'].values[0]
+        columns_values = list(gen_mode_code(group['transport_mode'].values))
+        for key, value in zip(columns_names, columns_values):
+            ls[key] = value
+        ls['first_mode'] = group['transport_mode'].values[0]
+        # distance
+        ls['max_dist'] = group['distance'].max()
+        ls['min_dist'] = group['distance'].min()
+        ls['mean_dist'] = group['distance'].mean()
+        ls['std_dist'] = group['distance'].std(ddof=0)
+        # price
+        ls['max_price'] = group['price'].max()
+        ls['min_price'] = group['price'].min()
+        ls['mean_price'] = group['price'].mean()
+        ls['std_price'] = group['price'].std(ddof=0)
+        # eta
+        ls['max_eta'] = group['eta'].max()
+        ls['min_eta'] = group['eta'].min()
+        ls['mean_eta'] = group['eta'].mean()
+        ls['std_eta'] = group['eta'].std(ddof=0)
+        # mode_texts
+        ls['mode_texts'] = ' '.join(['word_{}'.format(mode) for mode in group['transport_mode'].values])
+        # 符合特征 df.iloc[df['D'].idxmin()].C
+        ls['max_dist_mode'] = group.loc[group.index == group['distance'].idxmax()].transport_mode.values[0]
+        ls['min_dist_mode'] = group.loc[group.index == group['distance'].idxmin()].transport_mode.values[0]
+        ls['max_price_mode'] = group.loc[group.index == group['price'].idxmax()].transport_mode.values[0]
+        ls['min_price_mode'] = group.loc[group.index == group['price'].idxmin()].transport_mode.values[0]
+        ls['max_eta_mode'] = group.loc[group.index == group['eta'].idxmax()].transport_mode.values[0]
+        ls['min_eta_mode'] = group.loc[group.index == group['eta'].idxmin()].transport_mode.values[0]
+        return ls
+
+    for name, group in groups:
+        row = get_row(group)
+        data.append(row)
+    feature_df = pd.DataFrame(data)
+    print('mode tfidf...')
+    tfidf_enc = TfidfVectorizer(ngram_range=(1, 2))
+    tfidf_vec = tfidf_enc.fit_transform(feature_df['mode_texts'])
+    svd_enc = TruncatedSVD(n_components=10, n_iter=20, random_state=2019)
+    mode_svd = svd_enc.fit_transform(tfidf_vec)
+    mode_svd = pd.DataFrame(mode_svd)
+    mode_svd.columns = ['svd_mode_{}'.format(i) for i in range(10)]
+    feature_df = pd.concat([feature_df, mode_svd], axis=1)
+    return feature_df
 
 
 def get_plan_df(data):
@@ -254,6 +336,33 @@ def split_train_test(data):
     return train_x, train_y, test_data, submit
 
 
+def get_train_test_feas_data_3():
+    data = pd.read_csv('../data/features_new.csv')
+    train_data = data[data['click_mode'] != -1]
+    from sklearn.model_selection import train_test_split
+    train_data_t, train_data_e = train_test_split(train_data, test_size=0.2)
+
+    submit = train_data_e[['sid']].copy()
+
+    train_data = train_data_t.drop(['sid', 'pid'], axis=1)
+    test_data = train_data_e.drop(['sid', 'pid'], axis=1)
+
+    test_data = test_data.drop(['click_mode'], axis=1)
+    train_x = train_data.drop(['click_mode'], axis=1)
+    train_y = train_data['click_mode'].values
+
+    return train_x, train_y, test_data, submit
+
+def get_train_test_feas_data_2():
+    data_all = pd.read_csv('../data/features_new.csv')
+    # 排除训练、测试数中没有plan的数据 8946+1787=10733
+    data_exclude = data_all[(data_all['click_mode'].isin([0, -1]) & (data_all['max_dist'] == -1))]
+    data = data_all[~data_all.sid.isin(data_exclude.sid)]
+    submit1 = data.loc[data['click_mode'] == -1, ['sid']].copy()
+    submit2 = data_exclude.loc[data_exclude['click_mode'] == -1, ['sid']].copy()
+    train_x, train_y, test_x, submit, train_sid, test_sid = split_train_test(data)
+
+    return train_x, train_y, test_x, submit1, submit2, train_sid, test_sid
 def gen_train_test_feas_data():
     """
     :return:
@@ -284,6 +393,44 @@ def gen_train_test_feas_data():
     data.to_csv('./features.csv', index=False)
     train_x, train_y, test_x, submit = split_train_test(data)
     return train_x, train_y, test_x, submit
+
+def add_sta_feas(data):
+    """
+    添加统计特征
+    svd mode 10维
+    :param data:
+    :return:
+    """
+    dist = 'cosine'
+    svd_columns = ['svd_mode_{}'.format(i) for i in range(10)]
+    train_data = data[data['click_mode'] != -1]
+    test_data = data[data['click_mode'] == -1]
+    mode_indices_dict = common.get_sample_indices_by_relevance(train_data)
+    pid_mode_indices_dict = common.get_sample_indices_by_relevance(train_data, "pid")
+    stat_columns_sid = ['stat_{0}_{1}'.format(c, i) for c in ['min', 'median', 'max', 'mean', 'std'] for i in range(12)]
+    cut_data = data[['sid'] + svd_columns]
+    cut_data.loc[data['click_mode'] != -1, stat_columns_sid] = common.generate_dist_stats_feat(dist, train_data[svd_columns].values, train_data["sid"].values,
+                                                                                               train_data[svd_columns].values, train_data["sid"].values,
+                                                                                               mode_indices_dict)
+    cut_data.loc[data['click_mode'] == -1, stat_columns_sid] = common.generate_dist_stats_feat(dist, train_data[svd_columns].values, train_data["sid"].values,
+                                                                                               test_data[svd_columns].values, test_data["sid"].values,
+                                                                                               mode_indices_dict)
+    pid_stat_columns_sid = ['stat_pid_{0}'.format(c) for c in ['min', 'median', 'max', 'mean', 'std']]
+    cut_data.loc[data['click_mode'] != -1, pid_stat_columns_sid] = common.generate_dist_stats_feat(dist, train_data[svd_columns].values, train_data["sid"].values,
+                                                                                                   train_data[svd_columns].values, train_data["sid"].values,
+                                                                                                   pid_mode_indices_dict)
+    cut_data.loc[data['click_mode'] == -1, pid_stat_columns_sid] = common.generate_dist_stats_feat(dist, train_data[svd_columns].values, train_data["sid"].values,
+                                                                                                   test_data[svd_columns].values, test_data["sid"].values,
+                                                                                                   pid_mode_indices_dict)
+
+    svd_enc = TruncatedSVD(n_components=10, n_iter=20, random_state=2019)
+    stat_svd = svd_enc.fit_transform(cut_data[stat_columns_sid].values)
+    stat_svd_df = pd.DataFrame(stat_svd)
+    stat_svd_df.columns = ['stat_fea_{}'.format(i) for i in range(20)]
+
+    data = pd.merge(data, stat_svd_df, on=['sid'], how='inner')
+    return data
+
 
 
 def get_train_test_feas_data():

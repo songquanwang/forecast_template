@@ -90,11 +90,11 @@ class Lstm_Model(TFBaseModel):
             tf.expand_dims(self.eta_encode, 2),
             tf.expand_dims(self.price_encode, 2),
             tf.one_hot(self.mode_encode, 12),
-            tf.tile(tf.reshape(self.o1, shape=(tf.shape(self.o1)[0], 1, 1)), (1, self.num_encode_steps, 1)),
-            tf.tile(tf.reshape(self.o2, shape=(tf.shape(self.o2)[0], 1, 1)), (1, self.num_encode_steps, 1)),
-            tf.tile(tf.reshape(self.d1, shape=(tf.shape(self.d1)[0], 1, 1)), (1, self.num_encode_steps, 1)),
-            tf.tile(tf.reshape(self.d2, shape=(tf.shape(self.d2)[0], 1, 1)), (1, self.num_encode_steps, 1)),
-            tf.tile(tf.reshape(self.euc_dis, shape=(tf.shape(self.euc_dis)[0], 1, 1)), (1, self.num_encode_steps, 1))
+            # tf.tile(tf.reshape(self.o1, shape=(tf.shape(self.o1)[0], 1, 1)), (1, self.num_encode_steps, 1)),
+            # tf.tile(tf.reshape(self.o2, shape=(tf.shape(self.o2)[0], 1, 1)), (1, self.num_encode_steps, 1)),
+            # tf.tile(tf.reshape(self.d1, shape=(tf.shape(self.d1)[0], 1, 1)), (1, self.num_encode_steps, 1)),
+            # tf.tile(tf.reshape(self.d2, shape=(tf.shape(self.d2)[0], 1, 1)), (1, self.num_encode_steps, 1)),
+            # tf.tile(tf.reshape(self.euc_dis, shape=(tf.shape(self.euc_dis)[0], 1, 1)), (1, self.num_encode_steps, 1))
         ], axis=2)
         # encoder_features = tf.concat([self.encode_features, embedding_featrues, embedding_profile_feature], axis=2)
         outputs, final_state = LSTM(self.encode_features, self.encode_len, self.batch_size, self.n_hidden_units)
@@ -114,8 +114,15 @@ class Lstm_Model(TFBaseModel):
         embedding_profile_feature = tf.layers.dense(self.profile_data, 10, activation=tf.nn.relu)
         # 60个gbdt特征 降维 35
         mnn_input_feature = tf.layers.dense(self.mnn_feat1, 28, activation=tf.nn.relu)
-        # 合并输入特征 64 维
-        mnn_feature = tf.concat([embedding_featrues, embedding_profile_feature, mnn_input_feature], axis=1)
+
+        # 合并输入特征 64 维+5
+        mnn_feature = tf.concat([embedding_featrues, embedding_profile_feature, mnn_input_feature,
+                                 tf.expand_dims(self.o1, 1),
+                                 tf.expand_dims(self.o2, 1),
+                                 tf.expand_dims(self.d1, 1),
+                                 tf.expand_dims(self.d2, 1),
+                                 tf.expand_dims(self.euc_dis, 1),
+                                 ], axis=1)
 
         # 加5层全连接网络 第一层输出128
         o1 = tf.layers.dense(mnn_feature, 64, activation=tf.nn.relu)

@@ -5,16 +5,15 @@
   @Last Modified by:   zzn 
   @Last Modified time: 2019-04-17 19:34:38 
 """
-import numpy as np
+from time import gmtime, strftime
 
 import lightgbm as lgb
+import numpy as np
 import pandas as pd
+from sklearn.metrics import f1_score
+from sklearn.model_selection import StratifiedKFold
 
 import gen_features_sqw
-import gen_features
-from sklearn.model_selection import StratifiedKFold
-from sklearn.metrics import f1_score
-from time import gmtime, strftime
 
 
 def eval_f(y_pred, train_data):
@@ -33,7 +32,14 @@ def submit_result(submit, result, model_name):
     submit.to_csv('../submit/{}_result_{}.csv'.format(model_name, now_time), index=False)
 
 
-def train_lgb(train_x, train_y, test_x):
+def train_lgb(train_x, train_y, test_x, cate_cols):
+    """
+    训练并保存模型
+    :param train_x:
+    :param train_y:
+    :param test_x:
+    :return:
+    """
     kfold = StratifiedKFold(n_splits=5, shuffle=True, random_state=2019)
     lgb_paras = {
         'objective': 'multiclass',
@@ -48,8 +54,8 @@ def train_lgb(train_x, train_y, test_x):
         'bagging_fraction': 0.8,
         'bagging_freq': 4,
     }
-    cate_cols = ['max_dist_mode', 'min_dist_mode', 'max_price_mode',
-                 'min_price_mode', 'max_eta_mode', 'min_eta_mode', 'first_mode', 'weekday', 'hour']
+    # cate_cols = ['max_dist_mode', 'min_dist_mode', 'max_price_mode',
+    #              'min_price_mode', 'max_eta_mode', 'min_eta_mode', 'first_mode', 'weekday', 'hour']
     scores = []
     result_proba = []
     i = 0
@@ -74,30 +80,24 @@ def train_lgb(train_x, train_y, test_x):
     return pred_test
 
 
-def tp_1():
-    train_x, train_y, test_x, submit = gen_features_sqw.get_train_test_feas_data_1()
-    # train_x, train_y, test_x, submit = gen_features.get_train_test_feas_data()
-    result_lgb = train_lgb(train_x, train_y, test_x)
-    submit_result(submit, result_lgb, 'lgb')
+def tp_submit():
+    """
+    训练模型，生成测试集预测结果
+    :return:
+    """
+    train_x, train_y, test_x, test_y, train_sid, test_sid, cate_cols = gen_features_sqw.get_train_test_feas_submit()
+    result_lgb = train_lgb(train_x, train_y, test_x, cate_cols)
+    submit_result(test_sid, result_lgb, 'lgb')
 
 
 def tp_valid():
-    train_x, train_y, test_x, submit = gen_features_sqw.get_train_test_feas_data_3()
-    # train_x, train_y, test_x, submit = gen_features.get_train_test_feas_data()
-    result_lgb = train_lgb(train_x, train_y, test_x)
-    submit_result(submit, result_lgb, 'lgb')
-
-
-def tp_2():
-    train_x, train_y, test_x, submit1, submit2 = gen_features_sqw.get_train_test_feas_data_2()
-
-    # train_x, train_y, test_x, submit = gen_features.get_train_test_feas_data()
-    result_lgb = train_lgb(train_x, train_y, test_x)
-    now_time = strftime("%Y-%m-%d-%H-%M-%S", gmtime())
-    submit1['recommend_mode'] = result_lgb
-    submit2['recommend_mode'] = 0
-    submit = pd.concat([submit1, submit2], axis=0).reset_index(drop=True)
-    submit.to_csv('../submit/{}_result_{}.csv'.format('lgb', now_time), index=False)
+    """
+    训练模型，生成验证集预测结果
+    :return:
+    """
+    train_x, train_y, test_x, test_y, train_sid, test_sid, cate_cols = gen_features_sqw.get_train_test_feas_valid()
+    result_lgb = train_lgb(train_x, train_y, test_x, cate_cols)
+    submit_result(test_sid, result_lgb, 'lgb')
 
 
 def predict_by_model():
@@ -105,15 +105,15 @@ def predict_by_model():
     预测训练结果
     :return:
     """
-    train_x, train_y, test_x, submit1, submit2, train_sid, test_sid = gen_features_sqw.get_train_test_feas_data_2()
+    train_x, train_y, test_x, test_y, train_sid, test_sid, cate_cols = gen_features_sqw.get_train_test_feas_valid()
     result_proba = []
     scores = []
     for i in range(5):
         print('***************************{}'.format(i))
         lgb_model = lgb.Booster(model_file='../models/model_{}'.format(i))
-        pred_onehot = lgb_model.predict(train_x, num_iteration=lgb_model.best_iteration)
-        train_pred = np.argmax(pred_onehot, axis=1)
-        val_score = f1_score(train_y, train_pred, average='weighted')
+        pred_onehot = lgb_model.predict(test_x, num_iteration=lgb_model.best_iteration)
+        test_pred = np.argmax(pred_onehot, axis=1)
+        val_score = f1_score(test_y, test_pred, average='weighted')
         result_proba.append(pred_onehot)
         scores.append(val_score)
 

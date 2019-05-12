@@ -52,5 +52,21 @@ transport_mode
 
  sorted(c, key=c.get)[-1]
 
+ 特征工程
+ 1.按地址聚类  添加 o_class ,d_class,每个类别最大label cat
+               添加维度的直线距离  num_direct_distance
+ 2.按label 分组，计算：mode svd 向量
+      每个计划各个类别向量的 距离 num     12中方式*7 ,不足7个用None
+      每个label最大的
+ 3.按照用户分组，用户最喜欢的交通方式 cat
+                 用户+天气 最喜欢的交通方式 cat
+                 用户+价格 num
+                 用户+距离 num
+                 用户+时间 num
+ 4.
+
+
+
+
 
 

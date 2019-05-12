@@ -64,3 +64,108 @@ saving model to ./data/recommend1/checkpoints/model
 ***********abc*******1070
 [[step     1080]]     [[train]]     loss: 1.36075594       [[val]]     loss: 1.88873474       [[val]]     score: 0.56148438
 ***********abc*******1080
+
+##单独mnn
+[[step        0]]     [[train]]     loss: 2.44665933       [[val]]     loss: 2.45557237       [[val]]     score: 0.3671875
+***********abc*******0
+[[step       10]]     [[train]]     loss: 2.42985871       [[val]]     loss: 2.42675714       [[val]]     score: 0.35866477
+***********abc*******10
+[[step       20]]     [[train]]     loss: 2.31271964       [[val]]     loss: 2.40082426       [[val]]     score: 0.35342262
+[[step     4590]]     [[train]]     loss: 1.30537412       [[val]]     loss: 1.78027996       [[val]]     score: 0.42953125
+***********abc*******4590
+[[step     4600]]     [[train]]     loss: 1.30398199       [[val]]     loss: 1.78036274       [[val]]     score: 0.4303125
+***********abc*******4600
+[[step     4610]]     [[train]]     loss: 1.30599597       [[val]]     loss: 1.78528057       [[val]]     score: 0.42855469
+***********abc*******4610
+[[step     4620]]     [[train]]     loss: 1.31016762       [[val]]     loss: 1.79052558       [[val]]     score: 0.42589844
+
+####单独mnn +o d euc特征
+[[step        0]]     [[train]]     loss: 2.55963254       [[val]]     loss: 2.43753052       [[val]]     score: 0.265625
+***********abc*******0
+[[step       10]]     [[train]]     loss: 2.35934511       [[val]]     loss: 2.42941796       [[val]]     score: 0.28267045
+***********abc*******10
+[[step       20]]     [[train]]     loss: 2.25626506       [[val]]     loss: 2.41058405       [[val]]     score: 0.30412946
+[[step     5810]]     [[train]]     loss: 1.29769979       [[val]]     loss: 1.59903174       [[val]]     score: 0.50984375
+***********abc*******5810
+[[step     5820]]     [[train]]     loss: 1.29769734       [[val]]     loss: 1.60473564       [[val]]     score: 0.50675781
+***********abc*******5820
+[[step     5830]]     [[train]]     loss: 1.29735267       [[val]]     loss: 1.60402372       [[val]]     score: 0.50605469
+***********abc*******5830
+[[step     5840]]     [[train]]     loss: 1.29786497       [[val]]     loss: 1.6021849        [[val]]     score: 0.50769531
+
+#######mnn+lstm  od 转移到mnn
+[[step        0]]     [[train]]     loss: 2.59967303       [[val]]     loss: 2.55254412       [[val]]     score: 0.15625
+***********abc*******0
+[[step       10]]     [[train]]     loss: 2.51058154       [[val]]     loss: 2.53379655       [[val]]     score: 0.1875
+***********abc*******10
+[[step       20]]     [[train]]     loss: 2.39686463       [[val]]     loss: 2.51234279       [[val]]     score: 0.2167038
+
+###############mnn+lstm lstm加上 o d
+[[step        0]]     [[train]]     loss: 2.66442466       [[val]]     loss: 2.38222194       [[val]]     score: 0.37109375
+***********abc*******0
+[[step       10]]     [[train]]     loss: 2.55324864       [[val]]     loss: 2.36004966       [[val]]     score: 0.35866477
+***********abc*******10
+[[step       20]]     [[train]]     loss: 2.44277912       [[val]]     loss: 2.34138622       [[val]]     score: 0.35491071
+
+######################### l2:0.8  300 BATCH 不降低
+[[step        0]]     [[train]]     loss: 2.56052732       [[val]]     loss: 2.54452181       [[val]]     score: 0.34765625
+***********abc*******0
+[[step       10]]     [[train]]     loss: 2.51904264       [[val]]     loss: 2.52489636       [[val]]     score: 0.32848011
+***********abc*******10
+[[step       20]]     [[train]]     loss: 2.45707392       [[val]]     loss: 2.50711464       [[val]]     score: 0.34914435
+***********abc*******20
+
+
+######################### l2:0.2
+[[step        0]]     [[train]]     loss: 2.68676925       [[val]]     loss: 2.50193214       [[val]]     score: 0.26953125
+***********abc*******0
+[[step       10]]     [[train]]     loss: 2.53758597       [[val]]     loss: 2.4728182        [[val]]     score: 0.3462358
+***********abc*******10
+[[step       20]]     [[train]]     loss: 2.4499206        [[val]]     loss: 2.45608043       [[val]]     score: 0.38225446
+***********abc*******20
+[[step       30]]     [[train]]     loss: 2.37580882       [[val]]     loss: 2.44447346       [[val]]     score: 0.40284778
+***********abc*******30
+[[step       40]]     [[train]]     loss: 2.31811151       [[val]]     loss: 2.43699716       [[val]]     score: 0.40796494
+***********abc*******40
+[[step       50]]     [[train]]     loss: 2.25964085       [[val]]     loss: 2.4315383        [[val]]     score: 0.41130515
+
+
+500个batch valid 1.5 2.48 不变了
+
+################ l2 0.5
+
+[[step        0]]     [[train]]     loss: 2.62119484       [[val]]     loss: 2.35730791       [[val]]     score: 0.37109375
+***********abc*******0
+[[step       10]]     [[train]]     loss: 2.40012722       [[val]]     loss: 2.37988134       [[val]]     score: 0.35724432
+***********abc*******10
+[[step       20]]     [[train]]     loss: 2.30305727       [[val]]     loss: 2.39273747       [[val]]     score: 0.37072173
+***********abc*******20
+[[step       30]]     [[train]]     loss: 2.24808516       [[val]]     loss: 2.40215864       [[val]]     score: 0.38319052
+***********abc*******30
+[[step       40]]     [[train]]     loss: 2.20367662       [[val]]     loss: 2.41042045       [[val]]     score: 0.38519436
+
+
+一、python主流开发环境
+pycharm/jupiter notebook/jupiter lab
+二、主流深度学习技术
+RNN:GRU/LSTM
+CNN:各种图像处理Net；WaveNet （CNN+空洞卷积 对长时间序列例如声音进行 生成和预测)
+各种卷积方式：conv1d/conv2d/空洞卷积/深度分离卷积/可变性卷积
+注意力机制：经典注意力、自注意力 例如：transformer=多头自注意力
+Seq2Seq:一种时序到时序的网络架构
+一般多层神经网络：涉及到权重初始化、激活函数选择、矩阵dot、concat、gather、gather_nd、split、tile、expand_dim、reshape、batch_norm、dropout等常用操作
+transformer：多头注意力
+seq2seq:序列到序列模型
+fasttext:一种类似以word2vec的快速分类方法
+bert：基于transformer+mask的双向编码机制
+生成式模型：对偶学习、gan(多种)、vae
+强化学习：Q-value；policy_grident
+
+三、应用场景
+图像处理：图片分类、图片分割、图像增强（风格变换)、人脸识别等
+声音处理：声音生成、声音识别
+推荐：
+预测：
+自然语言处理：本体识别、文本分类、自动标注、自动摘要、搜索、情感分析、翻译
+
+

@@ -6,15 +6,15 @@
   @Last Modified time: 2019-04-17 19:32:26 
 """
 
-import json
-import pandas as pd
 import numpy as np
-from collections import OrderedDict
+import pandas as pd
+from six.moves import reduce
 from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
-from tqdm import tqdm
-from six.moves import reduce
+from sklearn.model_selection import train_test_split
 import common
+import conf
+from sklearn.metrics.pairwise import pairwise_distances
 
 
 def read_profile_data():
@@ -72,6 +72,7 @@ def merge_raw_data():
     # 训练数据
     tr_data = tr_queries.merge(tr_click, on='sid', how='left')
     tr_data = tr_data.merge(tr_plans, on='sid', how='left')
+    # click_time无用
     tr_data = tr_data.drop(['click_time'], axis=1)
     # 左连接不上的label置0
     tr_data['click_mode'] = tr_data['click_mode'].fillna(0)
@@ -132,8 +133,7 @@ def get_plan_df_bkp(data):
     plans_df.loc[(plans_df['transport_mode'] == 4) & (plans_df['distance'] < 100), 'dj1'] = plans_df.loc[
         (plans_df['transport_mode'] == 4) & (plans_df['distance'] < 100), 'mdj']
     df1 = plans_df.loc[(plans_df['transport_mode'] == 4) & (plans_df['distance'] < 100)]
-    plans_df.loc[(plans_df['transport_mode'] == 4) & (plans_df['distance'] < 100), 'distance1'] = df1['price'] * 100 / \
-                                                                                                  df1['dj1']
+    plans_df.loc[(plans_df['transport_mode'] == 4) & (plans_df['distance'] < 100), 'distance1'] = df1['price'] * 100 / df1['dj1']
     # 填充 price dj[1, 2, 7, 9, 11]
     plans_df['price_nan'] = plans_df['price'].apply(lambda x: 1 if np.isnan(x) else 0)
     plans_df['price1'] = plans_df['price']
@@ -143,10 +143,13 @@ def get_plan_df_bkp(data):
     return plans_df
 
 
-def get_plan_df(data):
+def gen_plan_df(data):
     """
-    获取 dj mdj -->dj1 distance1 price1
-    生成
+    [1, 2, 7, 9, 11] price 存在''
+    [3,5,6] price全是0
+    4 8 10 price不为''
+    对数据中的plans展开，生成plans dataframe
+    对plans 进行预处理，填充
     :return:
     """
     data.loc[data['click_mode'] != -1, 'is_train'] = 1
@@ -183,12 +186,13 @@ def get_plan_df(data):
     plans_df['mdj'] = plans_df.groupby(['transport_mode', 'time_num30'])['dj'].transform(lambda x: np.nanmedian(x))
 
     # 填充 price dj[1, 2, 7, 9, 11]
-    # plans_df['price1'] = plans_df['price']
+    # 用平均单价替换价格
     plans_df.loc[plans_df['price'].isnull(), 'dj'] = plans_df.loc[plans_df['price'].isnull(), 'mdj']
     df2 = plans_df.loc[plans_df['price'].isnull()]
+    # 价格为''的 用单价*距离代替价格
     plans_df.loc[plans_df['price'].isnull(), 'price'] = df2['dj'] * df2['distance'] / 100
     # sid, plan_time, distance, eta, price, transport_mode
-    return plans_df[['sid', 'plan_time', 'distance', 'eta', 'price', 'transport_mode']]
+    return plans_df[['sid', 'plan_time', 'distance', 'eta', 'price', 'transport_mode', 'dj']]
 
 
 def gen_od_feas(data):
@@ -201,88 +205,8 @@ def gen_od_feas(data):
     data['o2'] = data['o'].apply(lambda x: float(x.split(',')[1]))
     data['d1'] = data['d'].apply(lambda x: float(x.split(',')[0]))
     data['d2'] = data['d'].apply(lambda x: float(x.split(',')[1]))
-    data = data.drop(['o', 'd'], axis=1)
+    # data = data.drop(['o', 'd'], axis=1)
     return data
-
-
-def gen_plan_feas_bkp(plans_df):
-    """
-    太慢了
-    plan字段:distance ,eta, price, transport_mode
-    transport_mode: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-    [1, 2, 7, 9, 11] price 存在''
-    [3,5,6] price全是''
-    4 8 10 price不为''
-    0 未知(没推荐);-1 待预测
-    词向量:
-    mode_texts=['word_1 word_3 word_5','word_1 word_4 word_6'
-    tfidf_enc.vocabulary_
-    {'word_1': 0,'word_1 word_3': 1,'word_1 word_4': 2, 'word_3': 3,'word_3 word_5': 4, 'word_4': 5, 'word_4 word_6': 6,'word_5': 7, 'word_6': 8}
-    tfidf_vec.toarray() ;词向量跟词典长度相同
-    array([0.33517574, 0.47107781, 0.        , 0.47107781, 0.47107781, 0.        , 0.        , 0.47107781, 0.        ])
-    array([0.33517574, 0.        , 0.47107781, 0.        , 0.        ,0.47107781, 0.47107781, 0.        , 0.47107781])
-
-    需要处理 4 distance
-    :param data:
-    :return:
-    """
-    columns_names = ['mode_feas_{}'.format(i) for i in range(12)]
-
-    def gen_mode_code(mode_list):
-        ma = np.zeros(12)
-        ma[mode_list] = 1
-        return ma
-
-    data = []
-    groups = plans_df.groupby('sid')
-
-    def get_row(group):
-        # transport_mode
-        ls = OrderedDict()
-        ls['sid'] = group['sid'].values[0]
-        columns_values = list(gen_mode_code(group['transport_mode'].values))
-        for key, value in zip(columns_names, columns_values):
-            ls[key] = value
-        ls['first_mode'] = group['transport_mode'].values[0]
-        # distance
-        ls['max_dist'] = group['distance'].max()
-        ls['min_dist'] = group['distance'].min()
-        ls['mean_dist'] = group['distance'].mean()
-        ls['std_dist'] = group['distance'].std(ddof=0)
-        # price
-        ls['max_price'] = group['price'].max()
-        ls['min_price'] = group['price'].min()
-        ls['mean_price'] = group['price'].mean()
-        ls['std_price'] = group['price'].std(ddof=0)
-        # eta
-        ls['max_eta'] = group['eta'].max()
-        ls['min_eta'] = group['eta'].min()
-        ls['mean_eta'] = group['eta'].mean()
-        ls['std_eta'] = group['eta'].std(ddof=0)
-        # mode_texts
-        ls['mode_texts'] = ' '.join(['word_{}'.format(mode) for mode in group['transport_mode'].values])
-        # 符合特征 df.iloc[df['D'].idxmin()].C
-        ls['max_dist_mode'] = group.loc[group.index == group['distance'].idxmax()].transport_mode.values[0]
-        ls['min_dist_mode'] = group.loc[group.index == group['distance'].idxmin()].transport_mode.values[0]
-        ls['max_price_mode'] = group.loc[group.index == group['price'].idxmax()].transport_mode.values[0]
-        ls['min_price_mode'] = group.loc[group.index == group['price'].idxmin()].transport_mode.values[0]
-        ls['max_eta_mode'] = group.loc[group.index == group['eta'].idxmax()].transport_mode.values[0]
-        ls['min_eta_mode'] = group.loc[group.index == group['eta'].idxmin()].transport_mode.values[0]
-        return ls
-
-    for name, group in groups:
-        row = get_row(group)
-        data.append(row)
-    feature_df = pd.DataFrame(data)
-    print('mode tfidf...')
-    tfidf_enc = TfidfVectorizer(ngram_range=(1, 2))
-    tfidf_vec = tfidf_enc.fit_transform(feature_df['mode_texts'])
-    svd_enc = TruncatedSVD(n_components=10, n_iter=20, random_state=2019)
-    mode_svd = svd_enc.fit_transform(tfidf_vec)
-    mode_svd = pd.DataFrame(mode_svd)
-    mode_svd.columns = ['svd_mode_{}'.format(i) for i in range(10)]
-    feature_df = pd.concat([feature_df, mode_svd], axis=1)
-    return feature_df
 
 
 def gen_plan_feas_by_plans(plans_df):
@@ -365,7 +289,6 @@ def gen_empty_plan_feas(data):
     mode_columns = ['sid'] + mode_columns_names
     plan_feature_df = pd.DataFrame(np.hstack([sid_data, mode_data]), columns=mode_columns)
 
-    plan_feature_df['first_mode'] = 0
     plan_feature_df['mode_texts'] = 'word_null'
     plan_feature_df['max_dist'] = -1
     plan_feature_df['min_dist'] = -1
@@ -381,6 +304,8 @@ def gen_empty_plan_feas(data):
     plan_feature_df['min_eta'] = -1
     plan_feature_df['mean_eta'] = -1
     plan_feature_df['std_eta'] = -1
+
+    plan_feature_df['first_mode'] = 0
     plan_feature_df['max_dist_mode'] = -1
     plan_feature_df['min_dist_mode'] = -1
     plan_feature_df['max_price_mode'] = -1
@@ -391,12 +316,12 @@ def gen_empty_plan_feas(data):
     return plan_feature_df
 
 
-def get_plan_feas():
-    plan_featurns = pd.read_csv('../data/data_set_phase1/plan_features.csv')
-    return plan_featurns
-
-
 def gen_plan_feas(data):
+    """
+    计划特征 [max min mean std] * 3 + 8 mode
+    :param data:
+    :return:
+    """
     # plans_df = get_plan_df(data)
     # tr_plans + te_plans =583625
     plans_df = pd.read_csv('../data/plans_new.csv')
@@ -416,44 +341,39 @@ def gen_plan_feas(data):
     return feature_df
 
 
+def get_plan_feas():
+    plan_featurns = pd.read_csv('../data/data_set_phase1/plan_features.csv')
+    return plan_featurns
+
+
 def add_sta_feas(data):
     """
     添加统计特征
+    计算 由svd_mode 代表的 推荐计划列表 分别于各个label 向量中心的距离
+    最大距离、最小距离、平均距离、方差
+
+    svd mode 10维
     :param data:
     :return:
     """
-    dist = 'cosine'
-    svd_columns = ['svd_mode_{}'.format(i) for i in range(10)]
-    train_data = data[data['click_mode'] != -1]
-    test_data = data[data['click_mode'] == -1]
-    mode_indices_dict = common.get_sample_indices_by_relevance(train_data)
-    pid_mode_indices_dict = common.get_sample_indices_by_relevance(train_data, "pid")
-    stat_columns_sid = ['stat_{0}_{1}'.format(c, i) for c in ['min', 'median', 'max', 'mean', 'std'] for i in range(12)]
-    cut_data = data[['sid'] + svd_columns]
-    cut_data.loc[data['click_mode'] != -1, stat_columns_sid] = common.generate_dist_stats_feat(dist, train_data[svd_columns].values, train_data["sid"].values,
-                                                                                               train_data[svd_columns].values, train_data["sid"].values,
-                                                                                               mode_indices_dict)
-    cut_data.loc[data['click_mode'] == -1, stat_columns_sid] = common.generate_dist_stats_feat(dist, train_data[svd_columns].values, train_data["sid"].values,
-                                                                                               test_data[svd_columns].values, test_data["sid"].values,
-                                                                                               mode_indices_dict)
-    pid_stat_columns_sid = ['stat_pid_{0}'.format(c) for c in ['min', 'median', 'max', 'mean', 'std']]
-    cut_data.loc[data['click_mode'] != -1, pid_stat_columns_sid] = common.generate_dist_stats_feat(dist, train_data[svd_columns.values], train_data["sid"].values,
-                                                                                                   train_data[svd_columns.values], train_data["sid"].values,
-                                                                                                   pid_mode_indices_dict)
-    cut_data.loc[data['click_mode'] == -1, pid_stat_columns_sid] = common.generate_dist_stats_feat(dist, train_data[svd_columns.values], train_data["sid"].values,
-                                                                                                   test_data[svd_columns.values], test_data["sid"].values,
-                                                                                                   pid_mode_indices_dict)
+    svd_cloumns = ['svd_mode_{}'.format(i) for i in range(10)]
+    mode_center_dis_columns = ['mode_center_dis_{}'.format(i) for i in range(12)]
+    agg_df = data.groupby('click_mode')[svd_cloumns].agg(np.mean).reset_index().sort_values(by='click_mode').values
+    dis_matrix = pairwise_distances(data[svd_cloumns], agg_df[svd_cloumns], metric='cosine', n_jobs=1)
 
-    svd_enc = TruncatedSVD(n_components=10, n_iter=20, random_state=2019)
-    stat_svd = svd_enc.fit_transform(cut_data[stat_columns_sid].values)
-    stat_svd_df = pd.DataFrame(stat_svd)
-    stat_svd_df.columns = ['stat_fea_{}'.format(i) for i in range(20)]
-
-    data = pd.merge(data, stat_svd_df, on=['sid'], how='inner')
+    data[mode_center_dis_columns] = dis_matrix.values
+    #
+    stat_columns = ['max_mode_center_dis', 'min_mode_center_dis', 'mean_center_dis', 'std_center_dis']
+    data[stat_columns] = np.max(dis_matrix.values, axis=1), np.min(dis_matrix.values, axis=1), np.mean(dis_matrix.values, axis=1), np.std(dis_matrix.values, axis=1)
     return data
 
 
 def gen_profile_feas(data):
+    """
+    用户特征 20维度
+    :param data:
+    :return:
+    """
     profile_data = read_profile_data()
     x = profile_data.drop(['pid'], axis=1).values
     svd = TruncatedSVD(n_components=20, n_iter=20, random_state=2019)
@@ -467,6 +387,11 @@ def gen_profile_feas(data):
 
 
 def gen_time_feas(data):
+    """
+    时间特征
+    :param data:
+    :return:
+    """
     data['req_time'] = pd.to_datetime(data['req_time'])
     data['weekday'] = data['req_time'].dt.dayofweek
     data['hour'] = data['req_time'].dt.hour
@@ -474,25 +399,21 @@ def gen_time_feas(data):
     return data
 
 
-def split_train_test(data):
-    train_data = data[data['click_mode'] != -1]
-    test_data = data[data['click_mode'] == -1]
-    train_sid = train_data[['sid']].copy()
-    test_sid = test_data[['sid']].copy()
-    submit = test_data[['sid']].copy()
-    train_data = train_data.drop(['sid', 'pid'], axis=1)
-    test_data = test_data.drop(['sid', 'pid'], axis=1)
-    test_data = test_data.drop(['click_mode'], axis=1)
-    train_y = train_data['click_mode'].values
-    train_x = train_data.drop(['click_mode'], axis=1)
-    return train_x, train_y, test_data, submit, train_sid, test_sid
+def gen_plan_new():
+    """
+    预处理plans,保存成文件
+    :return:
+    """
+    data = merge_raw_data()
+    data = gen_od_feas(data)
+    plans_df = gen_plan_df(data)
+    plans_df.to_csv('../data/data_set_phase1/plans_new.csv')
+    return plans_df
 
 
 def gen_train_test_feas_data():
     """
-    :return:
-    """
-    feature_columns = ['sid', 'pid', 'click_mode', 'o1', 'o2', 'd1', 'd2',
+        feature_columns = ['sid', 'click_mode', 'o1', 'o2', 'd1', 'd2',
                        'first_mode', 'max_dist', 'min_dist', 'mean_dist', 'std_dist', 'max_price', 'min_price',
                        'mean_price', 'std_price', 'max_eta', 'min_eta', 'mean_eta', 'std_eta',
                        'max_dist_mode', 'min_dist_mode', 'max_price_mode', 'min_price_mode',
@@ -506,9 +427,11 @@ def gen_train_test_feas_data():
                        'svd_fea_9', 'svd_fea_10', 'svd_fea_11', 'svd_fea_12', 'svd_fea_13',
                        'svd_fea_14', 'svd_fea_15', 'svd_fea_16', 'svd_fea_17', 'svd_fea_18',
                        'svd_fea_19', 'weekday', 'hour']
+    :return:
+    """
     # 添加统计特征
     # stat_columns_sid = ['stat_{0}'.format(c) for c in ['min', 'median', 'max', 'mean', 'std']]
-    pid_stat_columns_sid = ['stat_pid_{0}'.format(c) for c in ['min', 'median', 'max', 'mean', 'std']]
+    # pid_stat_columns_sid = ['stat_pid_{0}'.format(c) for c in ['min', 'median', 'max', 'mean', 'std']]
 
     data = merge_raw_data()
     data = data.drop(['plans'], axis=1)
@@ -519,61 +442,77 @@ def gen_train_test_feas_data():
     data = gen_profile_feas(data)
     data = gen_time_feas(data)
     # data = add_sta_feas(data)
-    data = data[feature_columns]
+    # data = data[feature_columns]
     # 545907 = tr_click + te_plans
-    data.to_csv('../data/features_new.csv', index=False)
-    train_x, train_y, test_x, submit = split_train_test(data)
-    return train_x, train_y, test_x, submit
+    round(data, 7).to_csv('../data/features/features_new.csv', index=False)
+    return data
 
 
-def get_train_test_feas_data_1():
-    data = pd.read_csv('../data/features_new.csv')
-    train_x, train_y, test_x, submit = split_train_test(data)
-    return train_x, train_y, test_x, submit
+def split_train_test(train_data, test_data):
+    """
+    分离 训练数据和 key label;
+    :param data:
+    :return:
+    """
+
+    train_sid = train_data[['sid']].copy()
+    test_sid = test_data[['sid']].copy()
+    # train
+    train_data = train_data.drop(['sid'], axis=1)
+    train_y = train_data['click_mode'].values
+    train_x = train_data.drop(['click_mode'], axis=1)
+    # test
+    test_data = test_data.drop(['sid'], axis=1)
+    test_y = test_data['click_mode'].values
+    test_x = test_data.drop(['click_mode'], axis=1)
+    return train_x, train_y, test_x, test_y, train_sid, test_sid
 
 
-def get_train_test_feas_data_3():
-    data = pd.read_csv('../data/features_new.csv')
+def get_train_test_feas_submit():
+    """
+    划分训练集、测试集 特征
+    :return:
+    """
+    data = pd.read_csv('../data/features/features_new_od.csv')[conf.feature_columns]
     train_data = data[data['click_mode'] != -1]
-    from sklearn.model_selection import train_test_split
+    test_data = data[data['click_mode'] == -1]
+    train_x, train_y, test_x, test_y, train_sid, test_sid = split_train_test(train_data, test_data)
+    return train_x, train_y, test_x, test_y, train_sid, test_sid, conf.cate_columns
+
+
+def process_label_imbalance(raw_df):
+    """
+    处理label不均衡问题
+    :param raw_df:
+    :return:
+    """
+    raw_df = raw_df.append([raw_df[raw_df['click_mode'] == 3]] * 3, ignore_index=True)
+    raw_df = raw_df.append([raw_df[raw_df['click_mode'] == 4]] * 4, ignore_index=True)
+    raw_df = raw_df.append([raw_df[raw_df['click_mode'] == 8]] * 10, ignore_index=True)
+    raw_df = raw_df.append([raw_df[raw_df['click_mode'] == 11]] * 4, ignore_index=True)
+    return raw_df
+
+
+def get_train_test_feas_valid():
+    """
+    划分训练集、验证集 特征
+    :return:
+    """
+    data = pd.read_csv('../data/features/features_new_od.csv')[conf.feature_columns]
+    data = process_label_imbalance(data)
+    # 全部训练数据
+    train_data = data[data['click_mode'] != -1]
+    # 划分验证集
     train_data_t, train_data_e = train_test_split(train_data, test_size=0.2)
 
-    submit = train_data_e[['sid']].copy()
+    train_x, train_y, test_x, test_y, train_sid, test_sid = split_train_test(train_data_t, train_data_e)
 
-    train_data = train_data_t.drop(['sid', 'pid'], axis=1)
-    test_data = train_data_e.drop(['sid', 'pid'], axis=1)
-
-    test_data = test_data.drop(['click_mode'], axis=1)
-    train_x = train_data.drop(['click_mode'], axis=1)
-    train_y = train_data['click_mode'].values
-
-    return train_x, train_y, test_data, submit
-
-
-def gen_plan_new():
-    data = merge_raw_data()
-    data = gen_od_feas(data)
-    plans_df = get_plan_df(data)
-    plans_df.to_csv('../data/plans_new.csv')
-    return plans_df
-
-
-def get_train_test_feas_data_2():
-    data_all = pd.read_csv('../data/features_new.csv')
-    # 排除训练、测试数中没有plan的数据 8946+1787=10733
-    data_exclude = data_all[(data_all['click_mode'].isin([0, -1]) & (data_all['max_dist'] == -1))]
-    data = data_all[~data_all.sid.isin(data_exclude.sid)]
-    submit1 = data.loc[data['click_mode'] == -1, ['sid']].copy()
-    submit2 = data_exclude.loc[data_exclude['click_mode'] == -1, ['sid']].copy()
-    train_x, train_y, test_x, submit, train_sid, test_sid = split_train_test(data)
-
-    return train_x, train_y, test_x, submit1, submit2, train_sid, test_sid
+    return train_x, train_y, test_x, test_y, train_sid, test_sid, conf.cate_columns
 
 
 if __name__ == '__main__':
     import os
 
-    os.chdir('D:/github/recommend/recommend/Context-Aware-Multi-Modal-Transportation-Recommendation-master/code')
+    os.chdir('D:/github/forecast_template/recommend/rec')
     # gen_plan_new()
     gen_train_test_feas_data()
-    #
