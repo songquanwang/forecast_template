@@ -11,10 +11,10 @@ import pandas as pd
 from six.moves import reduce
 from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.model_selection import train_test_split
-import common
-import conf
 from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.model_selection import train_test_split
+
+import expanded_conf as conf
 
 
 def read_profile_data():
@@ -159,21 +159,21 @@ def gen_plan_df(data):
     lens = [len(item) for item in data['plans']]
     # plan_time distance eta price transport_mode
     sid_list = np.repeat(data['sid'].values, lens)
+    is_train_list = np.repeat(data['is_train'].values, lens)
     plan_time_list = np.repeat(data['plan_time'].values, lens)
     plans = np.concatenate(data['plans'].values)
-    plan_pos = np.concatenate([list(range(1, l + 1)) for l in lens])
     df_data = []
-    for s, t, p in zip(sid_list, plan_time_list, plans):
+    for s, it, t, p in zip(sid_list, is_train_list, plan_time_list, plans):
         p['sid'] = s
+        p['is_train'] = it
         p['plan_time'] = t
         df_data.append(p)
     # 生成新的plans_df
     plans_df = pd.DataFrame(df_data)
-    plans_df = plans_df[['sid', 'plan_time', 'distance', 'eta', 'price', 'transport_mode']]
+    plans_df = plans_df[['sid', 'is_train', 'plan_time', 'distance', 'eta', 'price', 'transport_mode']]
     plans_df['plan_time'] = pd.to_datetime(plans_df['plan_time'])
     # '' 替换成np.nan
     plans_df['price'] = plans_df['price'].replace(r'', np.NaN)
-    plans_df['plan_pos'] = plan_pos
 
     ###############
     def convert_time(d, m):
@@ -182,21 +182,17 @@ def gen_plan_df(data):
     # 3 5 6 价格填充为0
     plans_df.loc[plans_df['transport_mode'].isin([3, 5, 6]), 'price'] = 0
     plans_df['time_num30'] = plans_df['plan_time'].apply(lambda x: convert_time(x, 30))
-    # 计算单价和mode平均单价
-    plans_df['dj'] = plans_df['price'] / plans_df['distance']
+    plans_df['dj'] = plans_df['price'] * 100 / plans_df['distance']
     plans_df['mdj'] = plans_df.groupby(['transport_mode', 'time_num30'])['dj'].transform(lambda x: np.nanmedian(x))
+
     # 填充 price dj[1, 2, 7, 9, 11]
     # 用平均单价替换价格
     plans_df.loc[plans_df['price'].isnull(), 'dj'] = plans_df.loc[plans_df['price'].isnull(), 'mdj']
     df2 = plans_df.loc[plans_df['price'].isnull()]
     # 价格为''的 用单价*距离代替价格
-    plans_df.loc[plans_df['price'].isnull(), 'price'] = df2['dj'] * df2['distance']
-    # 生成 速度和 速度/单价比
-    plans_df['sd'] = plans_df['distance'] / plans_df['eta']
-    plans_df['sd_dj'] = plans_df['sd'] / plans_df['dj']
+    plans_df.loc[plans_df['price'].isnull(), 'price'] = df2['dj'] * df2['distance'] / 100
     # sid, plan_time, distance, eta, price, transport_mode
-    # plans_pos_sta_df.loc[plans_pos_sta_df['sd_dj']==np.inf,'sd_dj']=2000
-    return plans_df[['sid', 'plan_time', 'plan_pos', 'distance', 'eta', 'price', 'transport_mode', 'dj', 'sd', 'sd_dj']]
+    return plans_df[['sid', 'plan_time', 'distance', 'eta', 'price', 'transport_mode', 'dj']]
 
 
 def gen_od_feas(data):
@@ -459,16 +455,16 @@ def split_train_test(train_data, test_data):
     :return:
     """
 
-    train_sid = train_data[['sid']].copy()
-    test_sid = test_data[['sid']].copy()
+    train_sid = train_data[['sid', 'transport_mode']].copy()
+    test_sid = test_data[['sid', 'transport_mode']].copy()
     # train
     train_data = train_data.drop(['sid'], axis=1)
-    train_y = train_data['click_mode'].values
-    train_x = train_data.drop(['click_mode'], axis=1)
+    train_y = train_data['is_click'].values
+    train_x = train_data.drop(['click_mode', 'is_click'], axis=1)
     # test
     test_data = test_data.drop(['sid'], axis=1)
-    test_y = test_data['click_mode'].values
-    test_x = test_data.drop(['click_mode'], axis=1)
+    test_y = test_data['is_click'].values
+    test_x = test_data.drop(['click_mode', 'is_click'], axis=1)
     return train_x, train_y, test_x, test_y, train_sid, test_sid
 
 
@@ -477,7 +473,7 @@ def get_train_test_feas_submit():
     划分训练集、测试集 特征
     :return:
     """
-    data = pd.read_csv('../data/features/features_new_od.csv')[conf.feature_columns]
+    data = pd.read_csv('../data/features/expanded_feature_sample.csv')[conf.feature_columns]
     train_data = data[data['click_mode'] != -1]
     test_data = data[data['click_mode'] == -1]
     train_x, train_y, test_x, test_y, train_sid, test_sid = split_train_test(train_data, test_data)
@@ -503,7 +499,7 @@ def get_train_test_feas_valid():
     划分训练集、验证集 特征
     :return:
     """
-    data = pd.read_csv('../data/features/features_new_od.csv')[conf.feature_columns]
+    data = pd.read_csv('../data/features/expanded_feature_sample.csv')[conf.feature_columns]
     # data = process_label_imbalance(data)
     # 全部训练数据
     train_data = data[data['click_mode'] != -1]
