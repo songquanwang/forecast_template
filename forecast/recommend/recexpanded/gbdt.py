@@ -82,8 +82,8 @@ def train_lgb(train_x, train_y, test_x, train_sid, test_sid, cate_cols):
     """
     kfold = StratifiedKFold(n_splits=5, shuffle=True, random_state=2019)
     lgb_paras = {
-        'objective': 'xentropy',
-        'metrics': 'xentropy',
+        'objective': 'binary',
+        'metrics': 'binary',
         'learning_rate': 0.05,
         'num_leaves': 31,
         'lambda_l1': 0.01,
@@ -99,7 +99,7 @@ def train_lgb(train_x, train_y, test_x, train_sid, test_sid, cate_cols):
     scores = []
     result_proba = []
     i = 0
-    for tr_idx, val_idx in kfold.split(train_x, train_y):
+    for tr_idx, val_idx in kfold.split(train_x, train_sid['click_mode']):
         print('#######################################{}'.format(i))
         tr_x, tr_y, val_x, val_y, train_sid_valid = train_x.iloc[tr_idx], train_y[tr_idx], train_x.iloc[val_idx], train_y[val_idx], train_sid.iloc[val_idx]
         train_set = lgb.Dataset(tr_x, tr_y, categorical_feature=cate_cols)
@@ -173,4 +173,4 @@ def predict_by_model():
 
 
 if __name__ == '__main__':
-    tp_valid()
+    tp_submit()

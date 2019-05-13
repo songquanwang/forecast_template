@@ -504,7 +504,7 @@ def get_train_test_feas_valid():
     # 全部训练数据
     train_data = data[data['click_mode'] != -1]
     # 划分验证集
-    train_data_t, train_data_e = train_test_split(train_data, test_size=0.2)
+    train_data_t, train_data_e = train_test_split(train_data, test_size=0.2, stratify=train_data['click_mode'].values)
 
     train_x, train_y, test_x, test_y, train_sid, test_sid = split_train_test(train_data_t, train_data_e)
 
