@@ -455,8 +455,8 @@ def split_train_test(train_data, test_data):
     :return:
     """
 
-    train_sid = train_data[['sid', 'transport_mode']].copy()
-    test_sid = test_data[['sid', 'transport_mode']].copy()
+    train_sid = train_data[['sid', 'click_mode', 'transport_mode']].copy()
+    test_sid = test_data[['sid', 'click_mode', 'transport_mode']].copy()
     # train
     train_data = train_data.drop(['sid'], axis=1)
     train_y = train_data['is_click'].values
@@ -473,7 +473,7 @@ def get_train_test_feas_submit():
     划分训练集、测试集 特征
     :return:
     """
-    data = pd.read_csv('../data/features/expanded_feature_sample.csv')[conf.feature_columns]
+    data = pd.read_csv('../data/features/expanded_features.csv')[conf.feature_columns]
     train_data = data[data['click_mode'] != -1]
     test_data = data[data['click_mode'] == -1]
     train_x, train_y, test_x, test_y, train_sid, test_sid = split_train_test(train_data, test_data)
@@ -499,7 +499,7 @@ def get_train_test_feas_valid():
     划分训练集、验证集 特征
     :return:
     """
-    data = pd.read_csv('../data/features/expanded_feature_sample.csv')[conf.feature_columns]
+    data = pd.read_csv('../data/features/expanded_features.csv')[conf.feature_columns]
     # data = process_label_imbalance(data)
     # 全部训练数据
     train_data = data[data['click_mode'] != -1]
