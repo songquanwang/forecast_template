@@ -16,7 +16,7 @@ from sklearn.model_selection import StratifiedKFold
 
 import expanded_conf as conf
 
-zero_threshold = 0.5
+zero_threshold = 0.1
 
 
 def split_data_by_clickmode(df, kfold):
@@ -37,7 +37,7 @@ def split_data_by_clickmode(df, kfold):
     return train_data, valid_data
 
 
-def convert_plans_pro_to_pred(test_df, y_pred, threshold=0.5):
+def convert_plans_pro_to_pred(test_df, y_pred, threshold=zero_threshold):
     """
     把各个plan的 binary 概率预测转成 推荐模式预测
     :param test_df:
@@ -112,7 +112,7 @@ def submit_result(test_df, result, file_name):
     :return:
     """
     cut_df = test_df[['sid', 'click_mode', 'transport_mode']]
-    submit = convert_plans_pro_to_pred(cut_df, result, threshold=0.5)
+    submit = convert_plans_pro_to_pred(cut_df, result, threshold=zero_threshold)
     final_submit = submit.rename(columns={'transport_mode': 'recommend_mode'})
     final_submit[['sid', 'recommend_mode']].to_csv(file_name, index=False)
     return final_submit
@@ -131,7 +131,7 @@ def train_lgb(train_df, test_df):
         'objective': 'binary',
         'metrics': 'binary',
         'learning_rate': 0.05,
-        'num_leaves': 31,
+        'num_leaves': 61,
         'lambda_l1': 0.01,
         'lambda_l2': 10,
         # 'num_class': 12,
@@ -179,7 +179,7 @@ def get_train_test_feats():
     获取训练数据、测试数据
     :return:
     """
-    data = pd.read_csv('../data/features/expanded_feature_sample.csv')
+    data = pd.read_csv('../data/features/expanded_features_contain_zero_od.csv')
     train_df = data[data['click_mode'] != -1]
     test_df = data[data['click_mode'] == -1]
     return train_df, test_df
@@ -190,7 +190,7 @@ def get_train_valid_feats():
     获取训练数据、验证数据
     :return:
     """
-    data = pd.read_csv('../data/features/expanded_feature_sample.csv')
+    data = pd.read_csv('../data/features/expanded_features_contain_zero_od.csv')
     train_df = data[data['click_mode'] != -1]
     kfold = StratifiedKFold(n_splits=5, shuffle=True, random_state=2019)
     train_df_t, train_df_e = split_data_by_clickmode(train_df, kfold)
@@ -235,7 +235,7 @@ def predict_by_model():
     train_df_t, train_df_e = get_train_test_feats()
     result_proba = []
     scores = []
-    for i in range(5):
+    for i in range(1):
         print('***************************{}'.format(i))
         lgb_model = lgb.Booster(model_file='../models/model_{}'.format(i))
         test_pred = lgb_model.predict(train_df_e[conf.feature_columns], num_iteration=lgb_model.best_iteration)
