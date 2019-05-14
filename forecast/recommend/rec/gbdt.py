@@ -45,7 +45,7 @@ def train_lgb(train_x, train_y, test_x, cate_cols):
         'objective': 'multiclass',
         'metrics': 'multiclass',
         'learning_rate': 0.05,
-        'num_leaves': 31,
+        'num_leaves': 61,
         'lambda_l1': 0.01,
         'lambda_l2': 10,
         'num_class': 12,
@@ -53,6 +53,7 @@ def train_lgb(train_x, train_y, test_x, cate_cols):
         'feature_fraction': 0.8,
         'bagging_fraction': 0.8,
         'bagging_freq': 4,
+        'verbose': -1
     }
     # cate_cols = ['max_dist_mode', 'min_dist_mode', 'max_price_mode',
     #              'min_price_mode', 'max_eta_mode', 'min_eta_mode', 'first_mode', 'weekday', 'hour']

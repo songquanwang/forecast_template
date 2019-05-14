@@ -252,4 +252,7 @@ def predict_by_model():
 
 
 if __name__ == '__main__':
-    tp_submit()
+    # tp_submit()
+    predict_by_model()
+
+
