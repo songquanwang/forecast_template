@@ -53,8 +53,9 @@ transport_mode
  sorted(c, key=c.get)[-1]
 
  特征工程
- 1.按地址聚类  添加 o_class ,d_class,每个类别最大label cat
+ 1.按地址聚类  添加 o_class ,d_class,每个类别最大 label cat
                添加维度的直线距离  num_direct_distance
+
  2.按label 分组，计算：mode svd 向量
       每个计划各个类别向量的 距离 num     12中方式*7 ,不足7个用None
       每个label最大的
@@ -143,5 +144,11 @@ x=list(range(1,12))
 
 
 #50099 条推荐了两个类型相同的
+
+
+1.重新加入没有plans 的数据 +没有点击的数据：完成
+2.按组抽样 ：完成
+3.写f1 score 函数：完成
+3.加入新特征
 
 

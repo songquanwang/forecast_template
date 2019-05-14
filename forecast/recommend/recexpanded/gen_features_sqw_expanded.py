@@ -12,9 +12,6 @@ from six.moves import reduce
 from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import pairwise_distances
-from sklearn.model_selection import train_test_split
-
-import expanded_conf as conf
 
 
 def read_profile_data():
@@ -33,9 +30,9 @@ def read_profile_data():
 
 def merge_raw_data():
     """
-    1.tr_queries 中没有tr_plans 的8946
+    1.tr_queries 中没有tr_plans 的 8946
     2.tr_plans 中没有 tr_click 的占37718；tr_click是tr_plans的子集
-    3.te_queries中没有te_plans的占1787
+    3.te_queries中没有te_plans的占 1787
     结论:
     1.有tr_plans 的没有tr_click 37718的需要把click_mode=0 作为训练数据
     2.没有tr_plans的 8946 不需要作为训练数据
@@ -448,38 +445,6 @@ def gen_train_test_feas_data():
     return data
 
 
-def split_train_test(train_data, test_data):
-    """
-    分离 训练数据和 key label;
-    :param data:
-    :return:
-    """
-
-    train_sid = train_data[['sid', 'click_mode', 'transport_mode']].copy()
-    test_sid = test_data[['sid', 'click_mode', 'transport_mode']].copy()
-    # train
-    train_data = train_data.drop(['sid'], axis=1)
-    train_y = train_data['is_click'].values
-    train_x = train_data.drop(['click_mode', 'is_click'], axis=1)
-    # test
-    test_data = test_data.drop(['sid'], axis=1)
-    test_y = test_data['is_click'].values
-    test_x = test_data.drop(['click_mode', 'is_click'], axis=1)
-    return train_x, train_y, test_x, test_y, train_sid, test_sid
-
-
-def get_train_test_feas_submit():
-    """
-    划分训练集、测试集 特征
-    :return:
-    """
-    data = pd.read_csv('../data/features/expanded_features.csv')[conf.feature_columns]
-    train_data = data[data['click_mode'] != -1]
-    test_data = data[data['click_mode'] == -1]
-    train_x, train_y, test_x, test_y, train_sid, test_sid = split_train_test(train_data, test_data)
-    return train_x, train_y, test_x, test_y, train_sid, test_sid, conf.cate_columns
-
-
 def process_label_imbalance(raw_df):
     """
     处理label不均衡问题
@@ -494,21 +459,20 @@ def process_label_imbalance(raw_df):
     return raw_df
 
 
-def get_train_test_feas_valid():
+def make_expanded_features():
     """
-    划分训练集、验证集 特征
+    生成扩展特征
     :return:
     """
-    data = pd.read_csv('../data/features/expanded_features.csv')[conf.feature_columns]
-    # data = process_label_imbalance(data)
-    # 全部训练数据
-    train_data = data[data['click_mode'] != -1]
-    # 划分验证集
-    train_data_t, train_data_e = train_test_split(train_data, test_size=0.2, stratify=train_data['click_mode'].values)
-
-    train_x, train_y, test_x, test_y, train_sid, test_sid = split_train_test(train_data_t, train_data_e)
-
-    return train_x, train_y, test_x, test_y, train_sid, test_sid, conf.cate_columns
+    # 2706625
+    plans_pos_sta_df = pd.read_csv('../data/data_set_phase1/plans_pos_sta.csv')
+    # 594358
+    features_df = pd.read_csv('../data/features_new.csv')
+    # 2706625+8946+1787
+    merge_df = pd.merge(plans_pos_sta_df, features_df, on=['sid'], how='right')
+    plan_columns = ['plan_pos', 'distance', 'eta', 'price', 'transport_mode', 'dj', 'sd', 'sd_dj']
+    # 确实值填充-1
+    merge_df.loc[merge_df['plan_pos'].isnull(), plan_columns] = -1
 
 
 if __name__ == '__main__':

@@ -96,6 +96,14 @@ def train_lgb(train_x, train_y, test_x, train_sid, test_sid, cate_cols):
     }
     # cate_cols = ['max_dist_mode', 'min_dist_mode', 'max_price_mode',
     #              'min_price_mode', 'max_eta_mode', 'min_eta_mode', 'first_mode', 'weekday', 'hour']
+    group_df = train_sid[['sid', 'click_mode']].drop_duplicates()
+    train_click_mode_idx, valid_click_mode_idx = next(kfold.split(group_df, group_df['click_mode']))
+    # 保证训练集、验证集 sid没有交集
+    train_sids, valid_sids = group_df.iloc[train_click_mode_idx].sid, group_df.iloc[valid_click_mode_idx].sid
+    train_data = df[df['sid'].isin(train_sids)]
+    valid_data = df[df['sid'].isin(valid_sids)]
+
+
     scores = []
     result_proba = []
     i = 0

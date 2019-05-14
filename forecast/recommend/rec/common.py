@@ -6,7 +6,7 @@ from sklearn.metrics.pairwise import pairwise_distances
 
 quantiles_range = np.arange(0, 1.5, 0.5)
 stats_feat_num = 5
-
+from geopy.distance import geodesic
 
 def pairwise_cosine_euc_dist(X_test, X_train, dist_metric):
     """
@@ -99,3 +99,4 @@ def generate_dist_stats_feat(dist_metric, X_train, ids_train, X_test, ids_test, 
                     # 每一行生成 [五个值的数组]
                     stats_feat[i, j * stats_feat_num:(j + 1) * stats_feat_num] = feat
     return stats_feat
+

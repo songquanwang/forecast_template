@@ -109,3 +109,10 @@ ax.set_xlim3d(0, 100000)
 ax.set_ylim3d(0, 25000)
 ax.set_zlim3d(0, 10000)
 ax.legend([p1, p2, p3, p5, p6, p7, p8, p9, p10, p11], ['1', '2', '3', '5', '6', '7', '8', '9', '10', '11'], numpoints=1)
+
+###########
+def sort_count(c):
+    d=dict(c.transport_mode.value_counts())
+    ds=[(k,d[k]) for k in sorted(d.keys())]
+    x,y=zip(*ds)
+    return x,y

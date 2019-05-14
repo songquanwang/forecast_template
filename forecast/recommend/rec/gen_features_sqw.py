@@ -15,6 +15,7 @@ from sklearn.model_selection import train_test_split
 import common
 import conf
 from sklearn.metrics.pairwise import pairwise_distances
+from geopy.distance import geodesic
 
 
 def read_profile_data():
@@ -514,6 +515,11 @@ def get_train_test_feas_valid():
 
     return train_x, train_y, test_x, test_y, train_sid, test_sid, conf.cate_columns
 
+
+
+
+
+# merge_df['num_direct_distance'] = merge_df.apply(lambda x: get_dis(x['o'],x['d']), axis=1)
 
 if __name__ == '__main__':
     import os
