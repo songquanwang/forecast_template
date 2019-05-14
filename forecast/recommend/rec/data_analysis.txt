@@ -53,7 +53,7 @@ transport_mode
  sorted(c, key=c.get)[-1]
 
  特征工程
- 1.按地址聚类  添加 o_class ,d_class,每个类别最大 label cat
+ 1.按地址聚类  添加 o20 ,d29,每个类别最大 label cat
                添加维度的直线距离  num_direct_distance
 
  2.按label 分组，计算：mode svd 向量
@@ -151,4 +151,29 @@ x=list(range(1,12))
 3.写f1 score 函数：完成
 3.加入新特征
 
+
+1.按地址聚类：sid 维度
+            添加 o20 ,d20,
+            每个类别最大 label cat
+            是否在一个类别 same_cls20 cat
+            添加维度的直线距离  num_direct_distance
+
+2.添加天气标志：sid 维度
+             0 1 晴天、下雨
+
+2.按照用户分组 pid 维度：
+             用户最喜欢的交通方式 cat
+             用户+天气 最喜欢的交通方式 cat
+
+             用户+价格 ：最大 最小 平均 方差 中位数
+             用户+距离 ：最大 最小 平均 方差 中位数
+             用户+时间 ：最大 最小 平均 方差 中位数
+             用户每种方式的占比：12
+
+4.按label 分组，plans维度：
+              distance price eta ：标准化
+              平均值作为中心向量
+              计算每个计划与各个中心向量的 距离
+              12个特征
+              +mean std max min
 

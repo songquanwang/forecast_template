@@ -82,6 +82,7 @@ def score_f1(train_data, y_pred):
     """
     pred_df = convert_plans_pro_to_pred(train_data, y_pred, threshold=zero_threshold)
     score = f1_score(pred_df['click_mode'], pred_df['transport_mode'], average='weighted')
+    print('f1 score  is:{} '.format(score))
     return score
 
 
@@ -158,7 +159,7 @@ def train_lgb(train_df, test_df):
         val_set = lgb.Dataset(val_x, val_y, categorical_feature=conf.cate_columns)
         lgb_model = lgb.train(lgb_paras, train_set,
                               valid_sets=[val_set], early_stopping_rounds=500, num_boost_round=40000, verbose_eval=50)
-                              # ,feval=lambda y, t: eval_f1(train_sid_valid, y))
+        # ,feval=lambda y, t: eval_f1(train_sid_valid, y))
         lgb_model.save_model('../models/model_{}'.format(i))
         val_pred = lgb_model.predict(val_x, num_iteration=lgb_model.best_iteration)
         val_score = score_accurate_rate(train_sid_valid, val_pred)
