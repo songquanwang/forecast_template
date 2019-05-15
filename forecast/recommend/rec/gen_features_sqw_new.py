@@ -8,16 +8,12 @@
 
 import numpy as np
 import pandas as pd
+from geopy.distance import geodesic
 from six.moves import reduce
+from sklearn.cluster import KMeans
 from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.model_selection import train_test_split
-import common
-import conf
 from sklearn.metrics.pairwise import pairwise_distances
-from geopy.distance import geodesic
-from sklearn.cluster import KMeans
-import matplotlib.pyplot as plt
 
 
 def read_profile_data():
@@ -238,7 +234,8 @@ def gen_plan_feas_by_plans(plans_df):
 
                }
     # std ddof =1
-    agg_columns = ['sid', 'first_mode', 'mode_texts', 'max_dist', 'min_dist', 'mean_dist', 'std_dist',
+    agg_columns = ['sid', 'first_mode', 'mode_texts',
+                   'max_dist', 'min_dist', 'mean_dist', 'std_dist',
                    'max_price', 'min_price', 'mean_price', 'std_price',
                    'max_eta', 'min_eta', 'mean_eta', 'std_eta',
                    'max_dj', 'min_dj', 'mean_dj', 'std_dj',
@@ -293,7 +290,9 @@ def gen_empty_plan_feas(data):
     mode_columns = ['sid'] + mode_columns_names
     plan_feature_df = pd.DataFrame(np.hstack([sid_data, mode_data]), columns=mode_columns)
 
+    plan_feature_df['first_mode'] = 0
     plan_feature_df['mode_texts'] = 'word_null'
+
     plan_feature_df['max_dist'] = -1
     plan_feature_df['min_dist'] = -1
     plan_feature_df['mean_dist'] = -1
@@ -309,27 +308,28 @@ def gen_empty_plan_feas(data):
     plan_feature_df['mean_eta'] = -1
     plan_feature_df['std_eta'] = -1
 
-    plan_feature_df['first_mode'] = 0
+    # 新增特征
+    plan_feature_df['max_dj'] = -1
+    plan_feature_df['min_dj'] = -1
+    plan_feature_df['mean_dj'] = -1
+    plan_feature_df['std_dj'] = -1
+
+    plan_feature_df['max_sd'] = -1
+    plan_feature_df['min_sd'] = -1
+    plan_feature_df['mean_sd'] = -1
+    plan_feature_df['std_sd'] = -1
+
+    plan_feature_df['max_sd_dj'] = -1
+    plan_feature_df['min_sd_dj'] = -1
+    plan_feature_df['mean_sd_dj'] = -1
+    plan_feature_df['std_sd_dj'] = -1
+
     plan_feature_df['max_dist_mode'] = -1
     plan_feature_df['min_dist_mode'] = -1
     plan_feature_df['max_price_mode'] = -1
     plan_feature_df['min_price_mode'] = -1
     plan_feature_df['max_eta_mode'] = -1
     plan_feature_df['min_eta_mode'] = -1
-
-    # 新增特征
-    plan_feature_df['max_dj'] = -1
-    plan_feature_df['min_dj'] = -1
-    plan_feature_df['mean_dj'] = -1
-    plan_feature_df['std_dj'] = -1
-    plan_feature_df['max_sd'] = -1
-    plan_feature_df['min_sd'] = -1
-    plan_feature_df['mean_sd'] = -1
-    plan_feature_df['std_sd'] = -1
-    plan_feature_df['max_sd_dj'] = -1
-    plan_feature_df['min_sd_dj'] = -1
-    plan_feature_df['mean_sd_dj'] = -1
-    plan_feature_df['std_sd_dj'] = -1
 
     return plan_feature_df
 
@@ -360,6 +360,10 @@ def gen_plan_feas(data):
 
 
 def get_plan_feas():
+    """
+    获取
+    :return:
+    """
     plan_featurns = pd.read_csv('../data/data_set_phase1/plan_features.csv')
     return plan_featurns
 
@@ -475,9 +479,9 @@ def gen_plan_extra_features(data, plan_df):
     cut_plan_df = plan_df[['sid', 'plan_pos', 'distance', 'eta', 'price', 'transport_mode', 'dj', 'sd', 'sd_dj']]
     # 去挑一个sid 对应两个相同的mode 的plan
     cut_plan_df = cut_plan_df.drop_duplicates(subset=['sid', 'transport_mode'])
-    merge_df = pd.merge(cut_df, cut_plan_df, left_on=['sid', 'click_mode'], right_on=['sid', 'transport_mode'], how='left')
-    merge_df.loc[merge_df['plan_pos'].isnull(), ['plan_pos', 'distance', 'eta', 'price', 'dj', 'sd', 'sd_dj']] = -1
-    merge_df.loc[merge_df['transport_mode'].isnull(), 'transport_mode'] = 0
+    merge_df = pd.merge(cut_df, cut_plan_df, left_on=['sid', 'click_mode'], right_on=['sid', 'transport_mode'], how='inner')
+    # merge_df.loc[merge_df['plan_pos'].isnull(), ['plan_pos', 'distance', 'eta', 'price', 'dj', 'sd', 'sd_dj']] = -1
+    # merge_df.loc[merge_df['transport_mode'].isnull(), 'transport_mode'] = 0
     # 如果用户click_mode =-1 则返回-1；注意：如果使用merge_df 则会出现重复
     pid_df = cut_df.groupby(['pid'])['click_mode'].apply(lambda x: x.value_counts().idxmax()).reset_index()
     pid_df.columns = ['pid', 'pid_max_mode']
@@ -505,10 +509,10 @@ def gen_plan_extra_features(data, plan_df):
         z = np.zeros(12)
         k = c.index.values.astype(np.int32)
         v = c.values
-        idx = np.where(k > -1)
-        kc = k[idx]
-        vc = v[idx]
-        z[kc] = vc
+        # idx = np.where(k > -1)
+        # kc = k[idx]
+        # vc = v[idx]
+        z[k] = v
         return z / np.sum(z)
 
     mode_num_names = ['mode_num_{}'.format(i) for i in range(12)]
@@ -522,8 +526,17 @@ def gen_plan_extra_features(data, plan_df):
     mode_num_df.columns = mode_columns
     pid_ext_features_df = reduce(lambda ldf, rdf: pd.merge(ldf, rdf, on=['pid'], how='inner'), [pid_df, pid_feature_df, mode_num_df])
     # 保存文件
-    round(pid_ext_features_df, 7).to_csv('pid_ext_features.csv', index=False)
+    round(pid_ext_features_df, 7).to_csv('../data/data_set_phase1/pid_ext_features.csv', index=False)
     return pid_ext_features_df
+
+
+def get_plan_ext_feas():
+    """
+    获取用户维度的特征数据
+    :return:
+    """
+    plan_ext_features = pd.read_csv('../data/data_set_phase1/pid_ext_features.csv')
+    return plan_ext_features
 
 
 def gen_train_test_feas_data():
@@ -536,7 +549,7 @@ def gen_train_test_feas_data():
 
     data = merge_raw_data()
     # 添加天气特征
-    add_is_rain(data)
+    data = add_is_rain(data)
     data = data.drop(['plans'], axis=1)
     data = add_od_feas(data)
     plans_features = gen_plan_feas(data)
@@ -544,43 +557,11 @@ def gen_train_test_feas_data():
     data = pd.merge(data, plans_features, on=['sid'], how='left')
     data = add_profile_feas(data)
     data = add_time_feas(data)
-    # data = add_sta_feas(data)
-    # data = data[feature_columns]
-    # 545907 = tr_click + te_plans
+    pid_ext_features_df = get_plan_ext_feas()
+    data = pd.merge(data, pid_ext_features_df, on=['pid'], how='left')
+
     round(data, 7).to_csv('../data/features/features_all.csv', index=False)
     return data
-
-
-def split_train_test(train_data, test_data):
-    """
-    分离 训练数据和 key label;
-    :param data:
-    :return:
-    """
-
-    train_sid = train_data[['sid']].copy()
-    test_sid = test_data[['sid']].copy()
-    # train
-    train_data = train_data.drop(['sid'], axis=1)
-    train_y = train_data['click_mode'].values
-    train_x = train_data.drop(['click_mode'], axis=1)
-    # test
-    test_data = test_data.drop(['sid'], axis=1)
-    test_y = test_data['click_mode'].values
-    test_x = test_data.drop(['click_mode'], axis=1)
-    return train_x, train_y, test_x, test_y, train_sid, test_sid
-
-
-def get_train_test_feas_submit():
-    """
-    划分训练集、测试集 特征
-    :return:
-    """
-    data = pd.read_csv('../data/features/features_new_od.csv')[conf.feature_columns]
-    train_data = data[data['click_mode'] != -1]
-    test_data = data[data['click_mode'] == -1]
-    train_x, train_y, test_x, test_y, train_sid, test_sid = split_train_test(train_data, test_data)
-    return train_x, train_y, test_x, test_y, train_sid, test_sid, conf.cate_columns
 
 
 def process_label_imbalance(raw_df):
@@ -595,23 +576,6 @@ def process_label_imbalance(raw_df):
     raw_df = raw_df.append([raw_df[raw_df['click_mode'] == 8]] * 10, ignore_index=True)
     raw_df = raw_df.append([raw_df[raw_df['click_mode'] == 11]] * 4, ignore_index=True)
     return raw_df
-
-
-def get_train_test_feas_valid():
-    """
-    划分训练集、验证集 特征
-    :return:
-    """
-    data = pd.read_csv('../data/features/features_new_od.csv')[conf.feature_columns]
-    # data = process_label_imbalance(data)
-    # 全部训练数据
-    train_data = data[data['click_mode'] != -1]
-    # 划分验证集
-    train_data_t, train_data_e = train_test_split(train_data, test_size=0.2)
-
-    train_x, train_y, test_x, test_y, train_sid, test_sid = split_train_test(train_data_t, train_data_e)
-
-    return train_x, train_y, test_x, test_y, train_sid, test_sid, conf.cate_columns
 
 
 # merge_df['num_direct_distance'] = merge_df.apply(lambda x: get_dis(x['o'],x['d']), axis=1)
