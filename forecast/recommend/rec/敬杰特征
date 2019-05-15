@@ -1,0 +1,41 @@
+1.特征
+  user profile 特征：  done
+          那50多个0，1，
+
+ 时间特征：  done
+         hour
+         week
+         is weekend
+         season
+         morning,noon,evening,night
+
+ 天气特征： on-going
+          天气好的时候用户选的最多的mode  cat
+          天气差的时候最多的mode cat
+          天气和用户mode之前的相关性；各种相关性 ？应该有4，5种吧
+
+ 地点特征： done
+          起点地区
+          终点地区
+          起点是否等于终点
+          起点和终点的距离
+          起点和终点的距离 同 plan里面的差值？
+
+          起点adcode
+          终点adcode
+          是否相同
+
+   user 行为特征：on-going
+
+  plan: 用户之前选择这个mode的个数和不选这个mode的个数 num
+            用户最大和最小距离的差值 num
+            用户每个mode的统计特征  不是plan维度的是整个数据集维度的 num
+            用户单价？num
+            plan价格离散化？cat
+            second_mode ？cat
+
+
+  交互特征：首先需要确定那个profile跟mode相关性最强，选择前5个 类别的0，1特征；on-going
+           用户和query之间的特征 num
+           用户和价格之间的特征 num
+           用户和距离之间的特征 num

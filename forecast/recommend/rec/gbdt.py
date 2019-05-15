@@ -52,7 +52,7 @@ def get_train_valid_feats():
     train_df = data[data['click_mode'] != -1]
     kfold = StratifiedKFold(n_splits=5, shuffle=True, random_state=2019)
     train_df_t, train_df_e = next(kfold.split(train_df, train_df['click_mode']))
-    return train_df_t, train_df_e
+    return train_df.iloc[train_df_t], train_df.iloc[train_df_e]
 
 
 def tp_submit():
@@ -78,7 +78,7 @@ def tp_valid():
     result_lgb = train_lgb(train_df, valid_df)
     now_time = strftime("%Y-%m-%d-%H-%M-%S", gmtime())
     file_name = '../submit/{}_result_{}.csv'.format('gbdt_ext_valid', now_time)
-    submit = valid_df[['sid', 'transport_mode']]
+    submit = valid_df[['sid', 'click_mode']]
     submit['recommend_mode'] = result_lgb
     submit.to_csv(file_name, index=False)
 
@@ -95,7 +95,7 @@ def train_lgb(train_df, test_df):
         'objective': 'multiclass',
         'metrics': 'multiclass',
         'learning_rate': 0.05,
-        'num_leaves': 61,
+        'num_leaves': 31,
         'lambda_l1': 0.01,
         'lambda_l2': 10,
         'num_class': 12,
@@ -112,8 +112,10 @@ def train_lgb(train_df, test_df):
     i = 0
     for tr_idx, val_idx in kfold.split(train_df, train_df['click_mode']):
         print('#######################################{}'.format(i))
-        tr_x, tr_y, val_x, val_y = train_df.iloc[tr_idx, conf.feature_columns], train_df.loc[tr_idx, 'click_mode'], \
-                                   train_df.iloc[val_idx, conf.feature_columns], train_df.iloc[val_idx, 'click_mode']
+        train_data = train_df.iloc[tr_idx]
+        valid_data = train_df.iloc[val_idx]
+        tr_x, tr_y, val_x, val_y = train_data[conf.feature_columns], train_data['click_mode'], \
+                                   valid_data[conf.feature_columns], valid_data['click_mode']
         train_set = lgb.Dataset(tr_x, tr_y, categorical_feature=conf.cate_columns)
         val_set = lgb.Dataset(val_x, val_y, categorical_feature=conf.cate_columns)
         lgb_model = lgb.train(lgb_paras, train_set,
@@ -136,10 +138,11 @@ def predict_by_model():
     预测训练结果
     :return:
     """
-    train_df, valid_df = get_train_valid_feats()
+    train_df, valid_df = get_train_test_feats()
+    # train_df, valid_df = get_train_valid_feats()
     result_proba = []
     scores = []
-    for i in range(5):
+    for i in range(1):
         print('***************************{}'.format(i))
         lgb_model = lgb.Booster(model_file='../models/model_{}'.format(i))
         pred_onehot = lgb_model.predict(valid_df[conf.feature_columns], num_iteration=lgb_model.best_iteration)
@@ -152,10 +155,12 @@ def predict_by_model():
     pred_test = np.argmax(np.mean(result_proba, axis=0), axis=1)
     result_df = pd.DataFrame()
     result_df['sid'] = valid_df.sid
+    result_df['click_mode'] = valid_df.click_mode
     result_df['recommend_mode'] = pred_test
 
-    result_df.to_csv('../submit/lgbext_valid_result.csv', index=False)
+    result_df.to_csv('../submit/lgbext_valid_result1.csv', index=False)
 
 
 if __name__ == '__main__':
-    tp_submit()
+    # tp_submit()
+    predict_by_model()

@@ -475,13 +475,14 @@ def gen_plan_extra_features(data, plan_df):
     :return:返回 pid维度数据
     """
     # 用户点击量统计；去掉测试数据中-1
-    cut_df = data.loc[data['click_mode'] != -1, ['sid', 'pid', 'click_mode', 'is_rain']]
+    cut_df = data[['sid', 'pid', 'click_mode']]
     cut_plan_df = plan_df[['sid', 'plan_pos', 'distance', 'eta', 'price', 'transport_mode', 'dj', 'sd', 'sd_dj']]
     # 去挑一个sid 对应两个相同的mode 的plan
     cut_plan_df = cut_plan_df.drop_duplicates(subset=['sid', 'transport_mode'])
+    # 有过点击记录的pid只有42343 个
     merge_df = pd.merge(cut_df, cut_plan_df, left_on=['sid', 'click_mode'], right_on=['sid', 'transport_mode'], how='inner')
-    # merge_df.loc[merge_df['plan_pos'].isnull(), ['plan_pos', 'distance', 'eta', 'price', 'dj', 'sd', 'sd_dj']] = -1
-    # merge_df.loc[merge_df['transport_mode'].isnull(), 'transport_mode'] = 0
+    merge_df.loc[merge_df['plan_pos'].isnull(), ['plan_pos', 'distance', 'eta', 'price', 'dj', 'sd', 'sd_dj']] = -1
+    merge_df.loc[merge_df['transport_mode'].isnull(), 'transport_mode'] = 0
     # 如果用户click_mode =-1 则返回-1；注意：如果使用merge_df 则会出现重复
     pid_df = cut_df.groupby(['pid'])['click_mode'].apply(lambda x: x.value_counts().idxmax()).reset_index()
     pid_df.columns = ['pid', 'pid_max_mode']
@@ -509,10 +510,10 @@ def gen_plan_extra_features(data, plan_df):
         z = np.zeros(12)
         k = c.index.values.astype(np.int32)
         v = c.values
-        # idx = np.where(k > -1)
-        # kc = k[idx]
-        # vc = v[idx]
-        z[k] = v
+        idx = np.where(k > -1)
+        kc = k[idx]
+        vc = v[idx]
+        z[kc] = vc
         return z / np.sum(z)
 
     mode_num_names = ['mode_num_{}'.format(i) for i in range(12)]

@@ -54,10 +54,9 @@ base_features = [
     'o20_max_mode', 'd20_max_mode',
     # 'o30_max_mode', 'd30_max_mode',
 
-    # tfidf svd
+    # profile svd
     'svd_fea_0', 'svd_fea_1', 'svd_fea_2', 'svd_fea_3', 'svd_fea_4', 'svd_fea_5',
     'svd_fea_6', 'svd_fea_7', 'svd_fea_8', 'svd_fea_9', 'svd_fea_10', 'svd_fea_11',
-    # profile svd
     'svd_fea_12', 'svd_fea_13', 'svd_fea_14', 'svd_fea_15',
     'svd_fea_16', 'svd_fea_17', 'svd_fea_18', 'svd_fea_19',
     'weekday', 'hour']
@@ -70,11 +69,11 @@ pid_ext_features = [
     'pid_max_eta', 'pid_min_eta', 'pid_mean_eta', 'pid_std_eta',
     'pid_max_dj', 'pid_min_dj', 'pid_mean_dj', 'pid_std_dj',
     'pid_max_sd', 'pid_min_sd', 'pid_mean_sd', 'pid_std_sd',
-    'pid_max_sd_dj', 'pid_min_sd_dj', 'pid_mean_sd_dj', 'pid_std_sd_dj',
-    # 各个模式占比
-    'mode_num_0', 'mode_num_1', 'mode_num_2', 'mode_num_3', 'mode_num_4',
-    'mode_num_5', 'mode_num_6', 'mode_num_7', 'mode_num_8', 'mode_num_9',
-    'mode_num_10', 'mode_num_11']
+    'pid_max_sd_dj', 'pid_min_sd_dj', 'pid_mean_sd_dj', 'pid_std_sd_dj']
+    # # 各个模式占比
+    # 'mode_num_0', 'mode_num_1', 'mode_num_2', 'mode_num_3', 'mode_num_4',
+    # 'mode_num_5', 'mode_num_6', 'mode_num_7', 'mode_num_8', 'mode_num_9',
+    # 'mode_num_10', 'mode_num_11']
 
 # 'mode_texts',
 plans_features = ['mode_feas_0', 'mode_feas_1', 'mode_feas_2', 'mode_feas_3',
