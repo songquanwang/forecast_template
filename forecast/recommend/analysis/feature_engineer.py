@@ -3,20 +3,23 @@ from sklearn.datasets import make_blobs
 from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
 
+
+def gen_cluster(cluster_num, X):
+    # 将数据聚类成2个
+    kmeans = KMeans(n_clusters=cluster_num)
+    kmeans.fit(X)
+    y_pred = kmeans.predict(X)
+    return y_pred
+
+
 fig = plt.figure(figsize=(10, 6))
 X = od_df[['lnt', 'lat']].values
-# 将数据聚类成2个
-kmeans = KMeans(n_clusters=20)
-kmeans.fit(X)
-y_pred = kmeans.predict(X)
 # 画出簇分配和簇中心
 plt.scatter(X[:, 0], X[:, 1], c=y_pred, s=60)
 plt.scatter(kmeans.cluster_centers_[:, 0], kmeans.cluster_centers_[:, 1],
             marker='^', s=100, linewidth=2)
 plt.xlabel("Feature 0")
 plt.ylabel("Feature 1")
-
-
 
 #######################
 import numpy as np
@@ -110,9 +113,10 @@ ax.set_ylim3d(0, 25000)
 ax.set_zlim3d(0, 10000)
 ax.legend([p1, p2, p3, p5, p6, p7, p8, p9, p10, p11], ['1', '2', '3', '5', '6', '7', '8', '9', '10', '11'], numpoints=1)
 
+
 ###########
 def sort_count(c):
-    d=dict(c.transport_mode.value_counts())
-    ds=[(k,d[k]) for k in sorted(d.keys())]
-    x,y=zip(*ds)
-    return x,y
+    d = dict(c.transport_mode.value_counts())
+    ds = [(k, d[k]) for k in sorted(d.keys())]
+    x, y = zip(*ds)
+    return x, y
