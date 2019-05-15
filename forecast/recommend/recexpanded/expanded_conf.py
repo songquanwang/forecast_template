@@ -14,10 +14,10 @@ feature_columns = ['o1', 'o2', 'd1', 'd2',
                    'svd_fea_9', 'svd_fea_10', 'svd_fea_11', 'svd_fea_12', 'svd_fea_13',
                    'svd_fea_14', 'svd_fea_15', 'svd_fea_16', 'svd_fea_17', 'svd_fea_18',
                    'svd_fea_19', 'weekday', 'hour',
-                   'plan_pos', 'distance', 'eta', 'price', 'transport_mode', 'dj', 'sd', 'sd_dj']
+                   'plan_pos', 'distance', 'eta', 'price', 'transport_mode', 'dj', 'sd', 'sd_dj','o20', 'd20', 'num_direct_distance','same_cls20']
 
 cate_columns = ['max_dist_mode', 'min_dist_mode', 'max_price_mode',
                 'min_price_mode', 'max_eta_mode', 'min_eta_mode', 'first_mode', 'weekday', 'hour',
-                'transport_mode', 'plan_pos']
+                'transport_mode', 'plan_pos','o20', 'd20','same_cls20']
 
 # , 'o20', 'd20', 'num_direct_distance','same_cls20'

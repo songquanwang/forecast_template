@@ -473,7 +473,9 @@ def make_expanded_features():
     plan_columns = ['plan_pos', 'distance', 'eta', 'price', 'transport_mode', 'dj', 'sd', 'sd_dj']
     # 确实值填充-1
     merge_df.loc[merge_df['plan_pos'].isnull(), plan_columns] = -1
-
+    merge_df['is_click']=0
+    merge_df.loc[merge_df['transport_mode']==merge_df['click_mode'],'is_click']=1
+    round(merge_df, 7).to_csv('../data/expanded_features_contain_zero.csv', index=False)
 
 if __name__ == '__main__':
     import os
