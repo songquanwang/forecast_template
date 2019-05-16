@@ -34,7 +34,7 @@ def merge_raw_data():
     """
     1.tr_queries 中没有tr_plans 的8946
     2.tr_plans 中没有 tr_click 的占37718；tr_click是tr_plans的子集
-    3.te_queries中没有te_plans的占1787
+    3.te_queries中没有te_plans的占 1787
     结论:
     1.有tr_plans 的没有tr_click 37718的需要把click_mode=0 作为训练数据
     2.没有tr_plans的 8946 不需要作为训练数据
@@ -51,6 +51,10 @@ def merge_raw_data():
     tr_plans[tr_plans['sid']==3190603].iloc[0].plans
 
     没有plans的query 直接预测为0(没点击)
+    train:491054 8946
+    test: 92571  1787
+    all: 583625
+    pid:49119    train: 45247 test:12890  3872 个没有在训练数据中
     :return:
     """
     # 500000 sid 唯一 ;163979 pid为null;8946 个sid没有 tr_plans;46664 没有tr_click
@@ -70,14 +74,14 @@ def merge_raw_data():
     tr_click = pd.read_csv('../data/data_set_phase1/train_clicks.csv')
     # 训练数据
     tr_data = tr_queries.merge(tr_click, on='sid', how='left')
-    tr_data = tr_data.merge(tr_plans, on='sid', how='left')
+    tr_data = tr_data.merge(tr_plans, on='sid', how='inner')
     # click_time无用
     tr_data = tr_data.drop(['click_time'], axis=1)
-    # 左连接不上的label置0
+    # 训练数据：click_mode 置0
     tr_data['click_mode'] = tr_data['click_mode'].fillna(0)
     # 测试数据
-    te_data = te_queries.merge(te_plans, on='sid', how='left')
-    # label置-1
+    te_data = te_queries.merge(te_plans, on='sid', how='inner')
+    # 测试数据：click_mode 置-1
     te_data['click_mode'] = -1
 
     data = pd.concat([tr_data, te_data], axis=0)
@@ -98,8 +102,8 @@ def gen_plan_df(data):
     对plans 进行预处理，填充
     :return:
     """
-    data.loc[data['click_mode'] != -1, 'is_train'] = 1
-    data.loc[data['click_mode'] == -1, 'is_train'] = 0
+    # data.loc[data['click_mode'] != -1, 'is_train'] = 1
+    # data.loc[data['click_mode'] == -1, 'is_train'] = 0
     data.loc[data['plans'].isnull(), 'plans'] = '[]'
     data['plans'] = data['plans'].apply(lambda line: eval(line))
     lens = [len(item) for item in data['plans']]
@@ -130,6 +134,9 @@ def gen_plan_df(data):
     plans_df['time_num30'] = plans_df['plan_time'].apply(lambda x: convert_time(x, 30))
     # 计算单价和mode平均单价
     plans_df['dj'] = plans_df['price'] / plans_df['distance']
+    # 单价>3大多是因为距离太近导致，只有60个；只有13条异常数据
+    # mode 3 有两条异常数据，估计使收取过路费
+    plans_df.loc[(plans_df['transport_mode'] == 4) & (plans_df['dj'] > 3), 'dj'] = 3
     plans_df['mdj'] = plans_df.groupby(['transport_mode', 'time_num30'])['dj'].transform(lambda x: np.nanmedian(x))
     # 填充 price dj[1, 2, 7, 9, 11]
     # 用平均单价替换价格
@@ -141,7 +148,7 @@ def gen_plan_df(data):
     plans_df['sd'] = plans_df['distance'] / plans_df['eta']
     plans_df['sd_dj'] = plans_df['sd'] / plans_df['dj']
     # sid, plan_time, distance, eta, price, transport_mode ；最高性价比
-    plans_df.loc[plans_df['sd_dj'] == np.inf, 'sd_dj'] = 2000
+    plans_df.loc[plans_df['sd_dj'] > 1000, 'sd_dj'] = 1000
     return plans_df[['sid', 'plan_time', 'plan_pos', 'distance', 'eta', 'price', 'transport_mode', 'dj', 'sd', 'sd_dj']]
 
 
@@ -192,7 +199,7 @@ def add_od_feas(data, cluster_list=[10, 20, 30]):
     # 添加距离特征
     data['num_direct_distance'] = data[['o1', 'o2', 'd1', 'd2']].apply(get_dis, axis=1)
 
-    data['is_rain_max_mode'] = data.groupby(['pid', 'is_rain'])['click_mode'].transform(lambda x: mode_max(x.value_counts()))
+    data['is_rain_max_mode'] = data.groupby(['pid', 'is_    rain'])['click_mode'].transform(lambda x: mode_max(x.value_counts()))
     return data
 
 
@@ -471,31 +478,38 @@ def gen_plan_extra_features(data, plan_df):
     'mode_num_0', 'mode_num_1', 'mode_num_2', 'mode_num_3', 'mode_num_4',
     'mode_num_5', 'mode_num_6', 'mode_num_7', 'mode_num_8', 'mode_num_9',
     'mode_num_10', 'mode_num_11
+
+    len(data.loc[~data['click_mode'].isin([0,-1]),'sid']) # 453336
     :param data:
     :return:返回 pid维度数据
     """
-    # 用户点击量统计；去掉测试数据中-1
-    cut_df = data[['sid', 'pid', 'click_mode']]
+    # plan_df =pd.read_csv('../data/data_set_phase1/plans_djsd.csv')
+    # 用户点击量统计；去掉测试数据中-1 583625  ;train:45247
+    cut_df = data.loc[data['click_mode'] != -1, ['sid', 'pid', 'click_mode']]
+    # 2706625 - 110208 重复记录 2596417
     cut_plan_df = plan_df[['sid', 'plan_pos', 'distance', 'eta', 'price', 'transport_mode', 'dj', 'sd', 'sd_dj']]
-    # 去挑一个sid 对应两个相同的mode 的plan
+    # 去挑一个sid 对应两个相同的mode 的plan 2596417
     cut_plan_df = cut_plan_df.drop_duplicates(subset=['sid', 'transport_mode'])
-    # 有过点击记录的pid只有42343 个
-    merge_df = pd.merge(cut_df, cut_plan_df, left_on=['sid', 'click_mode'], right_on=['sid', 'transport_mode'], how='inner')
+    # 有过点击记录的pid只有42343 个; 为0，-1 的记录没有关联上   491054 sid: 45247
+    merge_df = pd.merge(cut_df, cut_plan_df, left_on=['sid', 'click_mode'], right_on=['sid', 'transport_mode'], how='left')
     merge_df.loc[merge_df['plan_pos'].isnull(), ['plan_pos', 'distance', 'eta', 'price', 'dj', 'sd', 'sd_dj']] = -1
     merge_df.loc[merge_df['transport_mode'].isnull(), 'transport_mode'] = 0
     # 如果用户click_mode =-1 则返回-1；注意：如果使用merge_df 则会出现重复
-    pid_df = cut_df.groupby(['pid'])['click_mode'].apply(lambda x: x.value_counts().idxmax()).reset_index()
+    pid_df = merge_df.groupby(['pid'])['click_mode'].apply(lambda x: x.value_counts().idxmax()).reset_index()
     pid_df.columns = ['pid', 'pid_max_mode']
-
-    agg_fun = {'distance': ['max', 'min', 'mean', lambda x: np.std(x)],
-               'price': ['max', 'min', 'mean', lambda x: np.std(x)],
-               'eta': ['max', 'min', 'mean', lambda x: np.std(x)],
-               'dj': ['max', 'min', 'mean', lambda x: np.std(x)],
-               'sd': ['max', 'min', 'mean', lambda x: np.std(x)],
-               'sd_dj': ['max', 'min', 'mean', lambda x: np.std(x)]
-               }
-
+    mode_num_names = ['mode_num_{}'.format(i) for i in range(12)]
+    agg_fun = {
+        'click_mode': [lambda x: x.value_counts().idxmax()],
+        'distance': ['max', 'min', 'mean', lambda x: np.std(x)],
+        'price': ['max', 'min', 'mean', lambda x: np.std(x)],
+        'eta': ['max', 'min', 'mean', lambda x: np.std(x)],
+        'dj': ['max', 'min', 'mean', lambda x: np.std(x)],
+        'sd': ['max', 'min', 'mean', lambda x: np.std(x)],
+        'sd_dj': ['max', 'min', 'mean', lambda x: np.std(x)]
+    }
+    # 统计数字会出现 -1 ，一个用户 有时候点击，有时候不点击，就会出现-1
     agg_columns = ['pid',
+                   'pid_max_mode',
                    'pid_max_dist', 'pid_min_dist', 'pid_mean_dist', 'pid_std_dist',
                    'pid_max_price', 'pid_min_price', 'pid_mean_price', 'pid_std_price',
                    'pid_max_eta', 'pid_min_eta', 'pid_mean_eta', 'pid_std_eta',
@@ -507,6 +521,11 @@ def gen_plan_extra_features(data, plan_df):
     pid_feature_df.columns = agg_columns
 
     def mode_num(c):
+        """
+
+        :param c:
+        :return:
+        """
         z = np.zeros(12)
         k = c.index.values.astype(np.int32)
         v = c.values
@@ -516,7 +535,6 @@ def gen_plan_extra_features(data, plan_df):
         z[kc] = vc
         return z / np.sum(z)
 
-    mode_num_names = ['mode_num_{}'.format(i) for i in range(12)]
     pid_group_df = merge_df.groupby('pid')['click_mode'].apply(lambda x: mode_num(x.value_counts())).reset_index()
 
     mode_columns = ['pid'] + mode_num_names
@@ -525,7 +543,14 @@ def gen_plan_extra_features(data, plan_df):
     sid_data = pid_group_df['pid'].values.reshape(len(pid_group_df), 1)
     mode_num_df = pd.DataFrame(np.hstack([sid_data, mode_data]), columns=mode_columns)
     mode_num_df.columns = mode_columns
-    pid_ext_features_df = reduce(lambda ldf, rdf: pd.merge(ldf, rdf, on=['pid'], how='inner'), [pid_df, pid_feature_df, mode_num_df])
+    pid_ext_features_df = reduce(lambda ldf, rdf: pd.merge(ldf, rdf, on=['pid'], how='inner'), [pid_feature_df, mode_num_df])
+
+    # 为没有关联上的pid 构造默认值
+    pid_list = list(set(data.pid) - set(pid_ext_features_df['pid']))
+    default_values = pid_ext_features_df[pid_ext_features_df['pid'] == -1].iloc[[0]]
+    default_df = pd.concat([default_values] * len(pid_list), axis=0)
+    default_df['pid'] = pid_list
+    pid_ext_features_df = pd.concat([pid_ext_features_df, default_df], axis=0)
     # 保存文件
     round(pid_ext_features_df, 7).to_csv('../data/data_set_phase1/pid_ext_features.csv', index=False)
     return pid_ext_features_df
@@ -551,7 +576,6 @@ def gen_train_test_feas_data():
     data = merge_raw_data()
     # 添加天气特征
     data = add_is_rain(data)
-    data = data.drop(['plans'], axis=1)
     data = add_od_feas(data)
     plans_features = gen_plan_feas(data)
     # union没有plans的 innner=left
@@ -560,8 +584,11 @@ def gen_train_test_feas_data():
     data = add_time_feas(data)
     pid_ext_features_df = get_plan_ext_feas()
     data = pd.merge(data, pid_ext_features_df, on=['pid'], how='left')
-
-    round(data, 7).to_csv('../data/features/features_all.csv', index=False)
+    #
+    data = data.drop(['plans'], axis=1)
+    data = data.drop(['is_train'], axis=1)
+    data = data.drop(['mode_texts'], axis=1)
+    round(data, 7).to_csv('../data/features/features_all_new.csv', index=False)
     return data
 
 

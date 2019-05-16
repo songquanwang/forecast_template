@@ -40,9 +40,9 @@ cate_columns_bkp2 = ['max_dist_mode', 'min_dist_mode', 'max_price_mode',
 # od + svd profile
 
 """
-
+min基本全0 可以去掉
 """
-base_features = [
+od_features = [
     # 'sid',  'd', 'o', 'pid','plan_time', 'click_mode',
     #  'is_rain' 'is_rain_max_mode',
     'o1', 'o2', 'd1', 'd2',
@@ -53,13 +53,14 @@ base_features = [
     # 'o10_max_mode', 'd10_max_mode',
     'o20_max_mode', 'd20_max_mode',
     # 'o30_max_mode', 'd30_max_mode',
-
+]
+time_features = ['weekday', 'hour']
+profile_svd_features = [
     # profile svd
     'svd_fea_0', 'svd_fea_1', 'svd_fea_2', 'svd_fea_3', 'svd_fea_4', 'svd_fea_5',
     'svd_fea_6', 'svd_fea_7', 'svd_fea_8', 'svd_fea_9', 'svd_fea_10', 'svd_fea_11',
     'svd_fea_12', 'svd_fea_13', 'svd_fea_14', 'svd_fea_15',
-    'svd_fea_16', 'svd_fea_17', 'svd_fea_18', 'svd_fea_19',
-    'weekday', 'hour']
+    'svd_fea_16', 'svd_fea_17', 'svd_fea_18', 'svd_fea_19']
 
 # 没有 'pid'
 pid_ext_features = [
@@ -69,11 +70,11 @@ pid_ext_features = [
     'pid_max_eta', 'pid_min_eta', 'pid_mean_eta', 'pid_std_eta',
     'pid_max_dj', 'pid_min_dj', 'pid_mean_dj', 'pid_std_dj',
     'pid_max_sd', 'pid_min_sd', 'pid_mean_sd', 'pid_std_sd',
-    'pid_max_sd_dj', 'pid_min_sd_dj', 'pid_mean_sd_dj', 'pid_std_sd_dj']
+    'pid_max_sd_dj', 'pid_min_sd_dj', 'pid_mean_sd_dj', 'pid_std_sd_dj',
     # # 各个模式占比
-    # 'mode_num_0', 'mode_num_1', 'mode_num_2', 'mode_num_3', 'mode_num_4',
-    # 'mode_num_5', 'mode_num_6', 'mode_num_7', 'mode_num_8', 'mode_num_9',
-    # 'mode_num_10', 'mode_num_11']
+    'mode_num_0', 'mode_num_1', 'mode_num_2', 'mode_num_3', 'mode_num_4',
+    'mode_num_5', 'mode_num_6', 'mode_num_7', 'mode_num_8', 'mode_num_9',
+    'mode_num_10', 'mode_num_11']
 
 # 'mode_texts',
 plans_features = ['mode_feas_0', 'mode_feas_1', 'mode_feas_2', 'mode_feas_3',
@@ -92,7 +93,7 @@ plans_features = ['mode_feas_0', 'mode_feas_1', 'mode_feas_2', 'mode_feas_3',
                   'svd_mode_4', 'svd_mode_5', 'svd_mode_6', 'svd_mode_7', 'svd_mode_8',
                   'svd_mode_9']
 
-feature_columns = base_features + pid_ext_features + plans_features
+feature_columns = od_features + time_features + profile_svd_features + pid_ext_features + plans_features
 
 cate_columns = ['max_dist_mode', 'min_dist_mode', 'max_price_mode',
                 'min_price_mode', 'max_eta_mode', 'min_eta_mode', 'first_mode', 'weekday', 'hour',

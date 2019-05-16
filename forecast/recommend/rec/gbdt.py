@@ -66,6 +66,9 @@ def tp_submit():
     file_name = '../submit/{}_result_{}.csv'.format('gbdt_ext', now_time)
     submit = test_df[['sid']]
     submit['recommend_mode'] = result_lgb
+    if len(submit) < 94358:
+        empty_pred_df = pd.read_csv('../submit/empty_pred.csv')
+        submit = pd.concat([submit, empty_pred_df], axis=0)
     submit.to_csv(file_name, index=False)
 
 
