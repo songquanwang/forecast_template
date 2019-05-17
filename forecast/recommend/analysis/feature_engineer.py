@@ -4,16 +4,18 @@ from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
 
 
+###########################聚类
 def gen_cluster(cluster_num, X):
     # 将数据聚类成2个
     kmeans = KMeans(n_clusters=cluster_num)
     kmeans.fit(X)
     y_pred = kmeans.predict(X)
-    return y_pred
+    return y_pred, kmeans
 
 
-fig = plt.figure(figsize=(10, 6))
 X = od_df[['lnt', 'lat']].values
+fig = plt.figure(figsize=(10, 6))
+y_pred, kmeans = gen_cluster(cluster_num=10, X=X)
 # 画出簇分配和簇中心
 plt.scatter(X[:, 0], X[:, 1], c=y_pred, s=60)
 plt.scatter(kmeans.cluster_centers_[:, 0], kmeans.cluster_centers_[:, 1],
@@ -40,7 +42,7 @@ import matplotlib as mpl
 
 mpl.rcParams['legend.fontsize'] = 10
 
-# 数据
+##################################数据  多维散点图
 
 values = plans_df[['distance', 'eta', 'price', 'transport_mode']]
 
@@ -114,9 +116,32 @@ ax.set_zlim3d(0, 10000)
 ax.legend([p1, p2, p3, p5, p6, p7, p8, p9, p10, p11], ['1', '2', '3', '5', '6', '7', '8', '9', '10', '11'], numpoints=1)
 
 
-###########
+############输出 分布对比图
 def sort_count(c):
     d = dict(c.transport_mode.value_counts())
     ds = [(k, d[k]) for k in sorted(d.keys())]
     x, y = zip(*ds)
     return x, y
+
+
+def sort_count(c):
+    d = dict(c)
+    ds = [(k, d[k]) for k in sorted(d.keys())]
+    x, y = zip(*ds)
+    return x, y
+
+
+import pandas as pd
+
+pred_df = pd.read_csv('../submit/gbdt_ext_valid_result_2019-05-16-07-22-32.csv')
+plt.figure(figsize=(10, 6))
+width = 0.3
+c1 = pred_df['click_mode'].value_counts()
+c2 = pred_df['recommend_mode'].value_counts()
+x1, y1 = sort_count(c1)
+x2, y2 = sort_count(c2)
+y11 = y1 / sum(y1)
+y22 = y2 / sum(y2)
+
+plt.bar(x1 - width / 2, y11, width=0.3)
+plt.bar(x2 + width / 2, y22, width=0.3)

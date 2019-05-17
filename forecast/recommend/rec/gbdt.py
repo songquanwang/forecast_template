@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import f1_score
 from sklearn.model_selection import StratifiedKFold
-
+from sklearn.model_selection import train_test_split
 import conf
 
 
@@ -51,9 +51,12 @@ def get_train_valid_feats():
 
     data = pd.read_csv('../data/features/features_all_new_140.csv')
     train_df = data[data['click_mode'] != -1]
-    kfold = StratifiedKFold(n_splits=5, shuffle=True, random_state=2019)
-    train_df_t, train_df_e = next(kfold.split(train_df, train_df['click_mode']))
-    return train_df.iloc[train_df_t], train_df.iloc[train_df_e]
+    # kfold = StratifiedKFold(n_splits=5, shuffle=True, random_state=2019)
+    # train_df_t, train_df_e = next(kfold.split(train_df, train_df['click_mode']))
+    # train_df.iloc[train_df_t], train_df.iloc[train_df_e]
+    train_df_t, train_df_e = train_test_split(train_df, test_size=0.2)
+
+    return train_df_t, train_df_e
 
 
 def tp_submit():

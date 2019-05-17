@@ -205,7 +205,24 @@ def add_od_feas(data, cluster_list=[10, 20, 30]):
 
 def gen_plan_feas_by_plans(plans_df):
     """
-
+    plans_features = [
+                  'mode_feas_0', 'mode_feas_1', 'mode_feas_2', 'mode_feas_3',
+                  'mode_feas_4', 'mode_feas_5', 'mode_feas_6', 'mode_feas_7',
+                  'mode_feas_8', 'mode_feas_9', 'mode_feas_10', 'mode_feas_11',
+                  'first_mode','mode_texts',
+                  'max_dist', 'min_dist', 'mean_dist', 'std_dist',
+                  'max_price', 'min_price', 'mean_price', 'std_price',
+                  'max_eta', 'min_eta', 'mean_eta', 'std_eta',
+                  'max_dj', 'min_dj', 'mean_dj', 'std_dj',
+                  'max_sd', 'min_sd', 'mean_sd', 'std_sd',
+                  'max_sd_dj', 'min_sd_dj', 'mean_sd_dj', 'std_sd_dj',
+                  'max_dist_mode', 'min_dist_mode', 'max_price_mode',
+                  'min_price_mode', 'max_eta_mode', 'min_eta_mode',
+                  'svd_mode_0', 'svd_mode_1', 'svd_mode_2', 'svd_mode_3',
+                  'svd_mode_4', 'svd_mode_5', 'svd_mode_6', 'svd_mode_7', 'svd_mode_8',
+                  'svd_mode_9'
+                  ]
+    max_dist_mode
     :param data:
     :return:
     """
@@ -286,6 +303,24 @@ def gen_plan_feas_by_plans(plans_df):
 def gen_empty_plan_feas(data):
     """
     生成empty plans
+      plans_features = [
+                  'mode_feas_0', 'mode_feas_1', 'mode_feas_2', 'mode_feas_3',
+                  'mode_feas_4', 'mode_feas_5', 'mode_feas_6', 'mode_feas_7',
+                  'mode_feas_8', 'mode_feas_9', 'mode_feas_10', 'mode_feas_11',
+                  'first_mode','mode_texts',
+                  'max_dist', 'min_dist', 'mean_dist', 'std_dist',
+                  'max_price', 'min_price', 'mean_price', 'std_price',
+                  'max_eta', 'min_eta', 'mean_eta', 'std_eta',
+                  'max_dj', 'min_dj', 'mean_dj', 'std_dj',
+                  'max_sd', 'min_sd', 'mean_sd', 'std_sd',
+                  'max_sd_dj', 'min_sd_dj', 'mean_sd_dj', 'std_sd_dj',
+                  'max_dist_mode', 'min_dist_mode', 'max_price_mode',
+                  'min_price_mode', 'max_eta_mode', 'min_eta_mode',
+                  'svd_mode_0', 'svd_mode_1', 'svd_mode_2', 'svd_mode_3',
+                  'svd_mode_4', 'svd_mode_5', 'svd_mode_6', 'svd_mode_7', 'svd_mode_8',
+                  'svd_mode_9'
+
+                  ]
     :param data:
     :return:
     """
@@ -491,14 +526,14 @@ def gen_plan_extra_features(data, plan_df):
     cut_plan_df = plan_df[['sid', 'plan_pos', 'distance', 'eta', 'price', 'transport_mode', 'dj', 'sd', 'sd_dj']]
     # 去挑一个sid 对应两个相同的mode 的plan 2596417
     cut_plan_df = cut_plan_df.drop_duplicates(subset=['sid', 'transport_mode'])
-    # 有过点击记录的pid只有42343 个; 为0，-1 的记录没有关联上   491054 sid: 45247
+    # 虽然推荐了，用户没有点击的（click_mode =0） 的记录没有关联上   sid:37718  pid: 11772
     merge_df = pd.merge(cut_df, cut_plan_df, left_on=['sid', 'click_mode'], right_on=['sid', 'transport_mode'], how='left')
-    merge_df.loc[merge_df['plan_pos'].isnull(), ['plan_pos', 'distance', 'eta', 'price', 'dj', 'sd', 'sd_dj']] = -1
+    # 填充-1就错了
+    # merge_df.loc[merge_df['plan_pos'].isnull(), ['plan_pos', 'distance', 'eta', 'price', 'dj', 'sd', 'sd_dj']] = -1
     merge_df.loc[merge_df['transport_mode'].isnull(), 'transport_mode'] = 0
-    # 如果用户click_mode =-1 则返回-1；注意：如果使用merge_df 则会出现重复
-    pid_df = merge_df.groupby(['pid'])['click_mode'].apply(lambda x: x.value_counts().idxmax()).reset_index()
-    pid_df.columns = ['pid', 'pid_max_mode']
+    # 生成聚合属性
     mode_num_names = ['mode_num_{}'.format(i) for i in range(12)]
+    # pandas 自动忽略np.nan
     agg_fun = {
         'click_mode': [lambda x: x.value_counts().idxmax()],
         'distance': ['max', 'min', 'mean', lambda x: np.std(x)],
@@ -545,23 +580,26 @@ def gen_plan_extra_features(data, plan_df):
     mode_num_df = pd.DataFrame(np.hstack([sid_data, mode_data]), columns=mode_columns)
     mode_num_df.columns = mode_columns
     pid_ext_features_df = reduce(lambda ldf, rdf: pd.merge(ldf, rdf, on=['pid'], how='inner'), [pid_feature_df, mode_num_df])
-
-    # 为没有关联上的pid 构造默认值
-    pid_list = list(set(data.pid) - set(pid_ext_features_df['pid']))
-
-    # default_values = pid_ext_features_df[pid_ext_features_df['pid'] == -1].iloc[[0]]
-    mean_series = pid_ext_features_df.mean()
-    default_values = pd.DataFrame(mean_series.values.reshape(1, -1), columns=mean_series.index)
-    default_values['pid_max_mode'] = pid_ext_features_df['pid_max_mode'].median()
-    default_df = pd.concat([default_values] * len(pid_list), axis=0)
-    default_df['pid'] = pid_list
-    pid_ext_features_df = pd.concat([pid_ext_features_df, default_df], axis=0)
+    # 2904 存在空值 把nan 填充 -1
+    pid_ext_features_df.loc[pid_ext_features_df['pid_max_dist'].isnull(), agg_columns[2:]] = -1
+    # 占比也改成-1  没有意义
+    pid_ext_features_df.loc[pid_ext_features_df['pid_max_dist'] == -1, mode_num_names] = -1
+    # 为没有关联上的pid 构造默认值 3872 个pid  没有特征 np.nan
+    # pid_list = list(set(data.pid) - set(pid_ext_features_df['pid']))
+    #
+    # # default_values = pid_ext_features_df[pid_ext_features_df['pid'] == -1].iloc[[0]]
+    # mean_series = pid_ext_features_df.mean()
+    # default_values = pd.DataFrame(mean_series.values.reshape(1, -1), columns=mean_series.index)
+    # default_values['pid_max_mode'] = pid_ext_features_df['pid_max_mode'].median()
+    # default_df = pd.concat([default_values] * len(pid_list), axis=0)
+    # default_df['pid'] = pid_list
+    # pid_ext_features_df = pd.concat([pid_ext_features_df, default_df], axis=0)
     # 保存文件
     round(pid_ext_features_df, 7).to_csv('../data/data_set_phase1/pid_ext_features.csv', index=False)
     return pid_ext_features_df
 
 
-def get_plan_ext_feas():
+def get_plan_extra_features():
     """
     获取用户维度的特征数据
     :return:
@@ -580,14 +618,14 @@ def gen_train_test_feas_data():
 
     data = merge_raw_data()
     # 添加天气特征
-    # data = add_is_rain(data)
+    data = add_is_rain(data)
     data = add_od_feas(data)
     plans_features = gen_plan_feas(data)
     # union没有plans的 innner=left
     data = pd.merge(data, plans_features, on=['sid'], how='left')
     data = add_profile_feas(data)
     data = add_time_feas(data)
-    pid_ext_features_df = gen_plan_extra_features()
+    pid_ext_features_df = get_plan_extra_features()
     data = pd.merge(data, pid_ext_features_df, on=['pid'], how='left')
     #
     data = data.drop(['plans'], axis=1)
