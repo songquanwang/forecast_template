@@ -37,7 +37,7 @@ def get_train_test_feats():
     获取训练数据、测试数据
     :return:
     """
-    data = pd.read_csv('../data/features/features_all.csv')
+    data = pd.read_csv('../data/features/features_all_new_140.csv')
     train_df = data[data['click_mode'] != -1]
     test_df = data[data['click_mode'] == -1]
     return train_df, test_df
@@ -48,7 +48,7 @@ def get_train_valid_feats():
     获取训练数据、验证数据
     :return:
     """
-    data = pd.read_csv('../data/features/features_all.csv')
+    data = pd.read_csv('../data/features/features_all_new_140.csv')
     train_df = data[data['click_mode'] != -1]
     kfold = StratifiedKFold(n_splits=5, shuffle=True, random_state=2019)
     train_df_t, train_df_e = next(kfold.split(train_df, train_df['click_mode']))
@@ -166,4 +166,4 @@ def predict_by_model():
 
 if __name__ == '__main__':
     # tp_submit()
-    predict_by_model()
+    tp_submit()
