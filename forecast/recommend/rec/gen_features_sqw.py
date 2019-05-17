@@ -12,10 +12,8 @@ from six.moves import reduce
 from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
-import common
-import conf
+from conf import conf_all
 from sklearn.metrics.pairwise import pairwise_distances
-from geopy.distance import geodesic
 
 
 def read_profile_data():
@@ -478,11 +476,11 @@ def get_train_test_feas_submit():
     划分训练集、测试集 特征
     :return:
     """
-    data = pd.read_csv('../data/features/features_new_od.csv')[conf.feature_columns]
+    data = pd.read_csv('../data/features/features_new_od.csv')[conf_all.feature_columns]
     train_data = data[data['click_mode'] != -1]
     test_data = data[data['click_mode'] == -1]
     train_x, train_y, test_x, test_y, train_sid, test_sid = split_train_test(train_data, test_data)
-    return train_x, train_y, test_x, test_y, train_sid, test_sid, conf.cate_columns
+    return train_x, train_y, test_x, test_y, train_sid, test_sid, conf_all.cate_columns
 
 
 def process_label_imbalance(raw_df):
@@ -504,7 +502,7 @@ def get_train_test_feas_valid():
     划分训练集、验证集 特征
     :return:
     """
-    data = pd.read_csv('../data/features/features_new_od.csv')[conf.feature_columns]
+    data = pd.read_csv('../data/features/features_new_od.csv')[conf_all.feature_columns]
     # data = process_label_imbalance(data)
     # 全部训练数据
     train_data = data[data['click_mode'] != -1]
@@ -513,7 +511,7 @@ def get_train_test_feas_valid():
 
     train_x, train_y, test_x, test_y, train_sid, test_sid = split_train_test(train_data_t, train_data_e)
 
-    return train_x, train_y, test_x, test_y, train_sid, test_sid, conf.cate_columns
+    return train_x, train_y, test_x, test_y, train_sid, test_sid, conf_all.cate_columns
 
 
 

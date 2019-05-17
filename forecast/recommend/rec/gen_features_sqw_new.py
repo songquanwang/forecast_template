@@ -199,7 +199,7 @@ def add_od_feas(data, cluster_list=[10, 20, 30]):
     # 添加距离特征
     data['num_direct_distance'] = data[['o1', 'o2', 'd1', 'd2']].apply(get_dis, axis=1)
 
-    data['is_rain_max_mode'] = data.groupby(['pid', 'is_    rain'])['click_mode'].transform(lambda x: mode_max(x.value_counts()))
+    data['is_rain_max_mode'] = data.groupby(['pid', 'is_rain'])['click_mode'].transform(lambda x: mode_max(x.value_counts()))
     return data
 
 
@@ -349,7 +349,7 @@ def gen_plan_feas(data):
     """
     # plans_df = get_plan_df(data)
     # tr_plans + te_plans =583625
-    plans_df = pd.read_csv('../data/plans_djsd.csv')
+    plans_df = pd.read_csv('../data/data_set_phase1/plans_djsd.csv')
     data_empty = data[~data['sid'].isin(plans_df.sid.unique())]
     plans_features = gen_plan_feas_by_plans(plans_df)
     empty_plans_features = gen_empty_plan_feas(data_empty)
@@ -440,9 +440,10 @@ def gen_plan_new():
 
 
 # 需要排除-1,否则无法对测试集构造此特征
+
 def mode_max(c):
-    c[[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]].idxmax()
-    return c[[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]].idxmax()
+    return c[[0., 1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11.]].idxmax()
+    # return c.idxmax()
 
 
 def add_is_rain(data):
@@ -547,7 +548,11 @@ def gen_plan_extra_features(data, plan_df):
 
     # 为没有关联上的pid 构造默认值
     pid_list = list(set(data.pid) - set(pid_ext_features_df['pid']))
-    default_values = pid_ext_features_df[pid_ext_features_df['pid'] == -1].iloc[[0]]
+
+    # default_values = pid_ext_features_df[pid_ext_features_df['pid'] == -1].iloc[[0]]
+    mean_series = pid_ext_features_df.mean()
+    default_values = pd.DataFrame(mean_series.values.reshape(1, -1), columns=mean_series.index)
+    default_values['pid_max_mode'] = pid_ext_features_df['pid_max_mode'].median()
     default_df = pd.concat([default_values] * len(pid_list), axis=0)
     default_df['pid'] = pid_list
     pid_ext_features_df = pd.concat([pid_ext_features_df, default_df], axis=0)
@@ -575,14 +580,14 @@ def gen_train_test_feas_data():
 
     data = merge_raw_data()
     # 添加天气特征
-    data = add_is_rain(data)
+    # data = add_is_rain(data)
     data = add_od_feas(data)
     plans_features = gen_plan_feas(data)
     # union没有plans的 innner=left
     data = pd.merge(data, plans_features, on=['sid'], how='left')
     data = add_profile_feas(data)
     data = add_time_feas(data)
-    pid_ext_features_df = get_plan_ext_feas()
+    pid_ext_features_df = gen_plan_extra_features()
     data = pd.merge(data, pid_ext_features_df, on=['pid'], how='left')
     #
     data = data.drop(['plans'], axis=1)
@@ -609,8 +614,8 @@ def process_label_imbalance(raw_df):
 # merge_df['num_direct_distance'] = merge_df.apply(lambda x: get_dis(x['o'],x['d']), axis=1)
 
 if __name__ == '__main__':
-    import os
+    # import os
 
-    os.chdir('D:/github/forecast_template/recommend/rec')
+    # os.chdir('D:/github/forecast_template/recommend/rec')
     # gen_plan_new()
     gen_train_test_feas_data()
