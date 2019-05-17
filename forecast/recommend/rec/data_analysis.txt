@@ -228,3 +228,8 @@ Out[54]:
 1.没有计划的pid按照-1用户替换
 2.没有推荐的用户，不能替换
 3.距离小于100的， 3 4 5 6 dj用平均单价计算
+
+
+
+用户 pid first_mode 次数 price distance  second_mode 次数 third_mode 次数
+request 上一次点击 click_mode
