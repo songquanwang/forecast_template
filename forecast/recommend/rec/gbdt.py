@@ -37,7 +37,7 @@ def get_train_test_feats():
     获取训练数据、测试数据
     :return:
     """
-    data = pd.read_csv('../data/features/features_all_new_140.csv')
+    data = pd.read_csv('../data/features/features_all_ts.csv')
     train_df = data[data['click_mode'] != -1]
     test_df = data[data['click_mode'] == -1]
     return train_df, test_df
@@ -49,7 +49,7 @@ def get_train_valid_feats():
     :return:
     """
 
-    data = pd.read_csv('../data/features/features_all_new_140.csv')
+    data = pd.read_csv('../data/features/features_all_ts.csv')
     train_df = data[data['click_mode'] != -1]
     # kfold = StratifiedKFold(n_splits=5, shuffle=True, random_state=2019)
     # train_df_t, train_df_e = next(kfold.split(train_df, train_df['click_mode']))
@@ -162,12 +162,14 @@ def predict_by_model():
     pred_test = np.argmax(np.mean(result_proba, axis=0), axis=1)
     result_df = pd.DataFrame()
     result_df['sid'] = valid_df.sid
-    result_df['click_mode'] = valid_df.click_mode
+    # result_df['click_mode'] = valid_df.click_mode
     result_df['recommend_mode'] = pred_test
-
-    result_df.to_csv('../submit/lgbext_valid_result5.csv', index=False)
+    if len(result_df) < 94358:
+        empty_pred_df = pd.read_csv('../submit/empty_pred.csv')
+        result_df = pd.concat([result_df, empty_pred_df], axis=0)
+    result_df.to_csv('../submit/2019-05-17-pre_feat.csv', index=False)
 
 
 if __name__ == '__main__':
-    # tp_submit()
     tp_submit()
+    #predict_by_model()

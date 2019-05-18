@@ -199,7 +199,7 @@ def add_od_feas(data, cluster_list=[10, 20, 30]):
     # 添加距离特征
     data['num_direct_distance'] = data[['o1', 'o2', 'd1', 'd2']].apply(get_dis, axis=1)
 
-    data['is_rain_max_mode'] = data.groupby(['pid', 'is_rain'])['click_mode'].transform(lambda x: mode_max(x.value_counts()))
+    # data['is_rain_max_mode'] = data.groupby(['pid', 'is_rain'])['click_mode'].transform(lambda x: mode_max(x.value_counts()))
     return data
 
 
@@ -519,15 +519,15 @@ def gen_plan_extra_features(data, plan_df):
     :param data:
     :return:返回 pid维度数据
     """
-    # plan_df =pd.read_csv('../data/data_set_phase1/plans_djsd.csv')
+    plan_df = pd.read_csv('../data/data_set_phase1/plans_djsd.csv')
     # 用户点击量统计；去掉测试数据中-1 583625  ;train:45247
-    cut_df = data.loc[data['click_mode'] != -1, ['sid', 'pid', 'click_mode']]
+    cut_df = data[['sid', 'pid', 'first_mode']]
     # 2706625 - 110208 重复记录 2596417
     cut_plan_df = plan_df[['sid', 'plan_pos', 'distance', 'eta', 'price', 'transport_mode', 'dj', 'sd', 'sd_dj']]
     # 去挑一个sid 对应两个相同的mode 的plan 2596417
     cut_plan_df = cut_plan_df.drop_duplicates(subset=['sid', 'transport_mode'])
     # 虽然推荐了，用户没有点击的（click_mode =0） 的记录没有关联上   sid:37718  pid: 11772
-    merge_df = pd.merge(cut_df, cut_plan_df, left_on=['sid', 'click_mode'], right_on=['sid', 'transport_mode'], how='left')
+    merge_df = pd.merge(cut_df, cut_plan_df, left_on=['sid', 'first_mode'], right_on=['sid', 'transport_mode'], how='left')
     # 填充-1就错了
     # merge_df.loc[merge_df['plan_pos'].isnull(), ['plan_pos', 'distance', 'eta', 'price', 'dj', 'sd', 'sd_dj']] = -1
     merge_df.loc[merge_df['transport_mode'].isnull(), 'transport_mode'] = 0
@@ -535,7 +535,7 @@ def gen_plan_extra_features(data, plan_df):
     mode_num_names = ['mode_num_{}'.format(i) for i in range(12)]
     # pandas 自动忽略np.nan
     agg_fun = {
-        'click_mode': [lambda x: x.value_counts().idxmax()],
+        'first_mode': [lambda x: x.value_counts().idxmax()],
         'distance': ['max', 'min', 'mean', lambda x: np.std(x)],
         'price': ['max', 'min', 'mean', lambda x: np.std(x)],
         'eta': ['max', 'min', 'mean', lambda x: np.std(x)],
@@ -571,11 +571,11 @@ def gen_plan_extra_features(data, plan_df):
         z[kc] = vc
         return z / np.sum(z)
 
-    pid_group_df = merge_df.groupby('pid')['click_mode'].apply(lambda x: mode_num(x.value_counts())).reset_index()
+    pid_group_df = merge_df.groupby('pid')['first_mode'].apply(lambda x: mode_num(x.value_counts())).reset_index()
 
     mode_columns = ['pid'] + mode_num_names
 
-    mode_data = np.concatenate(pid_group_df['click_mode'].values, axis=0).reshape(len(pid_group_df), 12)
+    mode_data = np.concatenate(pid_group_df['first_mode'].values, axis=0).reshape(len(pid_group_df), 12)
     sid_data = pid_group_df['pid'].values.reshape(len(pid_group_df), 1)
     mode_num_df = pd.DataFrame(np.hstack([sid_data, mode_data]), columns=mode_columns)
     mode_num_df.columns = mode_columns
@@ -618,14 +618,19 @@ def gen_train_test_feas_data():
 
     data = merge_raw_data()
     # 添加天气特征
-    data = add_is_rain(data)
+    # data = add_is_rain(data)
+    print('add od')
     data = add_od_feas(data)
+    print('add plan feat')
     plans_features = gen_plan_feas(data)
     # union没有plans的 innner=left
     data = pd.merge(data, plans_features, on=['sid'], how='left')
+    print('add profile feat')
     data = add_profile_feas(data)
+    print('add time feat')
     data = add_time_feas(data)
-    pid_ext_features_df = get_plan_extra_features()
+    print('add extra plan feat')
+    pid_ext_features_df = gen_plan_extra_features(data, None)
     data = pd.merge(data, pid_ext_features_df, on=['pid'], how='left')
     #
     data = data.drop(['plans'], axis=1)
@@ -649,7 +654,131 @@ def process_label_imbalance(raw_df):
     return raw_df
 
 
+def process_ts_feat():
+    """
+    时序特征
+    Index(['sid', 'pid', 'plan_time', 'click_mode', 'last_mode', 'pre_mode',
+       'pid_max_dist', 'pid_min_dist', 'pid_mean_dist', 'pid_std_dist',
+       'pid_max_price', 'pid_min_price', 'pid_mean_price', 'pid_std_price',
+       'pid_max_eta', 'pid_min_eta', 'pid_mean_eta', 'pid_std_eta',
+       'pid_max_dj', 'pid_min_dj', 'pid_mean_dj', 'pid_std_dj', 'pid_max_sd',
+       'pid_min_sd', 'pid_mean_sd', 'pid_std_sd', 'pid_max_sd_dj',
+       'pid_min_sd_dj', 'pid_mean_sd_dj', 'pid_std_sd_dj', 'shift_cm',
+       'pid_max_mode', 'mode_num_0', 'mode_num_1', 'mode_num_2', 'mode_num_3',
+       'mode_num_4', 'mode_num_5', 'mode_num_6', 'mode_num_7', 'mode_num_8',
+       'mode_num_9', 'mode_num_10', 'mode_num_11']
+    :return:
+    """
+    data = merge_raw_data()
+    plan_df = pd.read_csv('../data/data_set_phase1/plans_djsd.csv')
+    data['plan_time'] = pd.to_datetime('plan_time')
+    order_data = data.sort_values(by='plan_time')
+    order_data['last_mode'] = order_data.groupby('pid')['click_mode'].transform(lambda x: x.shift(1))
+    order_data['pre_mode'] = order_data.groupby('pid')['click_mode'].transform(lambda x: x.shift(1).rolling(3).median())
+    ###
+    cut_plan_df = plan_df[['sid', 'plan_pos', 'distance', 'eta', 'price', 'transport_mode', 'dj', 'sd', 'sd_dj']]
+    # 去挑一个sid 对应两个相同的mode 的plan 2596417
+    cut_plan_df = cut_plan_df.drop_duplicates(subset=['sid', 'transport_mode'])
+    # 虽然推荐了，用户没有点击的（click_mode =0） 的记录没有关联上   sid:37718  pid: 11772
+    merge_df = pd.merge(data, cut_plan_df, left_on=['sid', 'click_mode'], right_on=['sid', 'transport_mode'], how='left')
+    merge_df = merge_df.sort_values(by='plan_time')
+
+    merge_df['pid_max_dist'] = merge_df.groupby('pid')['distance'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).max())
+    merge_df['pid_min_dist'] = merge_df.groupby('pid')['distance'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).min())
+    merge_df['pid_mean_dist'] = merge_df.groupby('pid')['distance'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).mean())
+    merge_df['pid_std_dist'] = merge_df.groupby('pid')['distance'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).std())
+
+    merge_df['pid_max_price'] = merge_df.groupby('pid')['price'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).max())
+    merge_df['pid_min_price'] = merge_df.groupby('pid')['price'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).min())
+    merge_df['pid_mean_price'] = merge_df.groupby('pid')['price'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).mean())
+    merge_df['pid_std_price'] = merge_df.groupby('pid')['price'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).std())
+
+    merge_df['pid_max_eta'] = merge_df.groupby('pid')['eta'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).max())
+    merge_df['pid_min_eta'] = merge_df.groupby('pid')['eta'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).min())
+    merge_df['pid_mean_eta'] = merge_df.groupby('pid')['eta'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).mean())
+    merge_df['pid_std_eta'] = merge_df.groupby('pid')['eta'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).std())
+
+    merge_df['pid_max_dj'] = merge_df.groupby('pid')['dj'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).max())
+    merge_df['pid_min_dj'] = merge_df.groupby('pid')['dj'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).min())
+    merge_df['pid_mean_dj'] = merge_df.groupby('pid')['dj'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).mean())
+    merge_df['pid_std_dj'] = merge_df.groupby('pid')['dj'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).std())
+
+    merge_df['pid_max_sd'] = merge_df.groupby('pid')['sd'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).max())
+    merge_df['pid_min_sd'] = merge_df.groupby('pid')['sd'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).min())
+    merge_df['pid_mean_sd'] = merge_df.groupby('pid')['sd'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).mean())
+    merge_df['pid_std_sd'] = merge_df.groupby('pid')['sd'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).std())
+
+    merge_df['pid_max_sd_dj'] = merge_df.groupby('pid')['sd_dj'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).max())
+    merge_df['pid_min_sd_dj'] = merge_df.groupby('pid')['sd_dj'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).min())
+    merge_df['pid_mean_sd_dj'] = merge_df.groupby('pid')['sd_dj'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).mean())
+    merge_df['pid_std_sd_dj'] = merge_df.groupby('pid')['sd_dj'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).std())
+
+    ############
+    def gen_pre_list(x):
+        le = x.size
+        pre_list = list(map(list, zip(*[x.shift(i).values for i in range(1, 1 + le)][::-1])))
+        ls = {'shift_cm': pd.Series(pre_list)}
+        df = pd.DataFrame(ls, columns=['shift_cm'])
+        df.index = x.index
+        return df
+
+    # 需要去掉shift_cm里面的 -1
+    merge_df.loc[merge_df['pid'] == -1, 'shift_cm'] = np.nan
+    merge_df.loc[merge_df['pid'] != -1, 'shift_cm'] = merge_df.loc[merge_df['pid'] != -1].groupby('pid')['click_mode'].apply(gen_pre_list)
+
+    def mode_num(x):
+        """
+        :param c:
+        :return:
+        """
+        if x is np.nan:
+            return [0] * 12
+        if -1 in x:
+            x = x[0:x.index(-1)]
+        c = pd.value_counts(x)
+        z = np.zeros(12)
+        if len(c) > 0:
+            k = c.index.values.astype(np.int32)
+            v = c.values
+            z[k] = v
+            z = z / np.sum(z)
+        return z
+
+    mode_num_names = ['mode_num_{}'.format(i) for i in range(12)]
+    pid_group_df = merge_df['shift_cm'].apply(lambda x: mode_num(x)).reset_index()
+    mode_columns = ['sid'] + mode_num_names
+    mode_data = np.concatenate(pid_group_df['shift_cm'].values, axis=0).reshape(len(pid_group_df), 12)
+    sid_data = merge_df['sid'].values.reshape(len(merge_df), 1)
+    mode_num_df = pd.DataFrame(np.hstack([sid_data, mode_data]), columns=mode_columns)
+    mode_num_df.columns = mode_columns
+    merge_df = pd.merge(merge_df, mode_num_df, on=['sid'], how='left')
+
+    def get_max_fre(x):
+        if x is np.nan:
+            return np.nan
+        if -1 in x:
+            x = x[0:x.index(-1)]
+        c = pd.value_counts(x)
+        if len(c) == 0:
+            return np.nan
+        else:
+            return c.idxmax()
+
+    merge_df['pid_max_mode'] = merge_df['shift_cm'].apply(get_max_fre)
+    merge_df.to_csv('../data/data_set_phase1/pid_ext_ts_feature.csv', index=False)
+
+
 # merge_df['num_direct_distance'] = merge_df.apply(lambda x: get_dis(x['o'],x['d']), axis=1)
+def pre_next_n(x, n):
+    """
+    next N；pre N
+    :param x:
+    :param n:
+    param d:1 pre -1 next
+    :return:
+    """
+    return map(list, zip(*[x.shift(i).values for i in range(1, 1 + n)][::-1]))
+
 
 if __name__ == '__main__':
     # import os

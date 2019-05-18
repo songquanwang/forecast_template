@@ -1,0 +1,149 @@
+#############原始特征 +num_direct_distance
+Training until validation scores don't improve for 500 rounds.
+[50]	valid_0's multi_logloss: 1.03323	valid_0's weighted-f1-score: 0.652111
+[100]	valid_0's multi_logloss: 0.937565	valid_0's weighted-f1-score: 0.656229
+[150]	valid_0's multi_logloss: 0.914876	valid_0's weighted-f1-score: 0.657743
+[200]	valid_0's multi_logloss: 0.908095	valid_0's weighted-f1-score: 0.658494
+[250]	valid_0's multi_logloss: 0.905642	valid_0's weighted-f1-score: 0.658884
+[300]	valid_0's multi_logloss: 0.904534	valid_0's weighted-f1-score: 0.658929
+[350]	valid_0's multi_logloss: 0.904061	valid_0's weighted-f1-score: 0.659063
+[400]	valid_0's multi_logloss: 0.903807	valid_0's weighted-f1-score: 0.659095
+[450]	valid_0's multi_logloss: 0.903608	valid_0's weighted-f1-score: 0.659046
+[500]	valid_0's multi_logloss: 0.903365	valid_0's weighted-f1-score: 0.658952
+[550]	valid_0's multi_logloss: 0.903244	valid_0's weighted-f1-score: 0.659002
+[600]	valid_0's multi_logloss: 0.903135	valid_0's weighted-f1-score: 0.659222
+[650]	valid_0's multi_logloss: 0.903095	valid_0's weighted-f1-score: 0.659148
+[700]	valid_0's multi_logloss: 0.903167	valid_0's weighted-f1-score: 0.659301
+[750]	valid_0's multi_logloss: 0.903193	valid_0's weighted-f1-score: 0.659446
+[800]	valid_0's multi_logloss: 0.90311	valid_0's weighted-f1-score: 0.659484
+[850]	valid_0's multi_logloss: 0.903233	valid_0's weighted-f1-score: 0.659507
+[900]	valid_0's multi_logloss: 0.903284	valid_0's weighted-f1-score: 0.659313
+
+
+################################ p_cls
+[50]	valid_0's multi_logloss: 1.03673	valid_0's weighted-f1-score: 0.650742
+[100]	valid_0's multi_logloss: 0.941969	valid_0's weighted-f1-score: 0.654669
+[150]	valid_0's multi_logloss: 0.919398	valid_0's weighted-f1-score: 0.65656
+[200]	valid_0's multi_logloss: 0.912672	valid_0's weighted-f1-score: 0.656734
+[250]	valid_0's multi_logloss: 0.910147	valid_0's weighted-f1-score: 0.657355
+[300]	valid_0's multi_logloss: 0.90908	valid_0's weighted-f1-score: 0.657569
+[350]	valid_0's multi_logloss: 0.908477	valid_0's weighted-f1-score: 0.657885
+[400]	valid_0's multi_logloss: 0.908139	valid_0's weighted-f1-score: 0.658007
+[450]	valid_0's multi_logloss: 0.907926	valid_0's weighted-f1-score: 0.658211
+[500]	valid_0's multi_logloss: 0.907798	valid_0's weighted-f1-score: 0.658401
+[550]	valid_0's multi_logloss: 0.907657	valid_0's weighted-f1-score: 0.658393
+[600]	valid_0's multi_logloss: 0.907547	valid_0's weighted-f1-score: 0.658489
+[650]	valid_0's multi_logloss: 0.907497	valid_0's weighted-f1-score: 0.658723
+[700]	valid_0's multi_logloss: 0.907411	valid_0's weighted-f1-score: 0.658786
+[750]	valid_0's multi_logloss: 0.907376	valid_0's weighted-f1-score: 0.658851
+[800]	valid_0's multi_logloss: 0.90748	valid_0's weighted-f1-score: 0.659033
+[850]	valid_0's multi_logloss: 0.907536	valid_0's weighted-f1-score: 0.658874
+[900]	valid_0's multi_logloss: 0.90763	valid_0's weighted-f1-score: 0.658962
+[950]	valid_0's multi_logloss: 0.907734	valid_0's weighted-f1-score: 0.659107
+[1000]	valid_0's multi_logloss: 0.907932	valid_0's weighted-f1-score: 0.659013
+[1050]	valid_0's multi_logloss: 0.907989	valid_0's weighted-f1-score: 0.659308
+[1100]	valid_0's multi_logloss: 0.908158	valid_0's weighted-f1-score: 0.65942
+[1150]	valid_0's multi_logloss: 0.908461	valid_0's weighted-f1-score: 0.659236
+[1200]	valid_0's multi_logloss: 0.908636	valid_0's weighted-f1-score: 0.659308
+[1250]	valid_0's multi_logloss: 0.908732	valid_0's weighted-f1-score: 0.659318
+Early stopping, best iteration is:
+[768]	valid_0's multi_logloss: 0.90737	valid_0's weighted-f1-score: 0.65907
+#######################################+ o20 d20
+[50]	valid_0's multi_logloss: 1.03631	valid_0's weighted-f1-score: 0.650843
+[100]	valid_0's multi_logloss: 0.941285	valid_0's weighted-f1-score: 0.654565
+[150]	valid_0's multi_logloss: 0.919105	valid_0's weighted-f1-score: 0.656299
+[200]	valid_0's multi_logloss: 0.91251	valid_0's weighted-f1-score: 0.65682
+[250]	valid_0's multi_logloss: 0.909975	valid_0's weighted-f1-score: 0.65746
+[300]	valid_0's multi_logloss: 0.908987	valid_0's weighted-f1-score: 0.657887
+[350]	valid_0's multi_logloss: 0.908493	valid_0's weighted-f1-score: 0.658034
+[400]	valid_0's multi_logloss: 0.908171	valid_0's weighted-f1-score: 0.658017
+[450]	valid_0's multi_logloss: 0.907976	valid_0's weighted-f1-score: 0.658002
+[500]	valid_0's multi_logloss: 0.907813	valid_0's weighted-f1-score: 0.658387
+[550]	valid_0's multi_logloss: 0.907709	valid_0's weighted-f1-score: 0.658563
+[600]	valid_0's multi_logloss: 0.907606	valid_0's weighted-f1-score: 0.658438
+[650]	valid_0's multi_logloss: 0.907525	valid_0's weighted-f1-score: 0.658232
+[700]	valid_0's multi_logloss: 0.907471	valid_0's weighted-f1-score: 0.658343
+[750]	valid_0's multi_logloss: 0.907409	valid_0's weighted-f1-score: 0.658454
+[800]	valid_0's multi_logloss: 0.907517	valid_0's weighted-f1-score: 0.658626
+[850]	valid_0's multi_logloss: 0.907571	valid_0's weighted-f1-score: 0.658821
+[900]	valid_0's multi_logloss: 0.907701	valid_0's weighted-f1-score: 0.658535
+[950]	valid_0's multi_logloss: 0.907749	valid_0's weighted-f1-score: 0.65884
+[1000]	valid_0's multi_logloss: 0.907899	valid_0's weighted-f1-score: 0.658686
+[1050]	valid_0's multi_logloss: 0.90799	valid_0's weighted-f1-score: 0.658514
+[1100]	valid_0's multi_logloss: 0.908058	valid_0's weighted-f1-score: 0.658708
+[1150]	valid_0's multi_logloss: 0.908152	valid_0's weighted-f1-score: 0.658656
+[1200]	valid_0's multi_logloss: 0.908405	valid_0's weighted-f1-score: 0.658711
+Early stopping, best iteration is:
+[741]	valid_0's multi_logloss: 0.907398	valid_0's weighted-f1-score: 0.658395
+
+######################################添加了两个时序特征 线上提交：0.6901
+[50]	valid_0's multi_logloss: 1.02856	valid_0's weighted-f1-score: 0.654652
+[100]	valid_0's multi_logloss: 0.931911	valid_0's weighted-f1-score: 0.659971
+[150]	valid_0's multi_logloss: 0.909663	valid_0's weighted-f1-score: 0.662033
+[200]	valid_0's multi_logloss: 0.902975	valid_0's weighted-f1-score: 0.662964
+[250]	valid_0's multi_logloss: 0.900741	valid_0's weighted-f1-score: 0.66333
+[300]	valid_0's multi_logloss: 0.899786	valid_0's weighted-f1-score: 0.663819
+[350]	valid_0's multi_logloss: 0.899421	valid_0's weighted-f1-score: 0.663786
+[400]	valid_0's multi_logloss: 0.899192	valid_0's weighted-f1-score: 0.66425
+[450]	valid_0's multi_logloss: 0.898975	valid_0's weighted-f1-score: 0.663975
+[500]	valid_0's multi_logloss: 0.898899	valid_0's weighted-f1-score: 0.66458
+[550]	valid_0's multi_logloss: 0.898914	valid_0's weighted-f1-score: 0.664743
+[600]	valid_0's multi_logloss: 0.899034	valid_0's weighted-f1-score: 0.664651
+[650]	valid_0's multi_logloss: 0.899192	valid_0's weighted-f1-score: 0.664588
+[700]	valid_0's multi_logloss: 0.899227	valid_0's weighted-f1-score: 0.664838
+[750]	valid_0's multi_logloss: 0.899304	valid_0's weighted-f1-score: 0.664812
+[800]	valid_0's multi_logloss: 0.899587	valid_0's weighted-f1-score: 0.664791
+[850]	valid_0's multi_logloss: 0.899807	valid_0's weighted-f1-score: 0.664809
+[900]	valid_0's multi_logloss: 0.899968	valid_0's weighted-f1-score: 0.664794
+
+####################### 添加了 ext 全部（不包括min);包括plan sd 等  线上: 0.69025966
+50]	valid_0's multi_logloss: 1.02689	valid_0's weighted-f1-score: 0.656367
+[100]	valid_0's multi_logloss: 0.930064	valid_0's weighted-f1-score: 0.660671
+[150]	valid_0's multi_logloss: 0.907428	valid_0's weighted-f1-score: 0.662117
+[200]	valid_0's multi_logloss: 0.900657	valid_0's weighted-f1-score: 0.663156
+[250]	valid_0's multi_logloss: 0.898521	valid_0's weighted-f1-score: 0.66352
+[300]	valid_0's multi_logloss: 0.897548	valid_0's weighted-f1-score: 0.663945
+[350]	valid_0's multi_logloss: 0.89729	valid_0's weighted-f1-score: 0.664084
+[400]	valid_0's multi_logloss: 0.897089	valid_0's weighted-f1-score: 0.664163
+[450]	valid_0's multi_logloss: 0.897062	valid_0's weighted-f1-score: 0.664151
+[500]	valid_0's multi_logloss: 0.896956	valid_0's weighted-f1-score: 0.664221
+[550]	valid_0's multi_logloss: 0.896946	valid_0's weighted-f1-score: 0.66439
+[600]	valid_0's multi_logloss: 0.896996	valid_0's weighted-f1-score: 0.664383
+[650]	valid_0's multi_logloss: 0.897013	valid_0's weighted-f1-score: 0.66474
+[700]	valid_0's multi_logloss: 0.897103	valid_0's weighted-f1-score: 0.664642
+[750]	valid_0's multi_logloss: 0.897234	valid_0's weighted-f1-score: 0.664761
+[800]	valid_0's multi_logloss: 0.897499	valid_0's weighted-f1-score: 0.66478
+[850]	valid_0's multi_logloss: 0.897641	valid_0's weighted-f1-score: 0.664733
+[900]	valid_0's multi_logloss: 0.89774	valid_0's weighted-f1-score: 0.664793
+[950]	valid_0's multi_logloss: 0.897979	valid_0's weighted-f1-score: 0.665092
+
+############## 添加了max mode  深度 51 0.04
+[50]	valid_0's multi_logloss: 1.07566	valid_0's weighted-f1-score: 0.655428
+[100]	valid_0's multi_logloss: 0.949525	valid_0's weighted-f1-score: 0.66033
+[150]	valid_0's multi_logloss: 0.915329	valid_0's weighted-f1-score: 0.662086
+[200]	valid_0's multi_logloss: 0.903447	valid_0's weighted-f1-score: 0.663265
+[250]	valid_0's multi_logloss: 0.898948	valid_0's weighted-f1-score: 0.663783
+[300]	valid_0's multi_logloss: 0.897137	valid_0's weighted-f1-score: 0.664099
+[350]	valid_0's multi_logloss: 0.896389	valid_0's weighted-f1-score: 0.664536
+
+###########去掉 std  p_cls
+
+[50]	valid_0's multi_logloss: 1.02642	valid_0's weighted-f1-score: 0.656514
+[100]	valid_0's multi_logloss: 0.929603	valid_0's weighted-f1-score: 0.66111
+[150]	valid_0's multi_logloss: 0.906841	valid_0's weighted-f1-score: 0.662815
+[200]	valid_0's multi_logloss: 0.900295	valid_0's weighted-f1-score: 0.663837
+[250]	valid_0's multi_logloss: 0.898123	valid_0's weighted-f1-score: 0.664078
+[300]	valid_0's multi_logloss: 0.897251	valid_0's weighted-f1-score: 0.664098
+[350]	valid_0's multi_logloss: 0.896952	valid_0's weighted-f1-score: 0.664154
+[400]	valid_0's multi_logloss: 0.896802	valid_0's weighted-f1-score: 0.6644
+[450]	valid_0's multi_logloss: 0.896808	valid_0's weighted-f1-score: 0.664389
+[500]	valid_0's multi_logloss: 0.89684	valid_0's weighted-f1-score: 0.66446
+[550]	valid_0's multi_logloss: 0.896847	valid_0's weighted-f1-score: 0.66468
+[600]	valid_0's multi_logloss: 0.896984	valid_0's weighted-f1-score: 0.664496
+[650]	valid_0's multi_logloss: 0.897075	valid_0's weighted-f1-score: 0.664317
+
+##############去掉
+[50]	valid_0's multi_logloss: 1.02654	valid_0's weighted-f1-score: 0.656619
+[100]	valid_0's multi_logloss: 0.929708	valid_0's weighted-f1-score: 0.661139
+[150]	valid_0's multi_logloss: 0.906874	valid_0's weighted-f1-score: 0.662517
+
