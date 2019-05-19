@@ -103,9 +103,9 @@ def train_lgb(train_df, test_df):
         'objective': 'multiclass',
         'metrics': 'multiclass',
         'learning_rate': 0.01,
-        'num_leaves': 40,
-        'lambda_l1': 0.01,
-        'lambda_l2': 1,
+        'num_leaves': 61,
+        'lambda_l1': 0,
+        'lambda_l2': 0.01,
         'num_class': 12,
         'seed': 2019,
         'feature_fraction': 0.8,
@@ -113,8 +113,10 @@ def train_lgb(train_df, test_df):
         'bagging_freq': 4,
         'verbose': -1
     }
-    train_df.loc['weight'] = 1
-    train_df.loc[train_df['click_mode'].isin([3, 4, 6]), 'weight'] = 1
+    train_df['weight'] = 1
+    #train_df.loc[train_df['click_mode'].isin([0]), 'weight'] = 2
+    train_df.loc[train_df['click_mode'].isin([4, 6,11]), 'weight'] = 2.2
+    train_df.loc[train_df['click_mode'].isin([3]), 'weight'] = 2
     # cate_cols = ['max_dist_mode', 'min_dist_mode', 'max_price_mode',
     #              'min_price_mode', 'max_eta_mode', 'min_eta_mode', 'first_mode', 'weekday', 'hour']
     scores = []
@@ -126,7 +128,7 @@ def train_lgb(train_df, test_df):
         valid_data = train_df.iloc[val_idx]
         tr_x, tr_y, val_x, val_y = train_data[conf.feature_columns], train_data['click_mode'], \
                                    valid_data[conf.feature_columns], valid_data['click_mode']
-        train_set = lgb.Dataset(tr_x, tr_y, categorical_feature=conf.cate_columns)
+        train_set = lgb.Dataset(tr_x, tr_y, categorical_feature=conf.cate_columns, weight=train_data['weight'].values)
         val_set = lgb.Dataset(val_x, val_y, categorical_feature=conf.cate_columns)
         lgb_model = lgb.train(lgb_paras, train_set,
                               valid_sets=[val_set], early_stopping_rounds=500, num_boost_round=40000, verbose_eval=50,
@@ -184,7 +186,7 @@ def predict_by_model():
     if len(result_df) < 94358:
         empty_pred_df = pd.read_csv('../submit/empty_pred.csv')
         result_df = pd.concat([result_df, empty_pred_df], axis=0)
-    result_df.to_csv('../submit/2019-05-17-pre_feat.csv', index=False)
+    result_df.to_csv('../submit/2019-05-19-weight.csv', index=False)
 
 
 if __name__ == '__main__':

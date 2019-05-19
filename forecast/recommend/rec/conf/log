@@ -296,4 +296,279 @@ Training until validation scores don't improve for 500 rounds.
 cv f1-score:  0.6654375284993601
 
 
-########## features_all_ts_p10_s20_zero 换为
+########## features_all_ts_p10_s20_zero 换为 L2 1-->0.1
+[50]	valid_0's multi_logloss: 1.539	valid_0's weighted-f1-score: 0.573561
+[100]	valid_0's multi_logloss: 1.29497	valid_0's weighted-f1-score: 0.641072
+[150]	valid_0's multi_logloss: 1.15945	valid_0's weighted-f1-score: 0.650799
+[200]	valid_0's multi_logloss: 1.07786	valid_0's weighted-f1-score: 0.65374
+[250]	valid_0's multi_logloss: 1.02606	valid_0's weighted-f1-score: 0.655805
+[300]	valid_0's multi_logloss: 0.991608	valid_0's weighted-f1-score: 0.657414
+[350]	valid_0's multi_logloss: 0.967753	valid_0's weighted-f1-score: 0.658561
+[400]	valid_0's multi_logloss: 0.950713	valid_0's weighted-f1-score: 0.659392
+
+##############
+'learning_rate': 0.01,
+'num_leaves': 40,
+'lambda_l1': 0.01,
+'lambda_l2': 0.1,
+
+pid_ext_features = [
+    # 'pid',
+    'last_mode', 'pre_mode',
+    'pid_max_mode',
+    'pid_max_dist', 'pid_mean_dist',
+    'pid_max_price', 'pid_mean_price',
+    'pid_max_eta', 'pid_min_eta', 'pid_mean_eta',
+    'pid_max_dj', 'pid_mean_dj',
+    'pid_max_sd', 'pid_min_sd',
+    'pid_std_sd', 'pid_std_dist', 'pid_std_price', 'pid_std_eta', 'pid_std_dj', 'pid_mean_sd',
+    # # 各个模式占比
+    'mode_num_0', 'mode_num_1', 'mode_num_2', 'mode_num_3', 'mode_num_4',
+    'mode_num_5', 'mode_num_6', 'mode_num_7', 'mode_num_8', 'mode_num_9',
+    'mode_num_10', 'mode_num_11'
+]
+
+plans_features = [
+    'mode_feas_0', 'mode_feas_1', 'mode_feas_2', 'mode_feas_3',
+    'mode_feas_4', 'mode_feas_5', 'mode_feas_6', 'mode_feas_7',
+    'mode_feas_8', 'mode_feas_9', 'mode_feas_10', 'mode_feas_11',
+    'first_mode', 'second_mode', 'last_mode_1',
+    'max_dist', 'min_dist', 'mean_dist', 'std_dist',
+    'max_price', 'min_price', 'mean_price', 'std_price',
+    'max_eta', 'min_eta', 'mean_eta', 'std_eta',
+    'max_dj', 'min_dj', 'mean_dj', 'std_dj',
+    'max_sd', 'min_sd', 'mean_sd', 'std_sd',
+    'max_sd_dj', 'min_sd_dj', 'mean_sd_dj', 'std_sd_dj',
+    'max_price_eta', 'min_price_eta', 'mean_price_eta', 'std_price_eta',
+    'max_dist_mode', 'min_dist_mode',
+    'max_price_mode', 'min_price_mode',
+    'max_eta_mode', 'min_eta_mode',
+    'max_sd_mode', 'min_sd_mode',
+    'max_dj_mode', 'min_dj_mode',
+    'max_sd_dj_mode', 'min_sd_dj_mode',
+    'max_price_eta_mode', 'min_price_eta_mode',
+    'svd_mode_0', 'svd_mode_1', 'svd_mode_2', 'svd_mode_3',
+    'svd_mode_4', 'svd_mode_5', 'svd_mode_6', 'svd_mode_7', 'svd_mode_8',
+    'svd_mode_9'
+
+]
+
+feature_columns = od_features + time_features + profile_svd_features + pid_ext_features + plans_features
+
+cate_columns = ['max_dist_mode', 'min_dist_mode',
+                'max_price_mode', 'min_price_mode',
+                'max_eta_mode', 'min_eta_mode',
+                'max_sd_mode', 'min_sd_mode',
+                'max_dj_mode', 'min_dj_mode',
+                'max_sd_dj_mode', 'min_sd_dj_mode',
+                'max_price_eta_mode', 'min_price_eta_mode',
+
+                'last_mode', 'pre_mode',
+                'first_mode', 'second_mode', 'last_mode_1',
+                'weekday', 'hour','is_week_end',
+                'o20', 'd20',  'o20_max_mode', 'd20_max_mode','same_cls20'
+train_df.loc[train_df['click_mode'].isin([3,4, 6]), 'weight'] = 3
+
+# weight [3,4,6] 2.2
+[50]	valid_0's multi_logloss: 1.57456	valid_0's weighted-f1-score: 0.57546
+[100]	valid_0's multi_logloss: 1.32972	valid_0's weighted-f1-score: 0.6538
+[150]	valid_0's multi_logloss: 1.19218	valid_0's weighted-f1-score: 0.662809
+[200]	valid_0's multi_logloss: 1.10848	valid_0's weighted-f1-score: 0.664898
+[250]	valid_0's multi_logloss: 1.05497	valid_0's weighted-f1-score: 0.666516
+[300]	valid_0's multi_logloss: 1.01931	valid_0's weighted-f1-score: 0.667177
+[350]	valid_0's multi_logloss: 0.994829	valid_0's weighted-f1-score: 0.66808
+[400]	valid_0's multi_logloss: 0.977481	valid_0's weighted-f1-score: 0.668188
+
+
+###################
+train_df.loc[train_df['click_mode'].isin([0,3,4, 6,9,11]), 'weight'] = 2
+[50]	valid_0's multi_logloss: 1.58986	valid_0's weighted-f1-score: 0.595999
+[100]	valid_0's multi_logloss: 1.34176	valid_0's weighted-f1-score: 0.655261
+[150]	valid_0's multi_logloss: 1.20217	valid_0's weighted-f1-score: 0.658901
+[200]	valid_0's multi_logloss: 1.11712	valid_0's weighted-f1-score: 0.662222
+[250]	valid_0's multi_logloss: 1.06275	valid_0's weighted-f1-score: 0.664308
+[300]	valid_0's multi_logloss: 1.02658	valid_0's weighted-f1-score: 0.665567
+[350]	valid_0's multi_logloss: 1.00176	valid_0's weighted-f1-score: 0.666767
+[400]	valid_0's multi_logloss: 0.984164	valid_0's weighted-f1-score: 0.667229
+[450]	valid_0's multi_logloss: 0.971555	valid_0's weighted-f1-score: 0.667421
+
+######################train_df.loc[train_df['click_mode'].isin([0,3,4, 6,9,11]), 'weight'] = 1.5
+[50]	valid_0's multi_logloss: 1.55812	valid_0's weighted-f1-score: 0.585794
+[100]	valid_0's multi_logloss: 1.31226	valid_0's weighted-f1-score: 0.650136
+[150]	valid_0's multi_logloss: 1.17459	valid_0's weighted-f1-score: 0.658765
+[200]	valid_0's multi_logloss: 1.09115	valid_0's weighted-f1-score: 0.661053
+[250]	valid_0's multi_logloss: 1.038	valid_0's weighted-f1-score: 0.6622
+[300]	valid_0's multi_logloss: 1.00266	valid_0's weighted-f1-score: 0.663248
+[350]	valid_0's multi_logloss: 0.978375	valid_0's weighted-f1-score: 0.664219
+[400]	valid_0's multi_logloss: 0.961167	valid_0's weighted-f1-score: 0.665045
+[450]	valid_0's multi_logloss: 0.948667	valid_0's weighted-f1-score: 0.665386
+[500]	valid_0's multi_logloss: 0.939401	valid_0's weighted-f1-score: 0.665924
+[550]	valid_0's multi_logloss: 0.932502	valid_0's weighted-f1-score: 0.666353
+[600]	valid_0's multi_logloss: 0.927274	valid_0's weighted-f1-score: 0.666769
+[650]	valid_0's multi_logloss: 0.923243	valid_0's weighted-f1-score: 0.667332
+[700]	valid_0's multi_logloss: 0.920125	valid_0's weighted-f1-score: 0.667431
+
+################ 0.69555022
+train_df.loc[train_df['click_mode'].isin([3,4, 6]), 'weight'] = 2
+'learning_rate': 0.01,
+        'num_leaves': 45,
+        'lambda_l1': 0.01,
+        'lambda_l2': 0.1,
+        'num_class': 12,
+
+[50]	valid_0's multi_logloss: 1.56567	valid_0's weighted-f1-score: 0.573369
+[100]	valid_0's multi_logloss: 1.32091	valid_0's weighted-f1-score: 0.652344
+[150]	valid_0's multi_logloss: 1.18368	valid_0's weighted-f1-score: 0.66175
+[200]	valid_0's multi_logloss: 1.10032	valid_0's weighted-f1-score: 0.664197
+[250]	valid_0's multi_logloss: 1.04714	valid_0's weighted-f1-score: 0.66572
+[300]	valid_0's multi_logloss: 1.01174	valid_0's weighted-f1-score: 0.666611
+[350]	valid_0's multi_logloss: 0.987384	valid_0's weighted-f1-score: 0.667556
+[400]	valid_0's multi_logloss: 0.970121	valid_0's weighted-f1-score: 0.667897
+[450]	valid_0's multi_logloss: 0.957599	valid_0's weighted-f1-score: 0.668213
+[500]	valid_0's multi_logloss: 0.948312	valid_0's weighted-f1-score: 0.668594
+[550]	valid_0's multi_logloss: 0.941382	valid_0's weighted-f1-score: 0.66888
+[600]	valid_0's multi_logloss: 0.936133	valid_0's weighted-f1-score: 0.669252
+[650]	valid_0's multi_logloss: 0.932115	valid_0's weighted-f1-score: 0.669643
+[700]	valid_0's multi_logloss: 0.928984	valid_0's weighted-f1-score: 0.669793
+############### 55层
+train_df.loc[train_df['click_mode'].isin([3, 6]), 'weight'] = 2
+train_df.loc[train_df['click_mode'].isin([0, 4,9]), 'weight'] = 3
+
+效果不好 三行好一点
+
+##########################
+train_df.loc[train_df['click_mode'].isin([4, 6,11]), 'weight'] = 2
+train_df.loc[train_df['click_mode'].isin([3]), 'weight'] = 1.8
+[50]	valid_0's multi_logloss: 1.5639	valid_0's weighted-f1-score: 0.579793
+[100]	valid_0's multi_logloss: 1.3181	valid_0's weighted-f1-score: 0.651502
+[150]	valid_0's multi_logloss: 1.18054	valid_0's weighted-f1-score: 0.660203
+[200]	valid_0's multi_logloss: 1.09712	valid_0's weighted-f1-score: 0.662781
+[250]	valid_0's multi_logloss: 1.04394	valid_0's weighted-f1-score: 0.664443
+[300]	valid_0's multi_logloss: 1.00861	valid_0's weighted-f1-score: 0.665469
+[350]	valid_0's multi_logloss: 0.98429	valid_0's weighted-f1-score: 0.666255
+[400]	valid_0's multi_logloss: 0.967017	valid_0's weighted-f1-score: 0.667005
+[450]	valid_0's multi_logloss: 0.954494	valid_0's weighted-f1-score: 0.667282
+[500]	valid_0's multi_logloss: 0.945155	valid_0's weighted-f1-score: 0.667876
+[550]	valid_0's multi_logloss: 0.93819	valid_0's weighted-f1-score: 0.667893
+[600]	valid_0's multi_logloss: 0.932908	valid_0's weighted-f1-score: 0.66837
+[650]	valid_0's multi_logloss: 0.928823	valid_0's weighted-f1-score: 0.668858
+#########################################
+train_df.loc[train_df['click_mode'].isin([4, 6,11]), 'weight'] = 2.2
+train_df.loc[train_df['click_mode'].isin([3]), 'weight'] = 2
+
+[50]	valid_0's multi_logloss: 1.57241	valid_0's weighted-f1-score: 0.58373
+[100]	valid_0's multi_logloss: 1.32633	valid_0's weighted-f1-score: 0.653576
+[150]	valid_0's multi_logloss: 1.18837	valid_0's weighted-f1-score: 0.662014
+[200]	valid_0's multi_logloss: 1.10456	valid_0's weighted-f1-score: 0.664572
+[250]	valid_0's multi_logloss: 1.05106	valid_0's weighted-f1-score: 0.666074
+[300]	valid_0's multi_logloss: 1.01548	valid_0's weighted-f1-score: 0.666848
+[350]	valid_0's multi_logloss: 0.991022	valid_0's weighted-f1-score: 0.667521
+[400]	valid_0's multi_logloss: 0.973629	valid_0's weighted-f1-score: 0.667943
+[450]	valid_0's multi_logloss: 0.961089	valid_0's weighted-f1-score: 0.668253
+[500]	valid_0's multi_logloss: 0.951725	valid_0's weighted-f1-score: 0.66865
+[550]	valid_0's multi_logloss: 0.944704	valid_0's weighted-f1-score: 0.668856
+[600]	valid_0's multi_logloss: 0.939411	valid_0's weighted-f1-score: 0.668886
+[650]	valid_0's multi_logloss: 0.935323	valid_0's weighted-f1-score: 0.669377
+[700]	valid_0's multi_logloss: 0.932149	valid_0's weighted-f1-score: 0.669439
+[750]	valid_0's multi_logloss: 0.929657	valid_0's weighted-f1-score: 0.66965
+[800]	valid_0's multi_logloss: 0.927708	valid_0's weighted-f1-score: 0.669849
+[850]	valid_0's multi_logloss: 0.92612	valid_0's weighted-f1-score: 0.669858
+[900]	valid_0's multi_logloss: 0.924826	valid_0's weighted-f1-score: 0.669915
+[950]	valid_0's multi_logloss: 0.9238	valid_0's weighted-f1-score: 0.669943
+[1000]	valid_0's multi_logloss: 0.922997	valid_0's weighted-f1-score: 0.670022
+[1050]	valid_0's multi_logloss: 0.922305	valid_0's weighted-f1-score: 0.670074
+[1100]	valid_0's multi_logloss: 0.921715	valid_0's weighted-f1-score: 0.670123
+[1150]	valid_0's multi_logloss: 0.921212	valid_0's weighted-f1-score: 0.670147
+[1200]	valid_0's multi_logloss: 0.920748	valid_0's weighted-f1-score: 0.670102
+[1250]	valid_0's multi_logloss: 0.920339	valid_0's weighted-f1-score: 0.670208
+[1300]	valid_0's multi_logloss: 0.920011	valid_0's weighted-f1-score: 0.67025
+[1350]	valid_0's multi_logloss: 0.919695	valid_0's weighted-f1-score: 0.670329
+[1400]	valid_0's multi_logloss: 0.919396	valid_0's weighted-f1-score: 0.670348
+[1450]	valid_0's multi_logloss: 0.91914	valid_0's weighted-f1-score: 0.670333
+[1500]	valid_0's multi_logloss: 0.918915	valid_0's weighted-f1-score: 0.670332
+[1550]	valid_0's multi_logloss: 0.918677	valid_0's weighted-f1-score: 0.670349
+[1600]	valid_0's multi_logloss: 0.918477	valid_0's weighted-f1-score: 0.670322
+[1650]	valid_0's multi_logloss: 0.918288	valid_0's weighted-f1-score: 0.670314
+[1700]	valid_0's multi_logloss: 0.91809	valid_0's weighted-f1-score: 0.670431
+[1750]	valid_0's multi_logloss: 0.917971	valid_0's weighted-f1-score: 0.670462
+[1800]	valid_0's multi_logloss: 0.917835	valid_0's weighted-f1-score: 0.670504
+[1850]	valid_0's multi_logloss: 0.917654	valid_0's weighted-f1-score: 0.670569
+[1900]	valid_0's multi_logloss: 0.917503	valid_0's weighted-f1-score: 0.670653
+[1950]	valid_0's multi_logloss: 0.917375	valid_0's weighted-f1-score: 0.670639
+[2000]	valid_0's multi_logloss: 0.917238	valid_0's weighted-f1-score: 0.670615
+[2050]	valid_0's multi_logloss: 0.917103	valid_0's weighted-f1-score: 0.670635
+[2100]	valid_0's multi_logloss: 0.917012	valid_0's weighted-f1-score: 0.670607
+[2150]	valid_0's multi_logloss: 0.916867	valid_0's weighted-f1-score: 0.670495
+[2200]	valid_0's multi_logloss: 0.91672	valid_0's weighted-f1-score: 0.670382
+[2250]	valid_0's multi_logloss: 0.916588	valid_0's weighted-f1-score: 0.670498
+[2300]	valid_0's multi_logloss: 0.916468	valid_0's weighted-f1-score: 0.670571
+[2350]	valid_0's multi_logloss: 0.916327	valid_0's weighted-f1-score: 0.67066
+[2400]	valid_0's multi_logloss: 0.916237	valid_0's weighted-f1-score: 0.670669
+Early stopping, best iteration is:
+[1912]	valid_0's multi_logloss: 0.917482	valid_0's weighted-f1-score: 0.67071
+
+##########################################
+'num_leaves': 55,
+'lambda_l1': 0.01,
+'lambda_l2': 0.01,
+'num_class': 12,
+
+[50]	valid_0's multi_logloss: 1.57237	valid_0's weighted-f1-score: 0.584069
+[100]	valid_0's multi_logloss: 1.32632	valid_0's weighted-f1-score: 0.653686
+[150]	valid_0's multi_logloss: 1.18839	valid_0's weighted-f1-score: 0.661999
+[200]	valid_0's multi_logloss: 1.10458	valid_0's weighted-f1-score: 0.664401
+
+#########################
+'learning_rate': 0.01,
+'num_leaves': 61,
+'lambda_l1': 0,
+'lambda_l2': 0.01,
+
+Training until validation scores don't improve for 500 rounds.
+[50]	valid_0's multi_logloss: 1.57192	valid_0's weighted-f1-score: 0.584054
+[100]	valid_0's multi_logloss: 1.32574	valid_0's weighted-f1-score: 0.6537
+[150]	valid_0's multi_logloss: 1.18778	valid_0's weighted-f1-score: 0.662155
+[200]	valid_0's multi_logloss: 1.10396	valid_0's weighted-f1-score: 0.664539
+[250]	valid_0's multi_logloss: 1.05052	valid_0's weighted-f1-score: 0.666151
+[300]	valid_0's multi_logloss: 1.01497	valid_0's weighted-f1-score: 0.666935
+[350]	valid_0's multi_logloss: 0.990532	valid_0's weighted-f1-score: 0.667431
+[400]	valid_0's multi_logloss: 0.973186	valid_0's weighted-f1-score: 0.667975
+[450]	valid_0's multi_logloss: 0.960625	valid_0's weighted-f1-score: 0.668244
+[500]	valid_0's multi_logloss: 0.951277	valid_0's weighted-f1-score: 0.668673
+[550]	valid_0's multi_logloss: 0.944248	valid_0's weighted-f1-score: 0.668959
+[600]	valid_0's multi_logloss: 0.938935	valid_0's weighted-f1-score: 0.66912
+[650]	valid_0's multi_logloss: 0.934821	valid_0's weighted-f1-score: 0.66936
+[700]	valid_0's multi_logloss: 0.931651	valid_0's weighted-f1-score: 0.669479
+[750]	valid_0's multi_logloss: 0.92916	valid_0's weighted-f1-score: 0.669679
+[800]	valid_0's multi_logloss: 0.927229	valid_0's weighted-f1-score: 0.669762
+[850]	valid_0's multi_logloss: 0.925645	valid_0's weighted-f1-score: 0.669932
+[900]	valid_0's multi_logloss: 0.92433	valid_0's weighted-f1-score: 0.669903
+[950]	valid_0's multi_logloss: 0.923288	valid_0's weighted-f1-score: 0.669926
+[1000]	valid_0's multi_logloss: 0.922469	valid_0's weighted-f1-score: 0.670098
+[1050]	valid_0's multi_logloss: 0.921781	valid_0's weighted-f1-score: 0.670051
+[1100]	valid_0's multi_logloss: 0.921202	valid_0's weighted-f1-score: 0.670121
+[1150]	valid_0's multi_logloss: 0.920696	valid_0's weighted-f1-score: 0.670084
+[1200]	valid_0's multi_logloss: 0.920206	valid_0's weighted-f1-score: 0.670195
+[1250]	valid_0's multi_logloss: 0.919783	valid_0's weighted-f1-score: 0.670078
+[1300]	valid_0's multi_logloss: 0.919448	valid_0's weighted-f1-score: 0.670153
+[1350]	valid_0's multi_logloss: 0.919097	valid_0's weighted-f1-score: 0.670349
+[1400]	valid_0's multi_logloss: 0.918785	valid_0's weighted-f1-score: 0.670412
+[1450]	valid_0's multi_logloss: 0.918534	valid_0's weighted-f1-score: 0.670399
+[1500]	valid_0's multi_logloss: 0.918322	valid_0's weighted-f1-score: 0.670513
+[1550]	valid_0's multi_logloss: 0.918077	valid_0's weighted-f1-score: 0.670508
+[1600]	valid_0's multi_logloss: 0.917847	valid_0's weighted-f1-score: 0.670552
+[1650]	valid_0's multi_logloss: 0.917625	valid_0's weighted-f1-score: 0.670655
+[1700]	valid_0's multi_logloss: 0.917399	valid_0's weighted-f1-score: 0.670626
+[1750]	valid_0's multi_logloss: 0.917244	valid_0's weighted-f1-score: 0.67071
+[1800]	valid_0's multi_logloss: 0.917073	valid_0's weighted-f1-score: 0.67082
+[1850]	valid_0's multi_logloss: 0.91689	valid_0's weighted-f1-score: 0.670825
+[1900]	valid_0's multi_logloss: 0.916749	valid_0's weighted-f1-score: 0.670657
+[1950]	valid_0's multi_logloss: 0.916609	valid_0's weighted-f1-score: 0.670594
+[2000]	valid_0's multi_logloss: 0.916476	valid_0's weighted-f1-score: 0.67051
+[2050]	valid_0's multi_logloss: 0.916341	valid_0's weighted-f1-score: 0.670508
+[2100]	valid_0's multi_logloss: 0.916227	valid_0's weighted-f1-score: 0.670733
+[2150]	valid_0's multi_logloss: 0.916078	valid_0's weighted-f1-score: 0.670691
+[2200]	valid_0's multi_logloss: 0.915926	valid_0's weighted-f1-score: 0.670703
+[2250]	valid_0's multi_logloss: 0.915804	valid_0's weighted-f1-score: 0.670569
+Early stopping, best iteration is:
+[1795]	valid_0's multi_logloss: 0.917086	valid_0's weighted-f1-score: 0.670864

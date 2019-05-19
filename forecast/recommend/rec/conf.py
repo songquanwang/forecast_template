@@ -8,15 +8,14 @@ od_features = [
     #  'is_rain' 'is_rain_max_mode',
     'o1', 'o2', 'd1', 'd2',
     # 'o10', 'd10', 'same_cls10',
-    'o20', 'd20',
-    # 'same_cls20'
+    'o20', 'd20','same_cls20',
     # 'same_cls20',
     # 'o30', 'd30', 'same_cls30'
     'num_direct_distance',
-    'dis_cat_y'
+   # 'dis_cat_y'
 
     # 'o10_max_mode', 'd10_max_mode',
-    # 'o20_max_mode', 'd20_max_mode'
+     'o20_max_mode', 'd20_max_mode'
     # 'o30_max_mode', 'd30_max_mode'
 ]
 #  'hour',
@@ -86,7 +85,7 @@ cate_columns = ['max_dist_mode', 'min_dist_mode',
                 'last_mode', 'pre_mode',
                 'first_mode', 'second_mode', 'last_mode_1',
                 'weekday', 'hour','is_week_end',
-                'o20', 'd20','dis_cat_y'
-                # , 'same_cls20',
+                'o20', 'd20',  'o20_max_mode', 'd20_max_mode','same_cls20'
+
 
                 ]
