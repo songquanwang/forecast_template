@@ -37,7 +37,8 @@ def get_train_test_feats():
     获取训练数据、测试数据
     :return:
     """
-    data = pd.read_csv('../data/features/features_all_ts.csv')
+    data = pd.read_csv('../data/features/features_all_ts_p10_s20_zero.csv')
+    # data=process_label_imbalance(data)
     train_df = data[data['click_mode'] != -1]
     test_df = data[data['click_mode'] == -1]
     return train_df, test_df
@@ -49,7 +50,7 @@ def get_train_valid_feats():
     :return:
     """
 
-    data = pd.read_csv('../data/features/features_all_ts.csv')
+    data = pd.read_csv('../data/features/features_all_ts_p10_s20_zero.csv')
     train_df = data[data['click_mode'] != -1]
     # kfold = StratifiedKFold(n_splits=5, shuffle=True, random_state=2019)
     # train_df_t, train_df_e = next(kfold.split(train_df, train_df['click_mode']))
@@ -101,10 +102,10 @@ def train_lgb(train_df, test_df):
     lgb_paras = {
         'objective': 'multiclass',
         'metrics': 'multiclass',
-        'learning_rate': 0.05,
-        'num_leaves': 31,
+        'learning_rate': 0.01,
+        'num_leaves': 40,
         'lambda_l1': 0.01,
-        'lambda_l2': 10,
+        'lambda_l2': 1,
         'num_class': 12,
         'seed': 2019,
         'feature_fraction': 0.8,
@@ -112,6 +113,8 @@ def train_lgb(train_df, test_df):
         'bagging_freq': 4,
         'verbose': -1
     }
+    train_df.loc['weight'] = 1
+    train_df.loc[train_df['click_mode'].isin([3, 4, 6]), 'weight'] = 1
     # cate_cols = ['max_dist_mode', 'min_dist_mode', 'max_price_mode',
     #              'min_price_mode', 'max_eta_mode', 'min_eta_mode', 'first_mode', 'weekday', 'hour']
     scores = []
@@ -138,6 +141,20 @@ def train_lgb(train_df, test_df):
     print('cv f1-score: ', np.mean(scores))
     pred_test = np.argmax(np.mean(result_proba, axis=0), axis=1)
     return pred_test
+
+
+def process_label_imbalance(raw_df):
+    """
+    处理label不均衡问题
+    用了不好
+    :param raw_df:
+    :return:
+    """
+    raw_df = raw_df.append([raw_df[raw_df['click_mode'] == 3]] * 3, ignore_index=True)
+    raw_df = raw_df.append([raw_df[raw_df['click_mode'] == 4]] * 4, ignore_index=True)
+    raw_df = raw_df.append([raw_df[raw_df['click_mode'] == 8]] * 10, ignore_index=True)
+    raw_df = raw_df.append([raw_df[raw_df['click_mode'] == 11]] * 4, ignore_index=True)
+    return raw_df
 
 
 def predict_by_model():
@@ -172,4 +189,4 @@ def predict_by_model():
 
 if __name__ == '__main__':
     tp_submit()
-    #predict_by_model()
+    # predict_by_model()

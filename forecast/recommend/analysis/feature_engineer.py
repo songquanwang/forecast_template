@@ -128,7 +128,7 @@ def sort_count(c):
     d = dict(c)
     ds = [(k, d[k]) for k in sorted(d.keys())]
     x, y = zip(*ds)
-    return x, y
+    return np.array(x), np.array(y)
 
 
 import pandas as pd

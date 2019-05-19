@@ -147,3 +147,153 @@ Early stopping, best iteration is:
 [100]	valid_0's multi_logloss: 0.929708	valid_0's weighted-f1-score: 0.661139
 [150]	valid_0's multi_logloss: 0.906874	valid_0's weighted-f1-score: 0.662517
 
+#######添加 020_max_mode 提升一点点
+[50]	valid_0's multi_logloss: 1.02714	valid_0's weighted-f1-score: 0.655092
+[100]	valid_0's multi_logloss: 0.930474	valid_0's weighted-f1-score: 0.660458
+[150]	valid_0's multi_logloss: 0.907753	valid_0's weighted-f1-score: 0.662517
+[200]	valid_0's multi_logloss: 0.900927	valid_0's weighted-f1-score: 0.663304
+[250]	valid_0's multi_logloss: 0.898662	valid_0's weighted-f1-score: 0.663481
+[300]	valid_0's multi_logloss: 0.89783	valid_0's weighted-f1-score: 0.663787
+[350]	valid_0's multi_logloss: 0.897435	valid_0's weighted-f1-score: 0.664203
+[400]	valid_0's multi_logloss: 0.897353	valid_0's weighted-f1-score: 0.664261
+[450]	valid_0's multi_logloss: 0.897222	valid_0's weighted-f1-score: 0.664344
+[500]	valid_0's multi_logloss: 0.897091	valid_0's weighted-f1-score: 0.664565
+[550]	valid_0's multi_logloss: 0.897053	valid_0's weighted-f1-score: 0.664779
+[600]	valid_0's multi_logloss: 0.897252	valid_0's weighted-f1-score: 0.664623
+[650]	valid_0's multi_logloss: 0.897214	valid_0's weighted-f1-score: 0.664598
+[700]	valid_0's multi_logloss: 0.897382	valid_0's weighted-f1-score: 0.664421
+[750]	valid_0's multi_logloss: 0.897396	valid_0's weighted-f1-score: 0.664684
+[800]	valid_0's multi_logloss: 0.897571	valid_0's weighted-f1-score: 0.664498
+[850]	valid_0's multi_logloss: 0.897587	valid_0's weighted-f1-score: 0.664586
+[900]	valid_0's multi_logloss: 0.897729	valid_0's weighted-f1-score: 0.664722
+[950]	valid_0's multi_logloss: 0.897856	valid_0's weighted-f1-score: 0.66499
+[1000]	valid_0's multi_logloss: 0.897987	valid_0's weighted-f1-score: 0.664772
+
+####################################### 只天添加 num_direct_distance 'last_mode', 'pre_mode'
+[50]	valid_0's multi_logloss: 1.02844	valid_0's weighted-f1-score: 0.654613
+[100]	valid_0's multi_logloss: 0.931685	valid_0's weighted-f1-score: 0.660217
+[150]	valid_0's multi_logloss: 0.909181	valid_0's weighted-f1-score: 0.662308
+[200]	valid_0's multi_logloss: 0.902522	valid_0's weighted-f1-score: 0.662833
+[250]	valid_0's multi_logloss: 0.900229	valid_0's weighted-f1-score: 0.663032
+[300]	valid_0's multi_logloss: 0.89932	valid_0's weighted-f1-score: 0.663585
+[350]	valid_0's multi_logloss: 0.898876	valid_0's weighted-f1-score: 0.663793
+[400]	valid_0's multi_logloss: 0.898727	valid_0's weighted-f1-score: 0.663859
+[450]	valid_0's multi_logloss: 0.898584	valid_0's weighted-f1-score: 0.663917
+[500]	valid_0's multi_logloss: 0.898519	valid_0's weighted-f1-score: 0.663745
+[550]	valid_0's multi_logloss: 0.898555	valid_0's weighted-f1-score: 0.663994
+[600]	valid_0's multi_logloss: 0.898651	valid_0's weighted-f1-score: 0.66381
+[650]	valid_0's multi_logloss: 0.898603	valid_0's weighted-f1-score: 0.663828
+[700]	valid_0's multi_logloss: 0.898697	valid_0's weighted-f1-score: 0.66391
+[750]	valid_0's multi_logloss: 0.898833	valid_0's weighted-f1-score: 0.66394
+[800]	valid_0's multi_logloss: 0.89899	valid_0's weighted-f1-score: 0.664164
+[850]	valid_0's multi_logloss: 0.899113	valid_0's weighted-f1-score: 0.664119
+[900]	valid_0's multi_logloss: 0.899267	valid_0's weighted-f1-score: 0.664489
+[950]	valid_0's multi_logloss: 0.899399	valid_0's weighted-f1-score: 0.664602
+Early stopping, best iteration is:
+[481]	valid_0's multi_logloss: 0.898507	valid_0's weighted-f1-score: 0.663841
+
+############################# 40层
+
+Training until validation scores don't improve for 500 rounds.
+[50]	valid_0's multi_logloss: 1.02563	valid_0's weighted-f1-score: 0.655458
+[100]	valid_0's multi_logloss: 0.929025	valid_0's weighted-f1-score: 0.661145
+[150]	valid_0's multi_logloss: 0.906503	valid_0's weighted-f1-score: 0.662968
+[200]	valid_0's multi_logloss: 0.899926	valid_0's weighted-f1-score: 0.663767
+[250]	valid_0's multi_logloss: 0.897757	valid_0's weighted-f1-score: 0.663913
+[300]	valid_0's multi_logloss: 0.896945	valid_0's weighted-f1-score: 0.664237
+[350]	valid_0's multi_logloss: 0.896575	valid_0's weighted-f1-score: 0.664437
+[400]	valid_0's multi_logloss: 0.896453	valid_0's weighted-f1-score: 0.664409
+[450]	valid_0's multi_logloss: 0.896351	valid_0's weighted-f1-score: 0.664798
+[500]	valid_0's multi_logloss: 0.896355	valid_0's weighted-f1-score: 0.664739
+[550]	valid_0's multi_logloss: 0.896447	valid_0's weighted-f1-score: 0.664833
+[600]	valid_0's multi_logloss: 0.89653	valid_0's weighted-f1-score: 0.66492
+[650]	valid_0's multi_logloss: 0.896553	valid_0's weighted-f1-score: 0.665033
+[700]	valid_0's multi_logloss: 0.89668	valid_0's weighted-f1-score: 0.665031
+[750]	valid_0's multi_logloss: 0.896885	valid_0's weighted-f1-score: 0.664963
+[800]	valid_0's multi_logloss: 0.897007	valid_0's weighted-f1-score: 0.664787
+[850]	valid_0's multi_logloss: 0.897207	valid_0's weighted-f1-score: 0.664965
+[900]	valid_0's multi_logloss: 0.897516	valid_0's weighted-f1-score: 0.66515
+[950]	valid_0's multi_logloss: 0.897772	valid_0's weighted-f1-score: 0.665038
+Early stopping, best iteration is:
+[484]	valid_0's multi_logloss: 0.896303	valid_0's weighted-f1-score: 0.664952
+#######################################1
+Training until validation scores don't improve for 500 rounds.
+[50]	valid_0's multi_logloss: 1.02299	valid_0's weighted-f1-score: 0.656425
+[100]	valid_0's multi_logloss: 0.926353	valid_0's weighted-f1-score: 0.661469
+[150]	valid_0's multi_logloss: 0.903735	valid_0's weighted-f1-score: 0.662975
+[200]	valid_0's multi_logloss: 0.897068	valid_0's weighted-f1-score: 0.664148
+[250]	valid_0's multi_logloss: 0.894789	valid_0's weighted-f1-score: 0.664384
+[300]	valid_0's multi_logloss: 0.893849	valid_0's weighted-f1-score: 0.664742
+[350]	valid_0's multi_logloss: 0.893533	valid_0's weighted-f1-score: 0.665044
+[400]	valid_0's multi_logloss: 0.893508	valid_0's weighted-f1-score: 0.665022
+[450]	valid_0's multi_logloss: 0.893418	valid_0's weighted-f1-score: 0.665213
+[500]	valid_0's multi_logloss: 0.893411	valid_0's weighted-f1-score: 0.665329
+[550]	valid_0's multi_logloss: 0.893461	valid_0's weighted-f1-score: 0.665484
+[600]	valid_0's multi_logloss: 0.893592	valid_0's weighted-f1-score: 0.665553
+[650]	valid_0's multi_logloss: 0.893777	valid_0's weighted-f1-score: 0.665487
+[700]	valid_0's multi_logloss: 0.894029	valid_0's weighted-f1-score: 0.665503
+[750]	valid_0's multi_logloss: 0.894191	valid_0's weighted-f1-score: 0.665629
+[800]	valid_0's multi_logloss: 0.894378	valid_0's weighted-f1-score: 0.665432
+[850]	valid_0's multi_logloss: 0.894627	valid_0's weighted-f1-score: 0.665588
+[900]	valid_0's multi_logloss: 0.894951	valid_0's weighted-f1-score: 0.665465
+Early stopping, best iteration is:
+[441]	valid_0's multi_logloss: 0.893397	valid_0's weighted-f1-score: 0.665058
+#######################################2
+Training until validation scores don't improve for 500 rounds.
+[50]	valid_0's multi_logloss: 1.02183	valid_0's weighted-f1-score: 0.656544
+[100]	valid_0's multi_logloss: 0.924769	valid_0's weighted-f1-score: 0.661273
+[150]	valid_0's multi_logloss: 0.901973	valid_0's weighted-f1-score: 0.663522
+[200]	valid_0's multi_logloss: 0.895046	valid_0's weighted-f1-score: 0.664369
+[250]	valid_0's multi_logloss: 0.892815	valid_0's weighted-f1-score: 0.664849
+[300]	valid_0's multi_logloss: 0.89209	valid_0's weighted-f1-score: 0.665208
+[350]	valid_0's multi_logloss: 0.891786	valid_0's weighted-f1-score: 0.665228
+[400]	valid_0's multi_logloss: 0.891553	valid_0's weighted-f1-score: 0.665513
+[450]	valid_0's multi_logloss: 0.891585	valid_0's weighted-f1-score: 0.665739
+[500]	valid_0's multi_logloss: 0.8915	valid_0's weighted-f1-score: 0.66601
+[550]	valid_0's multi_logloss: 0.891633	valid_0's weighted-f1-score: 0.666071
+[600]	valid_0's multi_logloss: 0.89174	valid_0's weighted-f1-score: 0.665969
+[650]	valid_0's multi_logloss: 0.891905	valid_0's weighted-f1-score: 0.666029
+[700]	valid_0's multi_logloss: 0.891861	valid_0's weighted-f1-score: 0.665834
+
+############################# 40层 L2 =1  0.69109503
+'learning_rate': 0.01,
+'num_leaves': 40,
+'lambda_l1': 0.01,
+'lambda_l2': 1,
+Training until validation scores don't improve for 500 rounds.
+[50]	valid_0's multi_logloss: 1.53924	valid_0's weighted-f1-score: 0.574451
+[100]	valid_0's multi_logloss: 1.29519	valid_0's weighted-f1-score: 0.640267
+[150]	valid_0's multi_logloss: 1.15935	valid_0's weighted-f1-score: 0.650707
+[200]	valid_0's multi_logloss: 1.07767	valid_0's weighted-f1-score: 0.653929
+[250]	valid_0's multi_logloss: 1.02579	valid_0's weighted-f1-score: 0.655925
+[300]	valid_0's multi_logloss: 0.991289	valid_0's weighted-f1-score: 0.657412
+[350]	valid_0's multi_logloss: 0.967421	valid_0's weighted-f1-score: 0.658933
+[400]	valid_0's multi_logloss: 0.950345	valid_0's weighted-f1-score: 0.659832
+[450]	valid_0's multi_logloss: 0.937794	valid_0's weighted-f1-score: 0.660233
+[500]	valid_0's multi_logloss: 0.928373	valid_0's weighted-f1-score: 0.660759
+[550]	valid_0's multi_logloss: 0.92128	valid_0's weighted-f1-score: 0.661464
+[600]	valid_0's multi_logloss: 0.915876	valid_0's weighted-f1-score: 0.661814
+[650]	valid_0's multi_logloss: 0.911651	valid_0's weighted-f1-score: 0.662154
+[700]	valid_0's multi_logloss: 0.908377	valid_0's weighted-f1-score: 0.662714
+[750]	valid_0's multi_logloss: 0.905825	valid_0's weighted-f1-score: 0.663127
+[800]	valid_0's multi_logloss: 0.9038	valid_0's weighted-f1-score: 0.663098
+[850]	valid_0's multi_logloss: 0.902197	valid_0's weighted-f1-score: 0.663326
+[900]	valid_0's multi_logloss: 0.900904	valid_0's weighted-f1-score: 0.663367
+[950]	valid_0's multi_logloss: 0.899913	valid_0's weighted-f1-score: 0.663485
+[1000]	valid_0's multi_logloss: 0.899084	valid_0's weighted-f1-score: 0.663562
+[1050]	valid_0's multi_logloss: 0.898407	valid_0's weighted-f1-score: 0.663725
+[1100]	valid_0's multi_logloss: 0.897851	valid_0's weighted-f1-score: 0.663882
+[1150]	valid_0's multi_logloss: 0.897419	valid_0's weighted-f1-score: 0.663926
+[1200]	valid_0's multi_logloss: 0.897056	valid_0's weighted-f1-score: 0.663833
+[1250]	valid_0's multi_logloss: 0.896728	valid_0's weighted-f1-score: 0.663805
+[1300]	valid_0's multi_logloss: 0.896491	valid_0's weighted-f1-score: 0.663776
+[1350]	valid_0's multi_logloss: 0.896275	valid_0's weighted-f1-score: 0.663875
+[1400]	valid_0's multi_logloss: 0.896098	valid_0's weighted-f1-score: 0.663947
+[1450]	valid_0's multi_logloss: 0.895923	valid_0's weighted-f1-score: 0.663898
+[1500]	valid_0's multi_logloss: 0.895787	valid_0's weighted-f1-score: 0.664044
+[1550]	valid_0's multi_logloss: 0.89568	valid_0's weighted-f1-score: 0.664042
+[1837]	valid_0's multi_logloss: 0.893908	valid_0's weighted-f1-score: 0.664175
+cv f1-score:  0.6654375284993601
+
+
+########## features_all_ts_p10_s20_zero 换为

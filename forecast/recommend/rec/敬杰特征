@@ -24,10 +24,11 @@
           起点adcode
           终点adcode
           是否相同
+          是否为0
 
    user 行为特征：on-going
 
-  plan: 用户之前选择这个mode的个数和不选这个mode的个数 num
+  plan:  用户之前选择这个mode的个数和不选这个mode的个数 num
             用户最大和最小距离的差值 num
             用户每个mode的统计特征  不是plan维度的是整个数据集维度的 num
             用户单价？num

@@ -149,7 +149,10 @@ def gen_plan_df(data):
     plans_df['sd_dj'] = plans_df['sd'] / plans_df['dj']
     # sid, plan_time, distance, eta, price, transport_mode ；最高性价比
     plans_df.loc[plans_df['sd_dj'] > 1000, 'sd_dj'] = 1000
-    return plans_df[['sid', 'plan_time', 'plan_pos', 'distance', 'eta', 'price', 'transport_mode', 'dj', 'sd', 'sd_dj']]
+    ###
+    plans_df['price_eta'] = plans_df['price'] * plans_df['eta']
+
+    return plans_df[['sid', 'plan_time', 'plan_pos', 'distance', 'eta', 'price', 'transport_mode', 'dj', 'sd', 'sd_dj', 'price_eta']]
 
 
 def gen_cluster(cluster_num, X):
@@ -243,47 +246,58 @@ def gen_plan_feas_by_plans(plans_df):
     def get_first(x):
         return x.values[0]
 
+    def get_second(x):
+        if len(x) < 2:
+            return x.values[0]
+        return x.values[1]
+
+    def get_last(x):
+        return x.values[-1]
+
     def gen_mode_texts(x):
         tl = ' '.join(['word_{}'.format(mode) for mode in x.values])
         return tl
 
-    agg_fun = {'transport_mode': [get_first, gen_mode_texts],
+    agg_fun = {'transport_mode': [get_first, get_second, get_last, gen_mode_texts],
                'distance': ['max', 'min', 'mean', lambda x: np.std(x)],
                'price': ['max', 'min', 'mean', lambda x: np.std(x)],
                'eta': ['max', 'min', 'mean', lambda x: np.std(x)],
                # 添加三组特征
                'dj': ['max', 'min', 'mean', lambda x: np.std(x)],
                'sd': ['max', 'min', 'mean', lambda x: np.std(x)],
-               'sd_dj': ['max', 'min', 'mean', lambda x: np.std(x)]
-
+               'sd_dj': ['max', 'min', 'mean', lambda x: np.std(x)],
+               'price_eta': ['max', 'min', 'mean', lambda x: np.std(x)]
                }
     # std ddof =1
-    agg_columns = ['sid', 'first_mode', 'mode_texts',
+    agg_columns = ['sid', 'first_mode', 'second_mode', 'last_mode_1', 'mode_texts',
                    'max_dist', 'min_dist', 'mean_dist', 'std_dist',
                    'max_price', 'min_price', 'mean_price', 'std_price',
                    'max_eta', 'min_eta', 'mean_eta', 'std_eta',
                    'max_dj', 'min_dj', 'mean_dj', 'std_dj',
                    'max_sd', 'min_sd', 'mean_sd', 'std_sd',
-                   'max_sd_dj', 'min_sd_dj', 'mean_sd_dj', 'std_sd_dj'
-
+                   'max_sd_dj', 'min_sd_dj', 'mean_sd_dj', 'std_sd_dj',
+                   'max_price_eta', 'min_price_eta', 'mean_price_eta', 'std_price_eta'
                    ]
 
     agg_df = plans_df.groupby('sid').agg(agg_fun).reset_index()
     agg_df.columns = agg_columns
     merge_df = pd.merge(plans_df, agg_df, on=['sid'], how='inner')
     # 原来版本是 keep='last'
+    # dist
     max_dist_mode_df = merge_df.loc[merge_df['distance'] == merge_df['max_dist'], ['sid', 'transport_mode']]
     max_dist_mode_df.columns = ['sid', 'max_dist_mode']
     max_dist_mode_df.drop_duplicates(subset='sid', keep='last', inplace=True)
     min_dist_mode_df = merge_df.loc[merge_df['distance'] == merge_df['min_dist'], ['sid', 'transport_mode']]
     min_dist_mode_df.columns = ['sid', 'min_dist_mode']
     min_dist_mode_df.drop_duplicates(subset='sid', keep='first', inplace=True)
+    # price
     max_price_mode_df = merge_df.loc[merge_df['price'] == merge_df['max_price'], ['sid', 'transport_mode']]
     max_price_mode_df.columns = ['sid', 'max_price_mode']
     max_price_mode_df.drop_duplicates(subset='sid', keep='last', inplace=True)
     min_price_mode_df = merge_df.loc[merge_df['price'] == merge_df['min_price'], ['sid', 'transport_mode']]
     min_price_mode_df.columns = ['sid', 'min_price_mode']
     min_price_mode_df.drop_duplicates(subset='sid', keep='first', inplace=True)
+    # eta
     max_eta_mode_df = merge_df.loc[merge_df['eta'] == merge_df['max_eta'], ['sid', 'transport_mode']]
     max_eta_mode_df.columns = ['sid', 'max_eta_mode']
     max_eta_mode_df.drop_duplicates(subset='sid', keep='last', inplace=True)
@@ -291,9 +305,47 @@ def gen_plan_feas_by_plans(plans_df):
     min_eta_mode_df.columns = ['sid', 'min_eta_mode']
     min_eta_mode_df.drop_duplicates(subset='sid', keep='first', inplace=True)
 
+    # sd
+    max_sd_mode_df = merge_df.loc[merge_df['sd'] == merge_df['max_sd'], ['sid', 'transport_mode']]
+    max_sd_mode_df.columns = ['sid', 'max_sd_mode']
+    max_sd_mode_df.drop_duplicates(subset='sid', keep='last', inplace=True)
+
+    min_sd_mode_df = merge_df.loc[merge_df['sd'] == merge_df['min_sd'], ['sid', 'transport_mode']]
+    min_sd_mode_df.columns = ['sid', 'min_sd_mode']
+    min_sd_mode_df.drop_duplicates(subset='sid', keep='last', inplace=True)
+    # dj
+    max_dj_mode_df = merge_df.loc[merge_df['dj'] == merge_df['max_dj'], ['sid', 'transport_mode']]
+    max_dj_mode_df.columns = ['sid', 'max_dj_mode']
+    max_dj_mode_df.drop_duplicates(subset='sid', keep='last', inplace=True)
+
+    min_dj_mode_df = merge_df.loc[merge_df['dj'] == merge_df['min_dj'], ['sid', 'transport_mode']]
+    min_dj_mode_df.columns = ['sid', 'min_dj_mode']
+    min_dj_mode_df.drop_duplicates(subset='sid', keep='first', inplace=True)
+    # sj_dj
+    max_sd_dj_mode_df = merge_df.loc[merge_df['sd_dj'] == merge_df['max_sd_dj'], ['sid', 'transport_mode']]
+    max_sd_dj_mode_df.columns = ['sid', 'max_sd_dj_mode']
+    max_sd_dj_mode_df.drop_duplicates(subset='sid', keep='last', inplace=True)
+
+    min_sd_dj_mode_df = merge_df.loc[merge_df['sd_dj'] == merge_df['min_sd_dj'], ['sid', 'transport_mode']]
+    min_sd_dj_mode_df.columns = ['sid', 'min_sd_dj_mode']
+    min_sd_dj_mode_df.drop_duplicates(subset='sid', keep='last', inplace=True)
+    # price eta
+    max_price_eta_mode_df = merge_df.loc[merge_df['price_eta'] == merge_df['max_price_eta'], ['sid', 'transport_mode']]
+    max_price_eta_mode_df.columns = ['sid', 'max_price_eta_mode']
+    max_price_eta_mode_df.drop_duplicates(subset='sid', keep='last', inplace=True)
+
+    min_price_eta_mode_df = merge_df.loc[merge_df['price_eta'] == merge_df['min_price_eta'], ['sid', 'transport_mode']]
+    min_price_eta_mode_df.columns = ['sid', 'min_price_eta_mode']
+    min_price_eta_mode_df.drop_duplicates(subset='sid', keep='first', inplace=True)
+
     complex_feature_df = reduce(lambda ldf, rdf: pd.merge(ldf, rdf, on=['sid'], how='inner'),
-                                [max_dist_mode_df, min_dist_mode_df, max_price_mode_df, min_price_mode_df,
-                                 max_eta_mode_df, min_eta_mode_df])
+                                [max_dist_mode_df, min_dist_mode_df,
+                                 max_price_mode_df, min_price_mode_df,
+                                 max_eta_mode_df, min_eta_mode_df,
+                                 max_sd_mode_df, min_sd_mode_df,
+                                 max_dj_mode_df, min_dj_mode_df,
+                                 max_sd_dj_mode_df, min_sd_dj_mode_df,
+                                 max_price_eta_mode_df, min_price_eta_mode_df])
     plan_feature_df = reduce(lambda ldf, rdf: pd.merge(ldf, rdf, on=['sid'], how='inner'),
                              [mode_df, agg_df, complex_feature_df])
 
@@ -333,6 +385,8 @@ def gen_empty_plan_feas(data):
     plan_feature_df = pd.DataFrame(np.hstack([sid_data, mode_data]), columns=mode_columns)
 
     plan_feature_df['first_mode'] = 0
+    plan_feature_df['second_mode'] = 0
+    plan_feature_df['last_mode_1'] = 0
     plan_feature_df['mode_texts'] = 'word_null'
 
     plan_feature_df['max_dist'] = -1
@@ -366,12 +420,26 @@ def gen_empty_plan_feas(data):
     plan_feature_df['mean_sd_dj'] = -1
     plan_feature_df['std_sd_dj'] = -1
 
+    plan_feature_df['max_price_eta'] = -1
+    plan_feature_df['min_price_eta'] = -1
+    plan_feature_df['mean_price_eta'] = -1
+    plan_feature_df['std_price_eta'] = -1
+
     plan_feature_df['max_dist_mode'] = -1
     plan_feature_df['min_dist_mode'] = -1
     plan_feature_df['max_price_mode'] = -1
     plan_feature_df['min_price_mode'] = -1
     plan_feature_df['max_eta_mode'] = -1
     plan_feature_df['min_eta_mode'] = -1
+    # 新增
+    plan_feature_df['max_sd_mode'] = -1
+    plan_feature_df['min_sd_mode'] = -1
+    plan_feature_df['max_dj_mode'] = -1
+    plan_feature_df['min_dj_mode'] = -1
+    plan_feature_df['max_sd_dj_mode'] = -1
+    plan_feature_df['min_sd_dj_mode'] = -1
+    plan_feature_df['max_price_eta_mode'] = -1
+    plan_feature_df['min_price_eta_mode'] = -1
 
     return plan_feature_df
 
