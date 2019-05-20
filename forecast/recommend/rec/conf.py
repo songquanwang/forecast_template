@@ -19,7 +19,10 @@ od_features = [
     # 'o30_max_mode', 'd30_max_mode'
 ]
 #  'hour',
-time_features = ['weekday', 'hour', 'is_week_end']
+time_features = ['weekday', 'hour', 'is_week_end',
+                #'hour_first_mode','hour_second_mode'，dayofyear
+
+                 ]
 profile_svd_features = [
     # profile svd
     'svd_fea_0', 'svd_fea_1', 'svd_fea_2', 'svd_fea_3', 'svd_fea_4', 'svd_fea_5',

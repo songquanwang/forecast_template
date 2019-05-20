@@ -90,6 +90,10 @@ def merge_raw_data():
     data['pid'] = data['pid'].fillna(-1)
     print('total data size: {}'.format(data.shape))
     print('raw data columns: {}'.format(', '.join(data.columns)))
+    # 过滤全天为0
+    err_sid_df = pd.read_csv('../data/data_set_phase1/err_data_zero.csv')
+    # 过滤 1593 全天是0的数据
+    data = data[~data['sid'].isin(err_sid_df['sid'])]
     return data
 
 
@@ -812,6 +816,15 @@ def process_ts_feat():
             z = z / np.sum(z)
         return z
 
+    def gen_pre_list(x):
+        le = x.size
+        pre_list = list(map(list, zip(*[x.shift(i).values for i in range(1, 1 + le)][::-1])))
+        ls = {'shift_cm': pd.Series(pre_list)}
+        df = pd.DataFrame(ls, columns=['shift_cm'])
+        df.index = x.index
+        return df
+
+    merge_df.loc[merge_df['pid'] != -1, 'shift_cm'] = merge_df.loc[merge_df['pid'] != -1].groupby('pid')['click_mode'].apply(gen_pre_list)
     mode_num_names = ['mode_num_{}'.format(i) for i in range(12)]
     pid_group_df = merge_df['shift_cm'].apply(lambda x: mode_num(x)).reset_index()
     mode_columns = ['sid'] + mode_num_names

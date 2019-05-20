@@ -1,0 +1,83 @@
+1.过滤
+err_sid_df =pd.read_csv('../data/err_data_zero.csv')
+# 过滤 1593 全天是0的数据
+data=data[~data['sid'].isin(err_sid_df['sid'])]
+
+'learning_rate': 0.01,
+'num_leaves': 31,
+'lambda_l1': 0,
+'lambda_l2': 0.01,
+
+Training until validation scores don't improve for 500 rounds.
+raining until validation scores don't improve for 500 rounds.
+[50]	valid_0's multi_logloss: 1.71964	valid_0's weighted-f1-score: 0.662368
+[100]	valid_0's multi_logloss: 1.41101	valid_0's weighted-f1-score: 0.663614
+[150]	valid_0's multi_logloss: 1.24222	valid_0's weighted-f1-score: 0.664516
+[200]	valid_0's multi_logloss: 1.14055	valid_0's weighted-f1-score: 0.664964
+[250]	valid_0's multi_logloss: 1.07619	valid_0's weighted-f1-score: 0.66558
+[300]	valid_0's multi_logloss: 1.0337	valid_0's weighted-f1-score: 0.665945
+[350]	valid_0's multi_logloss: 1.00476	valid_0's weighted-f1-score: 0.666386
+[400]	valid_0's multi_logloss: 0.984392	valid_0's weighted-f1-score: 0.6669
+[450]	valid_0's multi_logloss: 0.969676	valid_0's weighted-f1-score: 0.667202
+[500]	valid_0's multi_logloss: 0.958846	valid_0's weighted-f1-score: 0.667314
+[550]	valid_0's multi_logloss: 0.950772	valid_0's weighted-f1-score: 0.667809
+[600]	valid_0's multi_logloss: 0.944663	valid_0's weighted-f1-score: 0.667909
+[650]	valid_0's multi_logloss: 0.940026	valid_0's weighted-f1-score: 0.668075
+[700]	valid_0's multi_logloss: 0.93642	valid_0's weighted-f1-score: 0.668252
+[750]	valid_0's multi_logloss: 0.933638	valid_0's weighted-f1-score: 0.668477
+[800]	valid_0's multi_logloss: 0.931437	valid_0's weighted-f1-score: 0.668497
+[850]	valid_0's multi_logloss: 0.929724	valid_0's weighted-f1-score: 0.668484
+[900]	valid_0's multi_logloss: 0.928328	valid_0's weighted-f1-score: 0.668564
+[950]	valid_0's multi_logloss: 0.927205	valid_0's weighted-f1-score: 0.668479
+[1000]	valid_0's multi_logloss: 0.926292	valid_0's weighted-f1-score: 0.668519
+[1050]	valid_0's multi_logloss: 0.925528	valid_0's weighted-f1-score: 0.668662
+[1100]	valid_0's multi_logloss: 0.924879	valid_0's weighted-f1-score: 0.668877
+[1150]	valid_0's multi_logloss: 0.924352	valid_0's weighted-f1-score: 0.668995
+[1200]	valid_0's multi_logloss: 0.923898	valid_0's weighted-f1-score: 0.669107
+[1250]	valid_0's multi_logloss: 0.923496	valid_0's weighted-f1-score: 0.669228
+[1300]	valid_0's multi_logloss: 0.92318	valid_0's weighted-f1-score: 0.669065
+[1350]	valid_0's multi_logloss: 0.922905	valid_0's weighted-f1-score: 0.669121
+[1400]	valid_0's multi_logloss: 0.922676	valid_0's weighted-f1-score: 0.669097
+[1450]	valid_0's multi_logloss: 0.92238	valid_0's weighted-f1-score: 0.669025
+[1500]	valid_0's multi_logloss: 0.922205	valid_0's weighted-f1-score: 0.669096
+[1550]	valid_0's multi_logloss: 0.92203	valid_0's weighted-f1-score: 0.669097
+[1600]	valid_0's multi_logloss: 0.921908	valid_0's weighted-f1-score: 0.66906
+[1650]	valid_0's multi_logloss: 0.921758	valid_0's weighted-f1-score: 0.669129
+[1700]	valid_0's multi_logloss: 0.921602	valid_0's weighted-f1-score: 0.66925
+Early stopping, best iteration is:
+[1231]	valid_0's multi_logloss: 0.923649	valid_0's weighted-f1-score: 0.66929
+
+##################
+2.不过滤
+Training until validation scores don't improve for 500 rounds.
+[50]	valid_0's multi_logloss: 1.71984	valid_0's weighted-f1-score: 0.663511
+[100]	valid_0's multi_logloss: 1.41113	valid_0's weighted-f1-score: 0.664716
+[150]	valid_0's multi_logloss: 1.24208	valid_0's weighted-f1-score: 0.665359
+[200]	valid_0's multi_logloss: 1.14024	valid_0's weighted-f1-score: 0.666299
+[250]	valid_0's multi_logloss: 1.07572	valid_0's weighted-f1-score: 0.666966
+[300]	valid_0's multi_logloss: 1.03307	valid_0's weighted-f1-score: 0.667371
+[350]	valid_0's multi_logloss: 1.00401	valid_0's weighted-f1-score: 0.667711
+[400]	valid_0's multi_logloss: 0.983526	valid_0's weighted-f1-score: 0.668196
+[450]	valid_0's multi_logloss: 0.968737	valid_0's weighted-f1-score: 0.668421
+[500]	valid_0's multi_logloss: 0.957906	valid_0's weighted-f1-score: 0.668761
+[550]	valid_0's multi_logloss: 0.949807	valid_0's weighted-f1-score: 0.668852
+[600]	valid_0's multi_logloss: 0.943644	valid_0's weighted-f1-score: 0.669025
+[650]	valid_0's multi_logloss: 0.938941	valid_0's weighted-f1-score: 0.668994
+[700]	valid_0's multi_logloss: 0.935324	valid_0's weighted-f1-score: 0.66926
+[750]	valid_0's multi_logloss: 0.932471	valid_0's weighted-f1-score: 0.669526
+[800]	valid_0's multi_logloss: 0.930293	valid_0's weighted-f1-score: 0.669688
+
+3. 添加0权重
+train_df.loc[train_df['click_mode'].isin([0,4, 6,11]), 'weight'] = 2.2
+train_df.loc[train_df['click_mode'].isin([3]), 'weight'] = 2
+
+Training until validation scores don't improve for 500 rounds.
+[50]	valid_0's multi_logloss: 1.74548	valid_0's weighted-f1-score: 0.670623
+[100]	valid_0's multi_logloss: 1.43682	valid_0's weighted-f1-score: 0.671246
+[150]	valid_0's multi_logloss: 1.26472	valid_0's weighted-f1-score: 0.671672
+[200]	valid_0's multi_logloss: 1.1593	valid_0's weighted-f1-score: 0.671889
+[250]	valid_0's multi_logloss: 1.09142	valid_0's weighted-f1-score: 0.672241
+[300]	valid_0's multi_logloss: 1.04617	valid_0's weighted-f1-score: 0.67294
+[350]	valid_0's multi_logloss: 1.01521	valid_0's weighted-f1-score: 0.673246
+[400]	valid_0's multi_logloss: 0.993462	valid_0's weighted-f1-score: 0.673788
+[450]	valid_0's multi_logloss: 0.977983	valid_0's weighted-f1-score: 0.674003
