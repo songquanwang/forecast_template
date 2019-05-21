@@ -12,6 +12,7 @@ od_features = [
     # 'same_cls20',
     # 'o30', 'd30', 'same_cls30'
     'num_direct_distance',
+    # is_same_od
    # 'dis_cat_y'
 
     # 'o10_max_mode', 'd10_max_mode',
@@ -20,8 +21,8 @@ od_features = [
 ]
 #  'hour',
 time_features = ['weekday', 'hour', 'is_week_end',
-                #'hour_first_mode','hour_second_mode'，dayofyear
-
+                #'hour_first_mode','hour_second_mode'，dayofyear,a hour_mode_mean_ratio
+                # hour_mode_ratio
                  ]
 profile_svd_features = [
     # profile svd

@@ -145,3 +145,11 @@ y22 = y2 / sum(y2)
 
 plt.bar(x1 - width / 2, y11, width=0.3)
 plt.bar(x2 + width / 2, y22, width=0.3)
+
+######################### 线性拟合
+from sklearn import linear_model
+# 建立线性回归模型
+regr = linear_model.LinearRegression()
+regr.fit(x, y)
+a, b = regr.coef_, regr.intercept_
+plt.plot(x, y, color='red', linewidth=4)
