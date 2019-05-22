@@ -172,68 +172,56 @@ Training until validation scores don't improve for 500 rounds.
 [1500]	valid_0's multi_logloss: 0.933798	valid_0's weighted-f1-score: 0.673832
 [1550]	valid_0's multi_logloss: 0.933575	valid_0's weighted-f1-score: 0.673707
 ?
-
-4.加上
-dayofyear + 斜率
-lgb_paras = {
-    'objective': 'multiclass',
-    'metrics': 'multiclass',
-    'learning_rate': 0.01,
-    'num_leaves': 31,
-    'lambda_l1': 0,
-    'lambda_l2': 0.01,
-    'num_class': 12,
-    'seed': 2019,
-    'feature_fraction': 0.8,
-    'bagging_fraction': 0.8,
-    'bagging_freq': 4,
-    'verbose': -1
-}
-train_df['weight'] = 1
-#train_df.loc[train_df['click_mode'].isin([0]), 'weight'] = 2
-train_df.loc[train_df['click_mode'].isin([0,4, 6,11]), 'weight'] = 2.2
-train_df.loc[train_df['click_mode'].isin([3]), 'weight'] = 2
-# cate_cols = ['max_dist_mode', 'min_dist_mode', 'max_price_mode',
-#              'min_price_mode', 'max_eta_mode', 'min_eta_mode', 'first_mode', 'weekday', 'hour']
-[50]	valid_0's multi_logloss: 1.74128	valid_0's weighted-f1-score: 0.671366
-[100]	valid_0's multi_logloss: 1.43103	valid_0's weighted-f1-score: 0.671934
-[150]	valid_0's multi_logloss: 1.25715	valid_0's weighted-f1-score: 0.672578
-[200]	valid_0's multi_logloss: 1.15017	valid_0's weighted-f1-score: 0.673072
-[250]	valid_0's multi_logloss: 1.08061	valid_0's weighted-f1-score: 0.673795
-[300]	valid_0's multi_logloss: 1.03352	valid_0's weighted-f1-score: 0.674739
-[350]	valid_0's multi_logloss: 1.00062	valid_0's weighted-f1-score: 0.675616
-[400]	valid_0's multi_logloss: 0.9768	valid_0's weighted-f1-score: 0.676337
-[450]	valid_0's multi_logloss: 0.959089	valid_0's weighted-f1-score: 0.67701
-[500]	valid_0's multi_logloss: 0.945584	valid_0's weighted-f1-score: 0.677705
-[550]	valid_0's multi_logloss: 0.934998	valid_0's weighted-f1-score: 0.678583
-[600]	valid_0's multi_logloss: 0.926464	valid_0's weighted-f1-score: 0.679354
-[650]	valid_0's multi_logloss: 0.919506	valid_0's weighted-f1-score: 0.679963
-[700]	valid_0's multi_logloss: 0.913632	valid_0's weighted-f1-score: 0.680597
-[750]	valid_0's multi_logloss: 0.908631	valid_0's weighted-f1-score: 0.681031
-[800]	valid_0's multi_logloss: 0.904316	valid_0's weighted-f1-score: 0.681654
-[850]	valid_0's multi_logloss: 0.900538	valid_0's weighted-f1-score: 0.682131
-[900]	valid_0's multi_logloss: 0.897102	valid_0's weighted-f1-score: 0.682657
+2.加上
+pid 没有放cat  31层
+[50]	valid_0's multi_logloss: 1.74149	valid_0's weighted-f1-score: 0.671453
+[100]	valid_0's multi_logloss: 1.43142	valid_0's weighted-f1-score: 0.67189
+[150]	valid_0's multi_logloss: 1.25764	valid_0's weighted-f1-score: 0.672349
 
 
-4.加上
-dayofyear + 斜率 +hour_mode_ratio
-lgb_paras = {
-    'objective': 'multiclass',
-    'metrics': 'multiclass',
-    'learning_rate': 0.01,
-    'num_leaves': 31,
-    'lambda_l1': 0,
-    'lambda_l2': 0.01,
-    'num_class': 12,
-    'seed': 2019,
-    'feature_fraction': 0.8,
-    'bagging_fraction': 0.8,
-    'bagging_freq': 4,
-    'verbose': -1
-}
-train_df['weight'] = 1
-#train_df.loc[train_df['click_mode'].isin([0]), 'weight'] = 2
-train_df.loc[train_df['click_mode'].isin([0,4, 6,11]), 'weight'] = 2.2
-train_df.loc[train_df['click_mode'].isin([3]), 'weight'] = 2
-# cate_cols = ['max_dist_mode', 'min_dist_mode', 'max_price_mode',
-#              'min_price_mode', 'max_eta_mode', 'min_eta_mode', 'first_mode', 'weekday', 'hour']
+3.加上pid 放入cat变量 31层 valid
+[50]	valid_0's multi_logloss: 1.73211	valid_0's weighted-f1-score: 0.677796
+
+
+4.加上pid submit
+
+[50]	valid_0's multi_logloss: 1.74837	valid_0's weighted-f1-score: 0.668214
+[100]	valid_0's multi_logloss: 1.44173	valid_0's weighted-f1-score: 0.668607
+[150]	valid_0's multi_logloss: 1.27054	valid_0's weighted-f1-score: 0.66887
+[200]	valid_0's multi_logloss: 1.1661	valid_0's weighted-f1-score: 0.669305
+[250]	valid_0's multi_logloss: 1.09894	valid_0's weighted-f1-score: 0.669397
+[300]	valid_0's multi_logloss: 1.05425	valid_0's weighted-f1-score: 0.669363
+[350]	valid_0's multi_logloss: 1.02378	valid_0's weighted-f1-score: 0.669953
+[400]	valid_0's multi_logloss: 1.00253	valid_0's weighted-f1-score: 0.670215
+[450]	valid_0's multi_logloss: 0.987524	valid_0's weighted-f1-score: 0.670195
+[500]	valid_0's multi_logloss: 0.976745	valid_0's weighted-f1-score: 0.670215
+[550]	valid_0's multi_logloss: 0.968871	valid_0's weighted-f1-score: 0.670443
+[600]	valid_0's multi_logloss: 0.963146	valid_0's weighted-f1-score: 0.67038
+[650]	valid_0's multi_logloss: 0.958835	valid_0's weighted-f1-score: 0.670531
+[700]	valid_0's multi_logloss: 0.955586	valid_0's weighted-f1-score: 0.670362
+[750]	valid_0's multi_logloss: 0.953257	valid_0's weighted-f1-score: 0.670475
+[800]	valid_0's multi_logloss: 0.951463	valid_0's weighted-f1-score: 0.670563
+[850]	valid_0's multi_logloss: 0.950069	valid_0's weighted-f1-score: 0.670394
+[900]	valid_0's multi_logloss: 0.94898	valid_0's weighted-f1-score: 0.670288
+[950]	valid_0's multi_logloss: 0.948158	valid_0's weighted-f1-score: 0.670145
+[1000]	valid_0's multi_logloss: 0.947534	valid_0's weighted-f1-score: 0.670109
+[1050]	valid_0's multi_logloss: 0.947071	valid_0's weighted-f1-score: 0.669887
+5.去掉pid submit featues文件替换回 submit
+
+#######################
+Training until validation scores don't improve for 500 rounds.
+[50]	valid_0's multi_logloss: 1.74824	valid_0's weighted-f1-score: 0.667822
+[100]	valid_0's multi_logloss: 1.44137	valid_0's weighted-f1-score: 0.668635
+[150]	valid_0's multi_logloss: 1.27011	valid_0's weighted-f1-score: 0.669228
+[200]	valid_0's multi_logloss: 1.16548	valid_0's weighted-f1-score: 0.669397
+[250]	valid_0's multi_logloss: 1.09814	valid_0's weighted-f1-score: 0.669733
+[300]	valid_0's multi_logloss: 1.05319	valid_0's weighted-f1-score: 0.670048
+[350]	valid_0's multi_logloss: 1.02251	valid_0's weighted-f1-score: 0.670162
+[400]	valid_0's multi_logloss: 1.00088	valid_0's weighted-f1-score: 0.670892
+[450]	valid_0's multi_logloss: 0.985413	valid_0's weighted-f1-score: 0.671205
+[500]	valid_0's multi_logloss: 0.9741	valid_0's weighted-f1-score: 0.671503
+[550]	valid_0's multi_logloss: 0.965766	valid_0's weighted-f1-score: 0.671629
+[600]	valid_0's multi_logloss: 0.959498	valid_0's weighted-f1-score: 0.671676
+[650]	valid_0's multi_logloss: 0.954705	valid_0's weighted-f1-score: 0.671891
+
+6. 去掉pid submit featues 使用date featues文件 +'month','dayofyear'

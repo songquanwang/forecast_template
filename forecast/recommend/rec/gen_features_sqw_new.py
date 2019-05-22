@@ -16,18 +16,18 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import pairwise_distances
 
 
-def read_profile_data():
+def process_label_imbalance(raw_df):
     """
-    添加了一个全0的行
+    处理label不均衡问题
+    用了不好
+    :param raw_df:
     :return:
     """
-    profile_data = pd.read_csv('../data/data_set_phase1/profiles.csv')
-    profile_na = np.zeros(67)
-    profile_na[0] = -1
-    profile_na = pd.DataFrame(profile_na.reshape(1, -1))
-    profile_na.columns = profile_data.columns
-    profile_data = profile_data.append(profile_na)
-    return profile_data
+    raw_df = raw_df.append([raw_df[raw_df['click_mode'] == 3]] * 3, ignore_index=True)
+    raw_df = raw_df.append([raw_df[raw_df['click_mode'] == 4]] * 4, ignore_index=True)
+    raw_df = raw_df.append([raw_df[raw_df['click_mode'] == 8]] * 10, ignore_index=True)
+    raw_df = raw_df.append([raw_df[raw_df['click_mode'] == 11]] * 4, ignore_index=True)
+    return raw_df
 
 
 def merge_raw_data():
@@ -90,10 +90,28 @@ def merge_raw_data():
     data['pid'] = data['pid'].fillna(-1)
     print('total data size: {}'.format(data.shape))
     print('raw data columns: {}'.format(', '.join(data.columns)))
-    # 过滤全天为0
-    err_sid_df = pd.read_csv('../data/data_set_phase1/err_data_zero.csv')
-    # 过滤 1593 全天是0的数据
-    data = data[~data['sid'].isin(err_sid_df['sid'])]
+    # 过滤全天为0 暂时不过滤 效果不好
+    # err_sid_df = pd.read_csv('../data/data_set_phase1/err_data_zero.csv')
+    # # 过滤 1593 全天是0的数据
+    # data = data[~data['sid'].isin(err_sid_df['sid'])]
+
+    return data
+
+
+def add_time_feas(data):
+    """
+    时间特征
+    :param data:
+    :return:
+    """
+    print('add time feat')
+    data['req_time'] = pd.to_datetime(data['req_time'])
+    data['weekday'] = data['req_time'].dt.dayofweek
+    data['hour'] = data['req_time'].dt.hour
+    data['month'] = data['req_time'].dt.month
+    data['dayofyear'] = data['req_time'].dt.dayofyear
+    data['is_week_end'] = 0
+    data.loc[data['weekday'].isin([5, 6]), 'is_week_end'] = 1
     return data
 
 
@@ -185,7 +203,7 @@ def get_dis(x):
     return geodesic((o1, o2), (d1, d2)).m
 
 
-def add_od_feas(data, cluster_list=[10, 20, 30]):
+def gen_od_feas(data, cluster_list=[10, 20, 30]):
     """
     经度、维度分开
     :param data:
@@ -195,41 +213,55 @@ def add_od_feas(data, cluster_list=[10, 20, 30]):
     data['o2'] = data['o'].apply(lambda x: float(x.split(',')[1]))
     data['d1'] = data['d'].apply(lambda x: float(x.split(',')[0]))
     data['d2'] = data['d'].apply(lambda x: float(x.split(',')[1]))
-    # data = data.drop(['o', 'd'], axis=1)
+    od_columns = ['sid', 'o1', 'o2', 'd1', 'd2']
     for num in cluster_list:
-        data['o{}'.format(num)], _ = gen_cluster(num, data[['o1', 'o2']].values)
-        data['d{}'.format(num)], _ = gen_cluster(num, data[['d1', 'd2']].values)
-        data.loc[data['o{}'.format(num)] != data['d{}'.format(num)], 'same_cls{}'.format(num)] = 0
-        data.loc[data['o{}'.format(num)] == data['d{}'.format(num)], 'same_cls{}'.format(num)] = 1
-        data['o{}_max_mode'.format(num)] = data.groupby(['o{}'.format(num)])['click_mode'].transform(lambda x: mode_max(x.value_counts()))
-        data['d{}_max_mode'.format(num)] = data.groupby(['d{}'.format(num)])['click_mode'].transform(lambda x: mode_max(x.value_counts()))
+        o_cls = 'o{}'.format(num)
+        d_cls = 'd{}'.format(num)
+        same_cls = 'same_cls{}'.format(num)
+        o_max_mode = 'o{}_max_mode'.format(num)
+        d_max_mode = 'd{}_max_mode'.format(num)
+        data[o_cls], _ = gen_cluster(num, data[['o1', 'o2']].values)
+        data[d_cls], _ = gen_cluster(num, data[['d1', 'd2']].values)
+        data.loc[data[o_cls] != data[d_cls], same_cls] = 0
+        data.loc[data[o_cls] == data[d_cls], same_cls] = 1
+        data[o_max_mode] = data.groupby([o_cls])['click_mode'].transform(lambda x: mode_max(x.value_counts()))
+        data[d_max_mode] = data.groupby([d_cls])['click_mode'].transform(lambda x: mode_max(x.value_counts()))
+        od_columns.extend([o_cls, d_cls, same_cls, o_max_mode, d_max_mode])
     # 添加距离特征
     data['num_direct_distance'] = data[['o1', 'o2', 'd1', 'd2']].apply(get_dis, axis=1)
-
-    # data['is_rain_max_mode'] = data.groupby(['pid', 'is_rain'])['click_mode'].transform(lambda x: mode_max(x.value_counts()))
-    return data
+    return data[od_columns]
 
 
 def gen_plan_feas_by_plans(plans_df):
     """
-    plans_features = [
-                  'mode_feas_0', 'mode_feas_1', 'mode_feas_2', 'mode_feas_3',
-                  'mode_feas_4', 'mode_feas_5', 'mode_feas_6', 'mode_feas_7',
-                  'mode_feas_8', 'mode_feas_9', 'mode_feas_10', 'mode_feas_11',
-                  'first_mode','mode_texts',
-                  'max_dist', 'min_dist', 'mean_dist', 'std_dist',
-                  'max_price', 'min_price', 'mean_price', 'std_price',
-                  'max_eta', 'min_eta', 'mean_eta', 'std_eta',
-                  'max_dj', 'min_dj', 'mean_dj', 'std_dj',
-                  'max_sd', 'min_sd', 'mean_sd', 'std_sd',
-                  'max_sd_dj', 'min_sd_dj', 'mean_sd_dj', 'std_sd_dj',
-                  'max_dist_mode', 'min_dist_mode', 'max_price_mode',
-                  'min_price_mode', 'max_eta_mode', 'min_eta_mode',
-                  'svd_mode_0', 'svd_mode_1', 'svd_mode_2', 'svd_mode_3',
-                  'svd_mode_4', 'svd_mode_5', 'svd_mode_6', 'svd_mode_7', 'svd_mode_8',
-                  'svd_mode_9'
-                  ]
-    max_dist_mode
+     共83个字段
+    plans_features = ['sid',
+       'mode_feas_0', 'mode_feas_1', 'mode_feas_2', 'mode_feas_3',
+       'mode_feas_4', 'mode_feas_5', 'mode_feas_6', 'mode_feas_7',
+       'mode_feas_8', 'mode_feas_9', 'mode_feas_10', 'mode_feas_11',
+       'first_mode', 'second_mode', 'last_mode_1', 'mode_texts', 'max_dist',
+       'min_dist', 'mean_dist', 'std_dist', 'max_price', 'min_price',
+       'mean_price', 'std_price', 'max_eta', 'min_eta', 'mean_eta', 'std_eta',
+       'max_dj', 'min_dj', 'mean_dj', 'std_dj', 'max_sd', 'min_sd', 'mean_sd',
+       'std_sd', 'max_sd_dj', 'min_sd_dj', 'mean_sd_dj', 'std_sd_dj',
+       'max_price_eta', 'min_price_eta', 'mean_price_eta', 'std_price_eta',
+       'max_dist_mode', 'min_dist_mode', 'max_price_mode', 'min_price_mode',
+       'max_eta_mode', 'min_eta_mode', 'max_sd_mode', 'min_sd_mode',
+       'max_dj_mode', 'min_dj_mode', 'max_sd_dj_mode', 'min_sd_dj_mode',
+       'max_price_eta_mode', 'min_price_eta_mode', 'max_dist_pos',
+       'min_dist_pos', 'max_price_pos', 'min_price_pos', 'max_eta_pos',
+       'min_eta_pos', 'max_dj_pos', 'min_dj_pos', 'max_sd_pos', 'min_sd_pos',
+       'max_sd_dj_pos', 'min_sd_dj_pos', 'max_price_eta_pos','min_price_eta_pos'
+        # new
+         max_price_eta,min_price_eta
+        max_eta_price,min_eta_price,
+        first_mode_price, first_mode_eta
+        second_mode_price, second_mode_eta
+        last_mode_1_price, last_mode_1_eta
+
+
+       ]
+
     :param data:
     :return:
     """
@@ -333,7 +365,7 @@ def gen_plan_feas_by_plans(plans_df):
     min_sd_dj_mode_df = merge_df.loc[merge_df['sd_dj'] == merge_df['min_sd_dj'], ['sid', 'transport_mode']]
     min_sd_dj_mode_df.columns = ['sid', 'min_sd_dj_mode']
     min_sd_dj_mode_df.drop_duplicates(subset='sid', keep='last', inplace=True)
-    # price eta
+    # price eta 有37609 sid np.nan
     max_price_eta_mode_df = merge_df.loc[merge_df['price_eta'] == merge_df['max_price_eta'], ['sid', 'transport_mode']]
     max_price_eta_mode_df.columns = ['sid', 'max_price_eta_mode']
     max_price_eta_mode_df.drop_duplicates(subset='sid', keep='last', inplace=True)
@@ -342,16 +374,121 @@ def gen_plan_feas_by_plans(plans_df):
     min_price_eta_mode_df.columns = ['sid', 'min_price_eta_mode']
     min_price_eta_mode_df.drop_duplicates(subset='sid', keep='first', inplace=True)
 
-    complex_feature_df = reduce(lambda ldf, rdf: pd.merge(ldf, rdf, on=['sid'], how='inner'),
-                                [max_dist_mode_df, min_dist_mode_df,
-                                 max_price_mode_df, min_price_mode_df,
-                                 max_eta_mode_df, min_eta_mode_df,
-                                 max_sd_mode_df, min_sd_mode_df,
-                                 max_dj_mode_df, min_dj_mode_df,
-                                 max_sd_dj_mode_df, min_sd_dj_mode_df,
-                                 max_price_eta_mode_df, min_price_eta_mode_df])
-    plan_feature_df = reduce(lambda ldf, rdf: pd.merge(ldf, rdf, on=['sid'], how='inner'),
-                             [mode_df, agg_df, complex_feature_df])
+    ######################### 添加位置信息特征
+    max_dist_pos_df = merge_df.loc[merge_df['distance'] == merge_df['max_dist'], ['sid', 'plan_pos']]
+    max_dist_pos_df.columns = ['sid', 'max_dist_pos']
+    max_dist_pos_df.drop_duplicates(subset='sid', keep='last', inplace=True)
+    min_dist_pos_df = merge_df.loc[merge_df['distance'] == merge_df['min_dist'], ['sid', 'plan_pos']]
+    min_dist_pos_df.columns = ['sid', 'min_dist_pos']
+    min_dist_pos_df.drop_duplicates(subset='sid', keep='first', inplace=True)
+
+    max_price_pos_df = merge_df.loc[merge_df['price'] == merge_df['max_price'], ['sid', 'plan_pos']]
+    max_price_pos_df.columns = ['sid', 'max_price_pos']
+    max_price_pos_df.drop_duplicates(subset='sid', keep='last', inplace=True)
+    min_price_pos_df = merge_df.loc[merge_df['price'] == merge_df['min_price'], ['sid', 'plan_pos']]
+    min_price_pos_df.columns = ['sid', 'min_price_pos']
+    min_price_pos_df.drop_duplicates(subset='sid', keep='first', inplace=True)
+
+    max_eta_pos_df = merge_df.loc[merge_df['eta'] == merge_df['max_eta'], ['sid', 'plan_pos']]
+    max_eta_pos_df.columns = ['sid', 'max_eta_pos']
+    max_eta_pos_df.drop_duplicates(subset='sid', keep='last', inplace=True)
+    min_eta_pos_df = merge_df.loc[merge_df['eta'] == merge_df['min_eta'], ['sid', 'plan_pos']]
+    min_eta_pos_df.columns = ['sid', 'min_eta_pos']
+    min_eta_pos_df.drop_duplicates(subset='sid', keep='first', inplace=True)
+
+    max_dj_pos_df = merge_df.loc[merge_df['dj'] == merge_df['max_dj'], ['sid', 'plan_pos']]
+    max_dj_pos_df.columns = ['sid', 'max_dj_pos']
+    max_dj_pos_df.drop_duplicates(subset='sid', keep='last', inplace=True)
+    min_dj_pos_df = merge_df.loc[merge_df['dj'] == merge_df['min_dj'], ['sid', 'plan_pos']]
+    min_dj_pos_df.columns = ['sid', 'min_dj_pos']
+    min_dj_pos_df.drop_duplicates(subset='sid', keep='first', inplace=True)
+
+    max_sd_pos_df = merge_df.loc[merge_df['sd'] == merge_df['max_sd'], ['sid', 'plan_pos']]
+    max_sd_pos_df.columns = ['sid', 'max_sd_pos']
+    max_sd_pos_df.drop_duplicates(subset='sid', keep='last', inplace=True)
+    min_sd_pos_df = merge_df.loc[merge_df['sd'] == merge_df['min_sd'], ['sid', 'plan_pos']]
+    min_sd_pos_df.columns = ['sid', 'min_sd_pos']
+    min_sd_pos_df.drop_duplicates(subset='sid', keep='first', inplace=True)
+
+    max_sd_dj_pos_df = merge_df.loc[merge_df['sd_dj'] == merge_df['max_sd_dj'], ['sid', 'plan_pos']]
+    max_sd_dj_pos_df.columns = ['sid', 'max_sd_dj_pos']
+    max_sd_dj_pos_df.drop_duplicates(subset='sid', keep='last', inplace=True)
+    min_sd_dj_pos_df = merge_df.loc[merge_df['sd_dj'] == merge_df['min_sd_dj'], ['sid', 'plan_pos']]
+    min_sd_dj_pos_df.columns = ['sid', 'min_sd_dj_pos']
+    min_sd_dj_pos_df.drop_duplicates(subset='sid', keep='first', inplace=True)
+    # 546016行 少
+    max_price_eta_pos_df = merge_df.loc[merge_df['price_eta'] == merge_df['max_price_eta'], ['sid', 'plan_pos']]
+    max_price_eta_pos_df.columns = ['sid', 'max_price_eta_pos']
+    max_price_eta_pos_df.drop_duplicates(subset='sid', keep='last', inplace=True)
+    min_price_eta_pos_df = merge_df.loc[merge_df['price_eta'] == merge_df['min_price_eta'], ['sid', 'plan_pos']]
+    min_price_eta_pos_df.columns = ['sid', 'min_price_eta_pos']
+    min_price_eta_pos_df.drop_duplicates(subset='sid', keep='first', inplace=True)
+
+    ###################
+    max_price_eta_df = merge_df.loc[merge_df['price'] == merge_df['max_price'], ['sid', 'eta']]
+    max_price_eta_df.columns = ['sid', 'max_price_eta']
+    max_price_eta_df.drop_duplicates(subset='sid', keep='last', inplace=True)
+    min_price_eta_df = merge_df.loc[merge_df['price'] == merge_df['min_price'], ['sid', 'eta']]
+    min_price_eta_df.columns = ['sid', 'min_price_eta']
+    min_price_eta_df.drop_duplicates(subset='sid', keep='first', inplace=True)
+
+    max_eta_price_df = merge_df.loc[merge_df['eta'] == merge_df['max_eta'], ['sid', 'price']]
+    max_eta_price_df.columns = ['sid', 'max_eta_price']
+    max_eta_price_df.drop_duplicates(subset='sid', keep='last', inplace=True)
+    min_eta_price_df = merge_df.loc[merge_df['eta'] == merge_df['min_eta'], ['sid', 'price']]
+    min_eta_price_df.columns = ['sid', 'min_eta_price']
+    min_eta_price_df.drop_duplicates(subset='sid', keep='first', inplace=True)
+
+    first_mode_price_df = merge_df.loc[merge_df['transport_mode'] == merge_df['first_mode'], ['sid', 'price']]
+    first_mode_price_df.columns = ['sid', 'first_mode_price']
+    first_mode_price_df.drop_duplicates(subset='sid', keep='last', inplace=True)
+    first_mode_eta_df = merge_df.loc[merge_df['transport_mode'] == merge_df['first_mode'], ['sid', 'eta']]
+    first_mode_eta_df.columns = ['sid', 'first_mode_eta']
+    first_mode_eta_df.drop_duplicates(subset='sid', keep='first', inplace=True)
+
+    second_mode_price_df = merge_df.loc[merge_df['transport_mode'] == merge_df['second_mode'], ['sid', 'price']]
+    second_mode_price_df.columns = ['sid', 'second_mode_price']
+    second_mode_price_df.drop_duplicates(subset='sid', keep='last', inplace=True)
+    second_mode_eta_df = merge_df.loc[merge_df['transport_mode'] == merge_df['second_mode'], ['sid', 'eta']]
+    second_mode_eta_df.columns = ['sid', 'second_mode_eta']
+    second_mode_eta_df.drop_duplicates(subset='sid', keep='first', inplace=True)
+
+    last_mode_1_mode_price_df = merge_df.loc[merge_df['transport_mode'] == merge_df['last_mode_1'], ['sid', 'price']]
+    last_mode_1_mode_price_df.columns = ['sid', 'last_mode_1_mode_price']
+    last_mode_1_mode_price_df.drop_duplicates(subset='sid', keep='last', inplace=True)
+    last_mode_1_mode_eta_df = merge_df.loc[merge_df['transport_mode'] == merge_df['last_mode_1'], ['sid', 'eta']]
+    last_mode_1_mode_eta_df.columns = ['sid', 'last_mode_1_mode_eta']
+    last_mode_1_mode_eta_df.drop_duplicates(subset='sid', keep='first', inplace=True)
+
+    mode_df_list = [max_dist_mode_df, min_dist_mode_df,
+                    max_price_mode_df, min_price_mode_df,
+                    max_eta_mode_df, min_eta_mode_df,
+                    max_sd_mode_df, min_sd_mode_df,
+                    max_dj_mode_df, min_dj_mode_df,
+                    max_sd_dj_mode_df, min_sd_dj_mode_df,
+                    max_price_eta_mode_df, min_price_eta_mode_df]
+
+    pos_df_list = [max_dist_pos_df, min_dist_pos_df,
+                   max_price_pos_df, min_price_pos_df,
+                   max_eta_pos_df, min_eta_pos_df,
+                   max_dj_pos_df, min_dj_pos_df,
+                   max_sd_pos_df, min_sd_pos_df,
+                   max_sd_dj_pos_df, min_sd_dj_pos_df,
+                   max_price_eta_pos_df, min_price_eta_pos_df
+                   ]
+    ext_df_list = [max_price_eta_df, min_price_eta_df,
+                   max_eta_price_df, min_eta_price_df,
+                   first_mode_price_df, first_mode_eta_df,
+                   second_mode_price_df, second_mode_eta_df,
+                   last_mode_1_mode_price_df, last_mode_1_mode_eta_df]
+
+    mode_feature_df = reduce(lambda ldf, rdf: pd.merge(ldf, rdf, on=['sid'], how='left'), mode_df_list)
+
+    pos_feature_df = reduce(lambda ldf, rdf: pd.merge(ldf, rdf, on=['sid'], how='left'), pos_df_list)
+    ext_feature_df = reduce(lambda ldf, rdf: pd.merge(ldf, rdf, on=['sid'], how='left'), ext_df_list)
+    # 合并各个部分
+    plan_feature_df = reduce(lambda ldf, rdf: pd.merge(ldf, rdf, on=['sid'], how='left'),
+                             [mode_df, agg_df, mode_feature_df, pos_feature_df, ext_feature_df])
 
     return plan_feature_df
 
@@ -445,10 +582,37 @@ def gen_empty_plan_feas(data):
     plan_feature_df['max_price_eta_mode'] = -1
     plan_feature_df['min_price_eta_mode'] = -1
 
+    ###pos
+    plan_feature_df['max_distance_pos'] = -1
+    plan_feature_df['min_distance_pos'] = -1
+    plan_feature_df['max_price_pos'] = -1
+    plan_feature_df['min_price_pos'] = -1
+    plan_feature_df['max_eta_pos'] = -1
+    plan_feature_df['min_eta_pos'] = -1
+    plan_feature_df['max_dj_pos'] = -1
+    plan_feature_df['min_dj_pos'] = -1
+    plan_feature_df['max_sd_pos'] = -1
+    plan_feature_df['min_sd_pos'] = -1
+    plan_feature_df['max_sd_dj_pos'] = -1
+    plan_feature_df['min_sd_dj_pos'] = -1
+    plan_feature_df['max_price_eta_pos'] = -1
+    plan_feature_df['min_price_eta_pos'] = -1
+    #### new ext
+    plan_feature_df['max_price_eta'] = -1
+    plan_feature_df['min_price_eta'] = -1
+    plan_feature_df['max_eta_price'] = -1
+    plan_feature_df['min_eta_price'] = -1
+    plan_feature_df['first_mode_price'] = -1
+    plan_feature_df['first_mode_eta'] = -1
+    plan_feature_df['second_mode_price'] = -1
+    plan_feature_df['second_mode_eta'] = -1
+    plan_feature_df['last_mode_1_price'] = -1
+    plan_feature_df['last_mode_1_eta'] = -1
+
     return plan_feature_df
 
 
-def gen_plan_feas(data):
+def gen_plan_feas(data, plans_df):
     """
     计划特征 [max min mean std] * 3 + 8 mode
     :param data:
@@ -456,7 +620,7 @@ def gen_plan_feas(data):
     """
     # plans_df = get_plan_df(data)
     # tr_plans + te_plans =583625
-    plans_df = pd.read_csv('../data/data_set_phase1/plans_djsd.csv')
+    # plans_df = pd.read_csv('../data/data_set_phase1/plans_djsd.csv')
     data_empty = data[~data['sid'].isin(plans_df.sid.unique())]
     plans_features = gen_plan_feas_by_plans(plans_df)
     empty_plans_features = gen_empty_plan_feas(data_empty)
@@ -470,16 +634,9 @@ def gen_plan_feas(data):
     mode_svd_df = pd.DataFrame(mode_svd)
     mode_svd_df.columns = ['svd_mode_{}'.format(i) for i in range(10)]
     feature_df = pd.concat([plan_feature_df, mode_svd_df], axis=1)
+    # 删除 node_texts列
+    feature_df = feature_df.drop(['mode_texts'], axis=1)
     return feature_df
-
-
-def get_plan_feas():
-    """
-    获取
-    :return:
-    """
-    plan_featurns = pd.read_csv('../data/data_set_phase1/plan_features.csv')
-    return plan_featurns
 
 
 def add_sta_feas(data):
@@ -504,46 +661,26 @@ def add_sta_feas(data):
     return data
 
 
-def add_profile_feas(data):
+def gen_profile_feas(data):
     """
     用户特征 20维度
     :param data:
     :return:
     """
-    profile_data = read_profile_data()
+    profile_data = pd.read_csv('../data/data_set_phase1/profiles.csv')
+    profile_na = np.zeros(67)
+    profile_na[0] = -1
+    profile_na = pd.DataFrame(profile_na.reshape(1, -1))
+    profile_na.columns = profile_data.columns
+    profile_data = profile_data.append(profile_na)
     x = profile_data.drop(['pid'], axis=1).values
     svd = TruncatedSVD(n_components=20, n_iter=20, random_state=2019)
     svd_x = svd.fit_transform(x)
     svd_feas = pd.DataFrame(svd_x)
     svd_feas.columns = ['svd_fea_{}'.format(i) for i in range(20)]
     svd_feas['pid'] = profile_data['pid'].values
-    data = data.merge(svd_feas, on='pid', how='left')
+    # data = data.merge(svd_feas, on='pid', how='left')
     return data
-
-
-def add_time_feas(data):
-    """
-    时间特征
-    :param data:
-    :return:
-    """
-    data['req_time'] = pd.to_datetime(data['req_time'])
-    data['weekday'] = data['req_time'].dt.dayofweek
-    data['hour'] = data['req_time'].dt.hour
-    data = data.drop(['req_time'], axis=1)
-    return data
-
-
-def gen_plan_new():
-    """
-    预处理plans,保存成文件
-    :return:
-    """
-    data = merge_raw_data()
-    data = add_od_feas(data)
-    plans_df = gen_plan_df(data)
-    plans_df.to_csv('../data/data_set_phase1/plans_djsd.csv')
-    return plans_df
 
 
 # 需要排除-1,否则无法对测试集构造此特征
@@ -576,22 +713,12 @@ def add_is_rain(data):
 
 def gen_plan_extra_features(data, plan_df):
     """
-    'pid', 'pid_max_mode',
-    'pid_max_dist', 'pid_min_dist', 'pid_mean_dist',
-    'pid_std_dist', 'pid_max_price', 'pid_min_price', 'pid_mean_price',
-    'pid_std_price', 'pid_max_eta', 'pid_min_eta', 'pid_mean_eta',
-    'pid_std_eta', 'pid_max_dj', 'pid_min_dj', 'pid_mean_dj', 'pid_std_dj',
-    'pid_max_sd', 'pid_min_sd', 'pid_mean_sd', 'pid_std_sd',
-    'pid_max_sd_dj', 'pid_min_sd_dj', 'pid_mean_sd_dj', 'pid_std_sd_dj',
-    'mode_num_0', 'mode_num_1', 'mode_num_2', 'mode_num_3', 'mode_num_4',
-    'mode_num_5', 'mode_num_6', 'mode_num_7', 'mode_num_8', 'mode_num_9',
-    'mode_num_10', 'mode_num_11
-
-    len(data.loc[~data['click_mode'].isin([0,-1]),'sid']) # 453336
+    由于穿越已废弃
+    first_mode 效果不好
     :param data:
     :return:返回 pid维度数据
     """
-    plan_df = pd.read_csv('../data/data_set_phase1/plans_djsd.csv')
+    # plan_df = pd.read_csv('../data/data_set_phase1/plans_djsd.csv')
     # 用户点击量统计；去掉测试数据中-1 583625  ;train:45247
     cut_df = data[['sid', 'pid', 'first_mode']]
     # 2706625 - 110208 重复记录 2596417
@@ -667,66 +794,10 @@ def gen_plan_extra_features(data, plan_df):
     # default_df['pid'] = pid_list
     # pid_ext_features_df = pd.concat([pid_ext_features_df, default_df], axis=0)
     # 保存文件
-    round(pid_ext_features_df, 7).to_csv('../data/data_set_phase1/pid_ext_features.csv', index=False)
     return pid_ext_features_df
 
 
-def get_plan_extra_features():
-    """
-    获取用户维度的特征数据
-    :return:
-    """
-    plan_ext_features = pd.read_csv('../data/data_set_phase1/pid_ext_features.csv')
-    return plan_ext_features
-
-
-def gen_train_test_feas_data():
-    """
-    :return:
-    """
-    # 添加统计特征
-    # stat_columns_sid = ['stat_{0}'.format(c) for c in ['min', 'median', 'max', 'mean', 'std']]
-    # pid_stat_columns_sid = ['stat_pid_{0}'.format(c) for c in ['min', 'median', 'max', 'mean', 'std']]
-
-    data = merge_raw_data()
-    # 添加天气特征
-    # data = add_is_rain(data)
-    print('add od')
-    data = add_od_feas(data)
-    print('add plan feat')
-    plans_features = gen_plan_feas(data)
-    # union没有plans的 innner=left
-    data = pd.merge(data, plans_features, on=['sid'], how='left')
-    print('add profile feat')
-    data = add_profile_feas(data)
-    print('add time feat')
-    data = add_time_feas(data)
-    print('add extra plan feat')
-    pid_ext_features_df = gen_plan_extra_features(data, None)
-    data = pd.merge(data, pid_ext_features_df, on=['pid'], how='left')
-    #
-    data = data.drop(['plans'], axis=1)
-    data = data.drop(['is_train'], axis=1)
-    data = data.drop(['mode_texts'], axis=1)
-    round(data, 7).to_csv('../data/features/features_all_new.csv', index=False)
-    return data
-
-
-def process_label_imbalance(raw_df):
-    """
-    处理label不均衡问题
-    用了不好
-    :param raw_df:
-    :return:
-    """
-    raw_df = raw_df.append([raw_df[raw_df['click_mode'] == 3]] * 3, ignore_index=True)
-    raw_df = raw_df.append([raw_df[raw_df['click_mode'] == 4]] * 4, ignore_index=True)
-    raw_df = raw_df.append([raw_df[raw_df['click_mode'] == 8]] * 10, ignore_index=True)
-    raw_df = raw_df.append([raw_df[raw_df['click_mode'] == 11]] * 4, ignore_index=True)
-    return raw_df
-
-
-def process_ts_feat():
+def process_pid_ts_feat(data, plan_df, min_periods=2):
     """
     时序特征
     Index(['sid', 'pid', 'plan_time', 'click_mode', 'last_mode', 'pre_mode',
@@ -741,13 +812,10 @@ def process_ts_feat():
        'mode_num_9', 'mode_num_10', 'mode_num_11']
     :return:
     """
-    data = merge_raw_data()
-    plan_df = pd.read_csv('../data/data_set_phase1/plans_djsd.csv')
-    data['plan_time'] = pd.to_datetime('plan_time')
-    order_data = data.sort_values(by='plan_time')
-    order_data['last_mode'] = order_data.groupby('pid')['click_mode'].transform(lambda x: x.shift(1))
-    order_data['pre_mode'] = order_data.groupby('pid')['click_mode'].transform(lambda x: x.shift(1).rolling(3).median())
-    ###
+    # data = merge_raw_data()
+    # plan_df = pd.read_csv('../data/data_set_phase1/plans_djsd.csv')
+    data['plan_time'] = pd.to_datetime(data['plan_time'])
+
     cut_plan_df = plan_df[['sid', 'plan_pos', 'distance', 'eta', 'price', 'transport_mode', 'dj', 'sd', 'sd_dj']]
     # 去挑一个sid 对应两个相同的mode 的plan 2596417
     cut_plan_df = cut_plan_df.drop_duplicates(subset=['sid', 'transport_mode'])
@@ -755,35 +823,38 @@ def process_ts_feat():
     merge_df = pd.merge(data, cut_plan_df, left_on=['sid', 'click_mode'], right_on=['sid', 'transport_mode'], how='left')
     merge_df = merge_df.sort_values(by='plan_time')
 
-    merge_df['pid_max_dist'] = merge_df.groupby('pid')['distance'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).max())
-    merge_df['pid_min_dist'] = merge_df.groupby('pid')['distance'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).min())
-    merge_df['pid_mean_dist'] = merge_df.groupby('pid')['distance'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).mean())
-    merge_df['pid_std_dist'] = merge_df.groupby('pid')['distance'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).std())
+    merge_df['last_mode'] = merge_df.groupby('pid')['click_mode'].transform(lambda x: x.shift(1))
+    merge_df['pre_mode'] = merge_df.groupby('pid')['click_mode'].transform(lambda x: x.shift(1).rolling(3).median())
 
-    merge_df['pid_max_price'] = merge_df.groupby('pid')['price'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).max())
-    merge_df['pid_min_price'] = merge_df.groupby('pid')['price'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).min())
-    merge_df['pid_mean_price'] = merge_df.groupby('pid')['price'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).mean())
-    merge_df['pid_std_price'] = merge_df.groupby('pid')['price'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).std())
+    merge_df['pid_max_dist'] = merge_df.groupby('pid')['distance'].transform(lambda x: x.shift(1).rolling(10, min_periods=min_periods).max())
+    merge_df['pid_min_dist'] = merge_df.groupby('pid')['distance'].transform(lambda x: x.shift(1).rolling(10, min_periods=min_periods).min())
+    merge_df['pid_mean_dist'] = merge_df.groupby('pid')['distance'].transform(lambda x: x.shift(1).rolling(10, min_periods=min_periods).mean())
+    merge_df['pid_std_dist'] = merge_df.groupby('pid')['distance'].transform(lambda x: x.shift(1).rolling(10, min_periods=min_periods).std())
 
-    merge_df['pid_max_eta'] = merge_df.groupby('pid')['eta'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).max())
-    merge_df['pid_min_eta'] = merge_df.groupby('pid')['eta'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).min())
-    merge_df['pid_mean_eta'] = merge_df.groupby('pid')['eta'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).mean())
-    merge_df['pid_std_eta'] = merge_df.groupby('pid')['eta'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).std())
+    merge_df['pid_max_price'] = merge_df.groupby('pid')['price'].transform(lambda x: x.shift(1).rolling(10, min_periods=min_periods).max())
+    merge_df['pid_min_price'] = merge_df.groupby('pid')['price'].transform(lambda x: x.shift(1).rolling(10, min_periods=min_periods).min())
+    merge_df['pid_mean_price'] = merge_df.groupby('pid')['price'].transform(lambda x: x.shift(1).rolling(10, min_periods=min_periods).mean())
+    merge_df['pid_std_price'] = merge_df.groupby('pid')['price'].transform(lambda x: x.shift(1).rolling(10, min_periods=min_periods).std())
 
-    merge_df['pid_max_dj'] = merge_df.groupby('pid')['dj'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).max())
-    merge_df['pid_min_dj'] = merge_df.groupby('pid')['dj'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).min())
-    merge_df['pid_mean_dj'] = merge_df.groupby('pid')['dj'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).mean())
-    merge_df['pid_std_dj'] = merge_df.groupby('pid')['dj'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).std())
+    merge_df['pid_max_eta'] = merge_df.groupby('pid')['eta'].transform(lambda x: x.shift(1).rolling(10, min_periods=min_periods).max())
+    merge_df['pid_min_eta'] = merge_df.groupby('pid')['eta'].transform(lambda x: x.shift(1).rolling(10, min_periods=min_periods).min())
+    merge_df['pid_mean_eta'] = merge_df.groupby('pid')['eta'].transform(lambda x: x.shift(1).rolling(10, min_periods=min_periods).mean())
+    merge_df['pid_std_eta'] = merge_df.groupby('pid')['eta'].transform(lambda x: x.shift(1).rolling(10, min_periods=min_periods).std())
 
-    merge_df['pid_max_sd'] = merge_df.groupby('pid')['sd'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).max())
-    merge_df['pid_min_sd'] = merge_df.groupby('pid')['sd'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).min())
-    merge_df['pid_mean_sd'] = merge_df.groupby('pid')['sd'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).mean())
-    merge_df['pid_std_sd'] = merge_df.groupby('pid')['sd'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).std())
+    merge_df['pid_max_dj'] = merge_df.groupby('pid')['dj'].transform(lambda x: x.shift(1).rolling(10, min_periods=min_periods).max())
+    merge_df['pid_min_dj'] = merge_df.groupby('pid')['dj'].transform(lambda x: x.shift(1).rolling(10, min_periods=min_periods).min())
+    merge_df['pid_mean_dj'] = merge_df.groupby('pid')['dj'].transform(lambda x: x.shift(1).rolling(10, min_periods=min_periods).mean())
+    merge_df['pid_std_dj'] = merge_df.groupby('pid')['dj'].transform(lambda x: x.shift(1).rolling(10, min_periods=min_periods).std())
 
-    merge_df['pid_max_sd_dj'] = merge_df.groupby('pid')['sd_dj'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).max())
-    merge_df['pid_min_sd_dj'] = merge_df.groupby('pid')['sd_dj'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).min())
-    merge_df['pid_mean_sd_dj'] = merge_df.groupby('pid')['sd_dj'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).mean())
-    merge_df['pid_std_sd_dj'] = merge_df.groupby('pid')['sd_dj'].transform(lambda x: x.shift(1).rolling(10, min_periods=2).std())
+    merge_df['pid_max_sd'] = merge_df.groupby('pid')['sd'].transform(lambda x: x.shift(1).rolling(10, min_periods=min_periods).max())
+    merge_df['pid_min_sd'] = merge_df.groupby('pid')['sd'].transform(lambda x: x.shift(1).rolling(10, min_periods=min_periods).min())
+    merge_df['pid_mean_sd'] = merge_df.groupby('pid')['sd'].transform(lambda x: x.shift(1).rolling(10, min_periods=min_periods).mean())
+    merge_df['pid_std_sd'] = merge_df.groupby('pid')['sd'].transform(lambda x: x.shift(1).rolling(10, min_periods=min_periods).std())
+
+    merge_df['pid_max_sd_dj'] = merge_df.groupby('pid')['sd_dj'].transform(lambda x: x.shift(1).rolling(10, min_periods=min_periods).max())
+    merge_df['pid_min_sd_dj'] = merge_df.groupby('pid')['sd_dj'].transform(lambda x: x.shift(1).rolling(10, min_periods=min_periods).min())
+    merge_df['pid_mean_sd_dj'] = merge_df.groupby('pid')['sd_dj'].transform(lambda x: x.shift(1).rolling(10, min_periods=min_periods).mean())
+    merge_df['pid_std_sd_dj'] = merge_df.groupby('pid')['sd_dj'].transform(lambda x: x.shift(1).rolling(10, min_periods=min_periods).std())
 
     ############
     def gen_pre_list(x):
@@ -846,19 +917,56 @@ def process_ts_feat():
             return c.idxmax()
 
     merge_df['pid_max_mode'] = merge_df['shift_cm'].apply(get_max_fre)
-    merge_df.to_csv('../data/data_set_phase1/pid_ext_ts_feature.csv', index=False)
+    return merge_df
 
 
-# merge_df['num_direct_distance'] = merge_df.apply(lambda x: get_dis(x['o'],x['d']), axis=1)
-def pre_next_n(x, n):
+def gen_all_feat_file():
     """
-    next N；pre N
-    :param x:
-    :param n:
-    param d:1 pre -1 next
+
     :return:
     """
-    return map(list, zip(*[x.shift(i).values for i in range(1, 1 + n)][::-1]))
+    print('gen base feat')
+    raw_data = merge_raw_data()
+    base_feat_df = add_time_feas(raw_data)
+    base_feat_df = base_feat_df.drop(['req_time', 'plans'], axis=1)
+    base_feat_df.to_csv('../data/features/base_features.csv', index=False)
+    print('gen od feat')
+    od_feat_df = gen_od_feas(raw_data)
+    od_feat_df.to_csv('../data/features/od_features.csv', index=False)
+    print('expand plans and  gen plan df')
+    plan_df = gen_plan_df(raw_data)
+    plan_df.to_csv('../data/data_set_phase1/plans_djsd.csv', index=False)
+    print('gen plan feat')
+    plans_features_df = gen_plan_feas(raw_data, plan_df)
+    plans_features_df.to_csv('../data/features/plan_features.csv', index=False)
+    print('gen pid ext ts feat')
+    pid_ext_ts_features_df = process_pid_ts_feat(raw_data, plan_df, min_periods=10)
+    pid_ext_ts_features_df.to_csv('../data/features/pid_ext_ts_features_p10.csv', index=False)
+    print('gen profile  feat')
+    profile_df = gen_profile_feas(raw_data)
+    profile_df.to_csv('../data/features/profile_features.csv', index=False)
+    # 删除无用列
+    features_all_df = reduce(lambda ldf, rdf: pd.merge(ldf, rdf, on=['sid'], how='left'),
+                             [base_feat_df, od_feat_df, plans_features_df, pid_ext_ts_features_df, profile_df])
+
+    round(features_all_df, 7).to_csv('../data/features/features_all_2019-05-22.csv', index=False)
+
+
+def merge_all_feat():
+    """
+    读取并合并所有特征文件
+    :return:
+    """
+    base_feat_df = pd.read_csv('../data/features/base_features.csv')
+    od_feat_df = pd.read_csv('../data/features/od_features.csv')
+    plans_features_df = pd.read_csv('../data/features/base_features.csv')
+    pid_ext_ts_features_df = pd.read_csv('../data/features/plan_features_p10.csv')
+    profile_df = pd.read_csv('../data/features/profile_features.csv')
+    features_all_df = reduce(lambda ldf, rdf: pd.merge(ldf, rdf, on=['sid'], how='left'),
+                             [base_feat_df, od_feat_df, plans_features_df, pid_ext_ts_features_df, profile_df])
+
+    round(features_all_df, 7).to_csv('../data/features/features_all_2019-05-22.csv', index=False)
+    return features_all_df
 
 
 if __name__ == '__main__':
@@ -866,4 +974,4 @@ if __name__ == '__main__':
 
     # os.chdir('D:/github/forecast_template/recommend/rec')
     # gen_plan_new()
-    gen_train_test_feas_data()
+    merge_all_feat()

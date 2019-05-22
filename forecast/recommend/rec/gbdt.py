@@ -6,7 +6,7 @@
   @Last Modified time: 2019-04-17 19:34:38 
 """
 from time import gmtime, strftime
-
+import time
 import lightgbm as lgb
 import numpy as np
 import pandas as pd
@@ -98,6 +98,7 @@ def train_lgb(train_df, test_df):
     :param test_df:
     :return:
     """
+    print('beging time:{}'.format(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))))
     kfold = StratifiedKFold(n_splits=5, shuffle=True, random_state=2019)
     lgb_paras = {
         'objective': 'multiclass',
@@ -142,6 +143,7 @@ def train_lgb(train_df, test_df):
         i += 1
     print('cv f1-score: ', np.mean(scores))
     pred_test = np.argmax(np.mean(result_proba, axis=0), axis=1)
+    print('end time:{}'.format(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))))
     return pred_test
 
 
@@ -190,5 +192,7 @@ def predict_by_model():
 
 
 if __name__ == '__main__':
+
     tp_submit()
     # predict_by_model()
+
